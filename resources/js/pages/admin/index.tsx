@@ -251,8 +251,8 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                 {/* Activity chart */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Aktivitet senaste 30 dagarna</CardTitle>
-                        <CardDescription>Antal svar per dag</CardDescription>
+                        <CardTitle>{t('admin.activity.title')}</CardTitle>
+                        <CardDescription>{t('admin.activity.description')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="flex h-32 items-end gap-1">
@@ -264,13 +264,13 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                         key={date}
                                         className="flex-1 rounded-t bg-blue-500 transition-all"
                                         style={{ height: `${Math.max(height, 2)}%` }}
-                                        title={`${date}: ${count} svar`}
+                                        title={t('admin.activity.bar_title', { date, count })}
                                     />
                                 );
                             })}
                         </div>
                         {Object.keys(activityByDay).length === 0 && (
-                            <p className="text-sm text-muted-foreground">Ingen aktivitet de senaste 30 dagarna.</p>
+                            <p className="text-sm text-muted-foreground">{t('admin.activity.empty')}</p>
                         )}
                     </CardContent>
                 </Card>
@@ -278,21 +278,21 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                 {/* Users */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Användare (poll-skapare)</CardTitle>
-                        <CardDescription>Alla registrerade användare</CardDescription>
+                        <CardTitle>{t('admin.users.title')}</CardTitle>
+                        <CardDescription>{t('admin.users.description')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b text-left">
-                                        <th className="pb-2 font-medium">Namn</th>
-                                        <th className="pb-2 font-medium">E-post</th>
-                                        <th className="pb-2 font-medium text-right">Polls</th>
-                                        <th className="pb-2 font-medium text-right">Sessioner</th>
-                                        <th className="pb-2 font-medium text-right">Svar</th>
-                                        <th className="pb-2 font-medium">Status</th>
-                                        <th className="pb-2 font-medium">Åtgärd</th>
+                                        <th className="pb-2 font-medium">{t('admin.users.columns.name')}</th>
+                                        <th className="pb-2 font-medium">{t('admin.users.columns.email')}</th>
+                                        <th className="pb-2 font-medium text-right">{t('admin.users.columns.polls')}</th>
+                                        <th className="pb-2 font-medium text-right">{t('admin.users.columns.sessions')}</th>
+                                        <th className="pb-2 font-medium text-right">{t('admin.users.columns.responses')}</th>
+                                        <th className="pb-2 font-medium">{t('admin.users.columns.status')}</th>
+                                        <th className="pb-2 font-medium">{t('admin.users.columns.action')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -337,7 +337,7 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                                             <div className="flex items-center gap-2">
                                                                 <input
                                                                     type="text"
-                                                                    placeholder="Anledning (valfritt)"
+                                                                    placeholder={t('admin.users.ban_reason_placeholder')}
                                                                     value={banReason}
                                                                     onChange={(e) => setBanReason(e.target.value)}
                                                                     className="h-8 w-32 rounded border px-2 text-xs"
@@ -348,14 +348,14 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                                                     onClick={() => banUser(user.id)}
                                                                     disabled={loading}
                                                                 >
-                                                                    Bekräfta
+                                                                    {t('admin.users.confirm')}
                                                                 </Button>
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="sm"
                                                                     onClick={() => { setBanningUserId(null); setBanReason(''); }}
                                                                 >
-                                                                    Avbryt
+                                                                    {t('admin.users.cancel')}
                                                                 </Button>
                                                             </div>
                                                         ) : (
@@ -364,7 +364,7 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                                                 size="sm"
                                                                 onClick={() => setBanningUserId(user.id)}
                                                             >
-                                                                Stäng av
+                                                                {t('admin.users.disable')}
                                                             </Button>
                                                         )}
                                                     </>
@@ -381,8 +381,8 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                 {/* Recent sessions */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Senaste sessioner</CardTitle>
-                        <CardDescription>De 20 senaste omröstningarna</CardDescription>
+                        <CardTitle>{t('admin.recent_sessions.title')}</CardTitle>
+                        <CardDescription>{t('admin.recent_sessions.description')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -390,12 +390,12 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                 <thead>
                                     <tr className="border-b text-left">
                                         <th className="w-8 pb-2"></th>
-                                        <th className="pb-2 font-medium">Kod</th>
-                                        <th className="pb-2 font-medium">Poll</th>
-                                        <th className="pb-2 font-medium">Skapare</th>
-                                        <th className="pb-2 font-medium text-right">Svar</th>
-                                        <th className="pb-2 font-medium">Status</th>
-                                        <th className="pb-2 font-medium">Skapad</th>
+                                        <th className="pb-2 font-medium">{t('admin.recent_sessions.columns.code')}</th>
+                                        <th className="pb-2 font-medium">{t('admin.recent_sessions.columns.poll')}</th>
+                                        <th className="pb-2 font-medium">{t('admin.recent_sessions.columns.creator')}</th>
+                                        <th className="pb-2 font-medium text-right">{t('admin.recent_sessions.columns.responses')}</th>
+                                        <th className="pb-2 font-medium">{t('admin.recent_sessions.columns.status')}</th>
+                                        <th className="pb-2 font-medium">{t('admin.recent_sessions.columns.created')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>

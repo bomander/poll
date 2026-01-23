@@ -8,14 +8,16 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useActiveUrl } from '@/hooks/use-active-url';
+import { useT } from '@/lib/i18n';
 import { type NavItem } from '@/types';
 
 export function NavMain({ items = [] }: { items: NavItem[] }) {
     const { urlIsActive } = useActiveUrl();
+    const t = useT();
 
     return (
         <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Meny</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('nav.menu')}</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>

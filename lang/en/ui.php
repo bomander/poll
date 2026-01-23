@@ -7,6 +7,7 @@ return [
         'sessions' => 'Sessions',
         'admin' => 'Admin',
         'navigation_menu' => 'Navigation Menu',
+        'menu' => 'Menu',
     ],
 
     'dashboard' => [
@@ -110,6 +111,12 @@ return [
         'loading_results' => 'Loading results...',
         'no_results' => 'No results to show.',
         'no_votes' => 'No votes.',
+        'preview' => [
+            'title' => 'Results',
+            'current_question' => 'Current question',
+            'no_questions' => 'No questions',
+            'question' => 'Question :n',
+        ],
         'confirm_delete' => 'Delete this session? This will remove all responses.',
         'confirm_close' => 'End this session?',
         'errors' => [
@@ -128,6 +135,41 @@ return [
             'closed' => 'Ended',
         ],
         'responses' => ':count responses',
+        'activity' => [
+            'title' => 'Activity last 30 days',
+            'description' => 'Responses per day',
+            'empty' => 'No activity in the last 30 days.',
+            'bar_title' => ':date: :count responses',
+        ],
+        'users' => [
+            'title' => 'Users (poll creators)',
+            'description' => 'All registered users',
+            'columns' => [
+                'name' => 'Name',
+                'email' => 'Email',
+                'polls' => 'Polls',
+                'sessions' => 'Sessions',
+                'responses' => 'Responses',
+                'status' => 'Status',
+                'action' => 'Action',
+            ],
+            'ban_reason_placeholder' => 'Reason (optional)',
+            'confirm' => 'Confirm',
+            'cancel' => 'Cancel',
+            'disable' => 'Disable',
+        ],
+        'recent_sessions' => [
+            'title' => 'Recent sessions',
+            'description' => 'The 20 latest polls',
+            'columns' => [
+                'code' => 'Code',
+                'poll' => 'Poll',
+                'creator' => 'Creator',
+                'responses' => 'Responses',
+                'status' => 'Status',
+                'created' => 'Created',
+            ],
+        ],
         'stats' => [
             'users' => 'Users',
             'polls' => 'Polls',
@@ -184,9 +226,21 @@ return [
         'instruction' => 'Go to :url and enter code',
         'waiting_title' => 'Waiting for the question to appear',
         'waiting_subtitle' => 'The teacher will start soon.',
+        'aria_ended' => 'ended',
+        'aria_waiting' => 'waiting',
         'errors' => [
             'load_failed' => 'Failed to load session.',
         ],
+    ],
+
+    'common' => [
+        'close' => 'Close',
+        'loading' => 'Loading',
+        'more' => 'More',
+        'breadcrumb' => 'Breadcrumb',
+        'toggle_sidebar' => 'Toggle sidebar',
+        'sidebar_title' => 'Sidebar',
+        'sidebar_description' => 'Displays the mobile sidebar.',
     ],
 
     'session' => [
@@ -338,6 +392,7 @@ return [
             'light' => 'Light',
             'dark' => 'Dark',
             'system' => 'System',
+            'toggle_theme' => 'Toggle theme',
         ],
         'two_factor' => [
             'breadcrumb' => 'Two-Factor Authentication',

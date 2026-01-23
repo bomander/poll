@@ -200,7 +200,12 @@ export default function ProjectorPage() {
                 <div className="flex flex-1 flex-col items-center justify-center">
                     <div className="rounded-2xl border-2 border-amber-200 bg-amber-50 px-16 py-12 text-center text-amber-900">
                         <div className="mb-4 text-5xl">
-                            <span role="img" aria-label="ended">✓</span>
+                            <span
+                                role="img"
+                                aria-label={t('projector.aria_ended')}
+                            >
+                                ✓
+                            </span>
                         </div>
                         <h2 className="text-2xl font-semibold">{t('projector.ended_title')}</h2>
                         <p className="mt-2">{t('projector.ended_subtitle')}</p>
@@ -210,7 +215,12 @@ export default function ProjectorPage() {
                 <div className="flex flex-1 flex-col items-center justify-center">
                     <div className="rounded-2xl border-2 border-neutral-200 bg-neutral-50 px-16 py-12 text-center dark:border-neutral-700 dark:bg-neutral-900">
                         <div className="mb-4 text-6xl">
-                            <span role="img" aria-label="waiting">...</span>
+                            <span
+                                role="img"
+                                aria-label={t('projector.aria_waiting')}
+                            >
+                                ...
+                            </span>
                         </div>
                         <h2 className="text-2xl font-semibold text-neutral-700 dark:text-neutral-200">{t('projector.waiting_title')}</h2>
                         <p className="mt-2 text-neutral-500 dark:text-neutral-400">{t('projector.waiting_subtitle')}</p>

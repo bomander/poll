@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useT } from '@/lib/i18n';
+import { type SharedData } from '@/types';
 
 type PageProps = {
     basePath: string;
@@ -10,7 +11,7 @@ type PageProps = {
 };
 
 export default function Welcome() {
-    const { basePath, auth } = usePage<PageProps>().props;
+    const { basePath, auth, name } = usePage<PageProps & SharedData>().props;
     const t = useT();
     const [code, setCode] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -46,12 +47,12 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="Enkat" />
+            <Head title={name} />
             <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-50 p-6 dark:bg-neutral-950">
                 <div className="w-full max-w-sm space-y-8">
                     <div className="text-center">
                         <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-                            Enkat
+                            {name}
                         </h1>
                         <p className="mt-2 text-neutral-600 dark:text-neutral-400">
                             {t('welcome.tagline')}

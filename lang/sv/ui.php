@@ -7,6 +7,7 @@ return [
         'sessions' => 'Sessioner',
         'admin' => 'Admin',
         'navigation_menu' => 'Navigationsmeny',
+        'menu' => 'Meny',
     ],
 
     'dashboard' => [
@@ -110,6 +111,12 @@ return [
         'loading_results' => 'Laddar resultat...',
         'no_results' => 'Inga resultat att visa.',
         'no_votes' => 'Inga röster.',
+        'preview' => [
+            'title' => 'Resultat',
+            'current_question' => 'Aktuell fråga',
+            'no_questions' => 'Inga frågor',
+            'question' => 'Fråga :n',
+        ],
         'confirm_delete' => 'Vill du radera sessionen? Detta tar bort alla svar.',
         'confirm_close' => 'Vill du avsluta sessionen?',
         'errors' => [
@@ -128,6 +135,41 @@ return [
             'closed' => 'Avslutad',
         ],
         'responses' => ':count svar',
+        'activity' => [
+            'title' => 'Aktivitet senaste 30 dagarna',
+            'description' => 'Antal svar per dag',
+            'empty' => 'Ingen aktivitet de senaste 30 dagarna.',
+            'bar_title' => ':date: :count svar',
+        ],
+        'users' => [
+            'title' => 'Användare (poll-skapare)',
+            'description' => 'Alla registrerade användare',
+            'columns' => [
+                'name' => 'Namn',
+                'email' => 'E-post',
+                'polls' => 'Polls',
+                'sessions' => 'Sessioner',
+                'responses' => 'Svar',
+                'status' => 'Status',
+                'action' => 'Åtgärd',
+            ],
+            'ban_reason_placeholder' => 'Anledning (valfritt)',
+            'confirm' => 'Bekräfta',
+            'cancel' => 'Avbryt',
+            'disable' => 'Stäng av',
+        ],
+        'recent_sessions' => [
+            'title' => 'Senaste sessioner',
+            'description' => 'De 20 senaste omröstningarna',
+            'columns' => [
+                'code' => 'Kod',
+                'poll' => 'Poll',
+                'creator' => 'Skapare',
+                'responses' => 'Svar',
+                'status' => 'Status',
+                'created' => 'Skapad',
+            ],
+        ],
         'stats' => [
             'users' => 'Användare',
             'polls' => 'Polls',
@@ -184,9 +226,21 @@ return [
         'instruction' => 'Gå till :url och ange kod',
         'waiting_title' => 'Väntar på att frågan visas',
         'waiting_subtitle' => 'Läraren startar snart.',
+        'aria_ended' => 'avslutad',
+        'aria_waiting' => 'väntar',
         'errors' => [
             'load_failed' => 'Kunde inte hämta sessionen.',
         ],
+    ],
+
+    'common' => [
+        'close' => 'Stäng',
+        'loading' => 'Laddar',
+        'more' => 'Mer',
+        'breadcrumb' => 'Brödsmulor',
+        'toggle_sidebar' => 'Visa/dölj sidofält',
+        'sidebar_title' => 'Sidofält',
+        'sidebar_description' => 'Visar mobilens sidofält.',
     ],
 
     'session' => [
@@ -338,6 +392,7 @@ return [
             'light' => 'Ljust',
             'dark' => 'Mörkt',
             'system' => 'System',
+            'toggle_theme' => 'Växla tema',
         ],
         'two_factor' => [
             'breadcrumb' => 'Tvåfaktorsautentisering',

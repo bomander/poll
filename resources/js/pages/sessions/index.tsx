@@ -335,18 +335,18 @@ export default function SessionsIndex() {
             <Dialog open={previewSessionId !== null} onOpenChange={() => setPreviewSessionId(null)}>
                 <DialogContent className="max-w-4xl bg-white dark:bg-neutral-950">
                     <DialogHeader>
-                        <DialogTitle>Resultat</DialogTitle>
+                        <DialogTitle>{t('sessions_index.preview.title')}</DialogTitle>
                     </DialogHeader>
                     {previewSessionId && expandedLoadingId === previewSessionId ? (
-                        <p className="text-sm text-muted-foreground">Laddar...</p>
+                        <p className="text-sm text-muted-foreground">{t('sessions_index.loading')}</p>
                     ) : previewDetails ? (
                         <div className="space-y-6">
                             <div className="flex flex-wrap items-center justify-between gap-4">
                                 <div>
                                     <div className="text-lg font-semibold">
                                         {previewDetails.poll.questions.length > 0
-                                            ? 'Aktuell fråga'
-                                            : 'Inga frågor'}
+                                            ? t('sessions_index.preview.current_question')
+                                            : t('sessions_index.preview.no_questions')}
                                     </div>
                                     <div className="text-sm text-muted-foreground">
                                         {previewDetails.poll.questions.find((q) => q.id === previewQuestionId)
@@ -366,7 +366,7 @@ export default function SessionsIndex() {
                                                 }`}
                                                 onClick={() => setPreviewQuestionId(question.id)}
                                             >
-                                                Fråga {index + 1}
+                                                {t('sessions_index.preview.question', { n: index + 1 })}
                                             </button>
                                         ))}
                                     </div>
@@ -374,7 +374,7 @@ export default function SessionsIndex() {
                             </div>
 
                             {previewResults.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">Inga röster.</p>
+                                <p className="text-sm text-muted-foreground">{t('sessions_index.no_votes')}</p>
                             ) : (
                                 <div className="flex items-end justify-center gap-6" style={{ height: '280px' }}>
                                     {previewResults.map((result, index) => {
@@ -416,7 +416,7 @@ export default function SessionsIndex() {
                             )}
                         </div>
                     ) : (
-                        <p className="text-sm text-muted-foreground">Inga resultat att visa.</p>
+                        <p className="text-sm text-muted-foreground">{t('sessions_index.no_results')}</p>
                     )}
                 </DialogContent>
             </Dialog>
