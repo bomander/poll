@@ -104,7 +104,7 @@ class BasenOAuthController extends Controller
         // Block banned users
         if ($user->is_banned) {
             return redirect()->route('home')->withErrors([
-                'banned' => 'Ditt konto har avstangts.' . ($user->ban_reason ? ' Anledning: ' . $user->ban_reason : ''),
+                'banned' => 'Ditt konto har avstängts.' . ($user->ban_reason ? ' Anledning: ' . $user->ban_reason : ''),
             ]);
         }
 

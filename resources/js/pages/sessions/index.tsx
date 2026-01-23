@@ -345,8 +345,8 @@ export default function SessionsIndex() {
                                 <div>
                                     <div className="text-lg font-semibold">
                                         {previewDetails.poll.questions.length > 0
-                                            ? 'Aktuell fraga'
-                                            : 'Inga fragor'}
+                                            ? 'Aktuell fråga'
+                                            : 'Inga frågor'}
                                     </div>
                                     <div className="text-sm text-muted-foreground">
                                         {previewDetails.poll.questions.find((q) => q.id === previewQuestionId)
@@ -366,7 +366,7 @@ export default function SessionsIndex() {
                                                 }`}
                                                 onClick={() => setPreviewQuestionId(question.id)}
                                             >
-                                                Fraga {index + 1}
+                                                Fråga {index + 1}
                                             </button>
                                         ))}
                                     </div>
@@ -374,7 +374,7 @@ export default function SessionsIndex() {
                             </div>
 
                             {previewResults.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">Inga roster.</p>
+                                <p className="text-sm text-muted-foreground">Inga röster.</p>
                             ) : (
                                 <div className="flex items-end justify-center gap-6" style={{ height: '280px' }}>
                                     {previewResults.map((result, index) => {

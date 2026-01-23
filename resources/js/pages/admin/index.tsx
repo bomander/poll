@@ -278,8 +278,8 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                 {/* Users */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Anvandare (poll-skapare)</CardTitle>
-                        <CardDescription>Alla registrerade anvandare</CardDescription>
+                        <CardTitle>Användare (poll-skapare)</CardTitle>
+                        <CardDescription>Alla registrerade användare</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -292,7 +292,7 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                         <th className="pb-2 font-medium text-right">Sessioner</th>
                                         <th className="pb-2 font-medium text-right">Svar</th>
                                         <th className="pb-2 font-medium">Status</th>
-                                        <th className="pb-2 font-medium">Atgard</th>
+                                        <th className="pb-2 font-medium">Åtgärd</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -313,7 +313,7 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                             <td className="py-2">
                                                 {user.is_banned ? (
                                                     <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700 dark:bg-red-900 dark:text-red-300" title={user.ban_reason || ''}>
-                                                        Avstangd
+                                                        Avstängd
                                                     </span>
                                                 ) : (
                                                     <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900 dark:text-green-300">
@@ -325,14 +325,14 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                                 {!user.is_admin && (
                                                     <>
                                                         {user.is_banned ? (
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => unbanUser(user.id)}
-                                                                disabled={loading}
-                                                            >
-                                                                Ateraktivera
-                                                            </Button>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => unbanUser(user.id)}
+                                                                    disabled={loading}
+                                                                >
+                                                                Återaktivera
+                                                                </Button>
                                                         ) : banningUserId === user.id ? (
                                                             <div className="flex items-center gap-2">
                                                                 <input
@@ -348,7 +348,7 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                                                     onClick={() => banUser(user.id)}
                                                                     disabled={loading}
                                                                 >
-                                                                    Bekrafta
+                                                                    Bekräfta
                                                                 </Button>
                                                                 <Button
                                                                     variant="ghost"
@@ -364,7 +364,7 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                                                 size="sm"
                                                                 onClick={() => setBanningUserId(user.id)}
                                                             >
-                                                                Stang av
+                                                                Stäng av
                                                             </Button>
                                                         )}
                                                     </>
@@ -382,7 +382,7 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                 <Card>
                     <CardHeader>
                         <CardTitle>Senaste sessioner</CardTitle>
-                        <CardDescription>De 20 senaste omrostningarna</CardDescription>
+                        <CardDescription>De 20 senaste omröstningarna</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
