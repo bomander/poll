@@ -38,12 +38,12 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"
-                        href={`${basePath}/settings/profile`}
+                        href={`${basePath}/settings/appearance`}
                         prefetch
                         onClick={cleanup}
                     >
                         <Settings className="mr-2" />
-                        {t('user_menu.settings')}
+                        {t('user_menu.appearance')}
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>

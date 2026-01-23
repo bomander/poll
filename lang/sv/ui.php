@@ -338,7 +338,7 @@ return [
     ],
 
     'user_menu' => [
-        'settings' => 'Inställningar',
+        'appearance' => 'Utseende',
         'log_out' => 'Logga ut',
     ],
 

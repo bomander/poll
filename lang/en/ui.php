@@ -338,7 +338,7 @@ return [
     ],
 
     'user_menu' => [
-        'settings' => 'Settings',
+        'appearance' => 'Appearance',
         'log_out' => 'Log out',
     ],
 
