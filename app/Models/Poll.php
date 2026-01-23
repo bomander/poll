@@ -12,6 +12,12 @@ class Poll extends Model
         'user_id',
         'title',
         'description',
+        'type',
+        'settings',
+    ];
+
+    protected $casts = [
+        'settings' => 'array',
     ];
 
     public function user(): BelongsTo

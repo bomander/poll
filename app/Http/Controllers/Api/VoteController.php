@@ -15,6 +15,11 @@ class VoteController extends Controller
 {
     public function store(Request $request, PollSession $session)
     {
+        $session->loadMissing('poll');
+        if (($session->poll->type ?? 'multiple_choice') !== 'multiple_choice') {
+            return response()->json(['message' => 'Voting is not supported for this poll type yet.'], 409);
+        }
+
         $data = $request->validate([
             'question_id' => ['required', 'integer'],
             'option_id' => ['required', 'integer'],

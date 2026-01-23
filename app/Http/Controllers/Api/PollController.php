@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class PollController extends Controller
 {
+    private const POLL_TYPES = ['multiple_choice', 'word_cloud'];
+
     public function index(Request $request)
     {
         $polls = Poll::query()
@@ -32,6 +34,8 @@ class PollController extends Controller
                 'user_id' => $request->user()->id,
                 'title' => $data['title'],
                 'description' => $data['description'] ?? null,
+                'type' => $data['type'] ?? 'multiple_choice',
+                'settings' => $data['settings'] ?? null,
             ]);
 
             $this->syncQuestions($poll, $data['questions']);
@@ -60,9 +64,17 @@ class PollController extends Controller
         $data = $this->validatePoll($request);
 
         $poll = DB::transaction(function () use ($poll, $data) {
+            $nextType = $data['type'] ?? $poll->type ?? 'multiple_choice';
+
+            if ($nextType !== ($poll->type ?? 'multiple_choice') && $poll->sessions()->exists()) {
+                return response()->json(['message' => 'Cannot change poll type after sessions have been created.'], 409);
+            }
+
             $poll->update([
                 'title' => $data['title'],
                 'description' => $data['description'] ?? null,
+                'type' => $nextType,
+                'settings' => $data['settings'] ?? $poll->settings,
             ]);
 
             $poll->questions()->delete();
@@ -70,6 +82,10 @@ class PollController extends Controller
 
             return $poll->load('questions.options');
         });
+
+        if ($poll instanceof \Illuminate\Http\JsonResponse) {
+            return $poll;
+        }
 
         return response()->json($poll);
     }
@@ -83,6 +99,8 @@ class PollController extends Controller
                 'user_id' => $request->user()->id,
                 'title' => $poll->title.' (Copy)',
                 'description' => $poll->description,
+                'type' => $poll->type ?? 'multiple_choice',
+                'settings' => $poll->settings,
             ]);
 
             $questions = $poll->questions()->with('options')->get();
@@ -106,14 +124,33 @@ class PollController extends Controller
 
     private function validatePoll(Request $request): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'questions' => ['required', 'array', 'min:1'],
+            'type' => ['sometimes', 'string', 'max:32', 'in:'.implode(',', self::POLL_TYPES)],
+            'settings' => ['nullable', 'array'],
+            'questions' => ['required', 'array', 'size:1'],
             'questions.*.question_text' => ['required', 'string'],
-            'questions.*.options' => ['required', 'array', 'min:2', 'max:8'],
+            'questions.*.options' => ['nullable', 'array', 'max:8'],
             'questions.*.options.*' => ['required', 'string', 'max:255'],
         ]);
+
+        $type = $data['type'] ?? 'multiple_choice';
+
+        if ($type === 'multiple_choice') {
+            $request->validate([
+                'questions.0.options' => ['required', 'array', 'min:2', 'max:8'],
+            ]);
+        }
+
+        if ($type === 'word_cloud') {
+            $options = $data['questions'][0]['options'] ?? [];
+            if (count($options) > 0) {
+                abort(422, 'Word cloud polls cannot have options.');
+            }
+        }
+
+        return $data;
     }
 
     private function syncQuestions(Poll $poll, array $questions): void
@@ -125,12 +162,14 @@ class PollController extends Controller
                 'order_index' => $index,
             ]);
 
-            foreach (array_values($questionData['options']) as $optionIndex => $optionText) {
-                PollOption::create([
-                    'question_id' => $question->id,
-                    'option_text' => $optionText,
-                    'order_index' => $optionIndex,
-                ]);
+            if (($poll->type ?? 'multiple_choice') === 'multiple_choice') {
+                foreach (array_values($questionData['options']) as $optionIndex => $optionText) {
+                    PollOption::create([
+                        'question_id' => $question->id,
+                        'option_text' => $optionText,
+                        'order_index' => $optionIndex,
+                    ]);
+                }
             }
         }
     }

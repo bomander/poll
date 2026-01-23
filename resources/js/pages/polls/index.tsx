@@ -68,17 +68,6 @@ export default function PollIndex() {
         setQuestions(next);
     };
 
-    const addQuestion = () => {
-        if (validationErrors.length || fieldErrors.questions.length) {
-            setValidationErrors([]);
-            setFieldErrors({ questions: [] });
-        }
-        setQuestions([
-            ...questions,
-            { question_text: '', options: [{ option_text: '' }, { option_text: '' }] },
-        ]);
-    };
-
     const addOption = (qIndex: number) => {
         if (validationErrors.length || fieldErrors.questions.length) {
             setValidationErrors([]);
@@ -106,6 +95,10 @@ export default function PollIndex() {
             const message = t('polls.validation.title_required');
             errors.push(message);
             nextFieldErrors.title = message;
+        }
+
+        if (questions.length !== 1) {
+            errors.push(t('polls.validation.single_question_only'));
         }
 
         questions.forEach((question, qIndex) => {
@@ -274,13 +267,6 @@ export default function PollIndex() {
                                 </div>
                             </div>
                         ))}
-                        <button
-                            type="button"
-                            className="text-left text-sm text-blue-600"
-                            onClick={addQuestion}
-                        >
-                            + {t('polls.add_question')}
-                        </button>
                         <button
                             type="button"
                             className="rounded-md bg-black px-4 py-2 text-white"

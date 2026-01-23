@@ -79,6 +79,7 @@ return [
         ],
         'validation' => [
             'title_required' => 'Title is required.',
+            'single_question_only' => 'A poll can only have one question.',
             'question_text_required' => 'Question text is required.',
             'option_required' => 'Option is required.',
             'question_min_options' => 'Question :n needs at least 2 options.',

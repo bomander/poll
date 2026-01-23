@@ -53,11 +53,14 @@ export default function PollEdit() {
                 setTitle(data.title);
                 setDescription(data.description || '');
                 setQuestions(
-                    data.questions.map((q: any) => ({
+                    (data.questions?.length ? [data.questions[0]] : []).map((q: any) => ({
                         question_text: q.question_text,
-                        options: q.options.map((o: any) => ({ option_text: o.option_text })),
+                        options: (q.options || []).map((o: any) => ({ option_text: o.option_text })),
                     })),
                 );
+                if (!data.questions?.length) {
+                    setQuestions([{ question_text: '', options: [{ option_text: '' }, { option_text: '' }] }]);
+                }
             })
             .catch((err) => setError(err instanceof Error ? err.message : t('polls.errors.load_poll')));
     }, [pollId, basePath]);
@@ -82,17 +85,6 @@ export default function PollEdit() {
         options[oIndex] = { option_text: value };
         next[qIndex] = { ...next[qIndex], options };
         setQuestions(next);
-    };
-
-    const addQuestion = () => {
-        if (validationErrors.length || fieldErrors.questions.length) {
-            setValidationErrors([]);
-            setFieldErrors({ questions: [] });
-        }
-        setQuestions([
-            ...questions,
-            { question_text: '', options: [{ option_text: '' }, { option_text: '' }] },
-        ]);
     };
 
     const addOption = (qIndex: number) => {
@@ -122,6 +114,10 @@ export default function PollEdit() {
             const message = t('polls.validation.title_required');
             errors.push(message);
             nextFieldErrors.title = message;
+        }
+
+        if (questions.length !== 1) {
+            errors.push(t('polls.validation.single_question_only'));
         }
 
         questions.forEach((question, qIndex) => {
@@ -301,13 +297,6 @@ export default function PollEdit() {
                                     </div>
                                 </div>
                             ))}
-                            <button
-                                type="button"
-                                className="text-left text-sm text-blue-600"
-                                onClick={addQuestion}
-                            >
-                                + {t('polls.add_question')}
-                            </button>
                             <button
                                 type="button"
                                 className="rounded-md bg-black px-4 py-2 text-white"

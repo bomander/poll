@@ -79,6 +79,7 @@ return [
         ],
         'validation' => [
             'title_required' => 'Titel krävs.',
+            'single_question_only' => 'En poll kan bara ha en fråga.',
             'question_text_required' => 'Frågetext krävs.',
             'option_required' => 'Alternativ krävs.',
             'question_min_options' => 'Fråga :n behöver minst 2 alternativ.',
