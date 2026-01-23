@@ -31,7 +31,6 @@ import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 
 import AppLogo from './app-logo';
-import AppLogoIcon from './app-logo-icon';
 
 const activeItemStyles =
     'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
@@ -91,7 +90,9 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                     {t('nav.navigation_menu')}
                                 </SheetTitle>
                                 <SheetHeader className="flex justify-start text-left">
-                                    <AppLogoIcon className="h-6 w-6 fill-current text-black dark:text-white" />
+                                    <div className="flex items-center space-x-2">
+                                        <AppLogo />
+                                    </div>
                                 </SheetHeader>
                                 <div className="flex h-full flex-1 flex-col space-y-4 p-4">
                                     <div className="flex h-full flex-col justify-between text-sm">
