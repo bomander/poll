@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
+import { useT } from '@/lib/i18n';
 
 interface LoginProps {
     status?: string;
@@ -13,23 +14,28 @@ export default function Login({
     canResetPassword,
     canRegister,
 }: LoginProps) {
+    const t = useT();
+
     return (
-        <AuthLayout title="Log in to your account" description="Use Basen to authenticate">
-            <Head title="Log in" />
+        <AuthLayout
+            title={t('auth.login.title')}
+            description={t('auth.login.description')}
+        >
+            <Head title={t('auth.login.head')} />
 
             <div className="mb-4">
                 <a
                     href="/auth/basen/redirect"
                     className="block w-full rounded-md bg-black px-4 py-2 text-center text-white"
                 >
-                    Sign in with Basen
+                    {t('auth.login.sign_in_with_basen')}
                 </a>
             </div>
             {canRegister && (
                 <div className="text-center text-sm text-muted-foreground">
-                    Don't have an account?{' '}
+                    {t('auth.login.no_account')}{' '}
                     <a className="underline" href={register.url()}>
-                        Sign up
+                        {t('auth.login.sign_up')}
                     </a>
                 </div>
             )}

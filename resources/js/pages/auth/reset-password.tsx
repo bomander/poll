@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { update } from '@/routes/password';
+import { useT } from '@/lib/i18n';
 
 interface ResetPasswordProps {
     token: string;
@@ -14,12 +15,14 @@ interface ResetPasswordProps {
 }
 
 export default function ResetPassword({ token, email }: ResetPasswordProps) {
+    const t = useT();
+
     return (
         <AuthLayout
-            title="Reset password"
-            description="Please enter your new password below"
+            title={t('auth.reset_password.title')}
+            description={t('auth.reset_password.description')}
         >
-            <Head title="Reset password" />
+            <Head title={t('auth.reset_password.head')} />
 
             <Form
                 {...update.form()}
@@ -29,7 +32,9 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                 {({ processing, errors }) => (
                     <div className="grid gap-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="email">
+                                {t('auth.reset_password.email_label')}
+                            </Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -46,7 +51,9 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">
+                                {t('auth.reset_password.password_label')}
+                            </Label>
                             <Input
                                 id="password"
                                 type="password"
@@ -54,14 +61,16 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                 autoComplete="new-password"
                                 className="mt-1 block w-full"
                                 autoFocus
-                                placeholder="Password"
+                                placeholder={t(
+                                    'auth.reset_password.password_placeholder',
+                                )}
                             />
                             <InputError message={errors.password} />
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="password_confirmation">
-                                Confirm password
+                                {t('auth.reset_password.confirm_label')}
                             </Label>
                             <Input
                                 id="password_confirmation"
@@ -69,7 +78,9 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                 name="password_confirmation"
                                 autoComplete="new-password"
                                 className="mt-1 block w-full"
-                                placeholder="Confirm password"
+                                placeholder={t(
+                                    'auth.reset_password.confirm_placeholder',
+                                )}
                             />
                             <InputError
                                 message={errors.password_confirmation}
@@ -84,7 +95,7 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                             data-test="reset-password-button"
                         >
                             {processing && <Spinner />}
-                            Reset password
+                            {t('auth.reset_password.submit')}
                         </Button>
                     </div>
                 )}
