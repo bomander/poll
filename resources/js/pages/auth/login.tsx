@@ -28,7 +28,7 @@ export default function Login({
             {canRegister && (
                 <div className="text-center text-sm text-muted-foreground">
                     Don't have an account?{' '}
-                    <a className="underline" href={register()}>
+                    <a className="underline" href={register.url()}>
                         Sign up
                     </a>
                 </div>

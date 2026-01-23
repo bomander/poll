@@ -1,7 +1,6 @@
 import { usePage } from '@inertiajs/react';
 
-type TranslationValue = string | Record<string, TranslationValue>;
-type Translations = Record<string, TranslationValue>;
+type Translations = Record<string, unknown>;
 type Replacements = Record<string, string | number>;
 
 function getNestedValue(translations: Translations | undefined, key: string): unknown {
@@ -31,4 +30,3 @@ export function useT() {
     const { translations } = usePage<{ translations?: Translations }>().props;
     return (key: string, replacements?: Replacements) => translate(translations, key, replacements);
 }
-
