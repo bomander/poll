@@ -2,6 +2,7 @@ import { LucideIcon, Monitor, Moon, Sun } from 'lucide-react';
 import { HTMLAttributes } from 'react';
 
 import { Appearance, useAppearance } from '@/hooks/use-appearance';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export default function AppearanceToggleTab({
@@ -9,11 +10,16 @@ export default function AppearanceToggleTab({
     ...props
 }: HTMLAttributes<HTMLDivElement>) {
     const { appearance, updateAppearance } = useAppearance();
+    const t = useT();
 
     const tabs: { value: Appearance; icon: LucideIcon; label: string }[] = [
-        { value: 'light', icon: Sun, label: 'Light' },
-        { value: 'dark', icon: Moon, label: 'Dark' },
-        { value: 'system', icon: Monitor, label: 'System' },
+        { value: 'light', icon: Sun, label: t('settings.appearance.light') },
+        { value: 'dark', icon: Moon, label: t('settings.appearance.dark') },
+        {
+            value: 'system',
+            icon: Monitor,
+            label: t('settings.appearance.system'),
+        },
     ];
 
     return (

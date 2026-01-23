@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
+import { useT } from '@/lib/i18n';
 import { type User } from '@/types';
 
 interface UserMenuContentProps {
@@ -18,6 +19,7 @@ interface UserMenuContentProps {
 export function UserMenuContent({ user }: UserMenuContentProps) {
     const { basePath } = usePage<{ basePath: string }>().props;
     const cleanup = useMobileNavigation();
+    const t = useT();
 
     const handleLogout = () => {
         cleanup();
@@ -41,7 +43,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                         onClick={cleanup}
                     >
                         <Settings className="mr-2" />
-                        Settings
+                        {t('user_menu.settings')}
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -56,7 +58,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                     data-test="logout-button"
                 >
                     <LogOut className="mr-2" />
-                    Log out
+                    {t('user_menu.log_out')}
                 </Link>
             </DropdownMenuItem>
         </>
