@@ -33,6 +33,7 @@ export default function JoinPage() {
         return params.get('code')?.toUpperCase() || '';
     }, []);
     const [code, setCode] = useState(initialCode);
+    const [joinedCode, setJoinedCode] = useState<string | null>(null);
     const [sessionId, setSessionId] = useState<number | null>(null);
     const [pollTitle, setPollTitle] = useState<string | null>(null);
     const [question, setQuestion] = useState<PollQuestion | null>(null);
@@ -68,6 +69,7 @@ export default function JoinPage() {
             setLocked(data.locked);
             setVoted(data.has_voted || false);
             setSessionStatus(data.status || null);
+            setJoinedCode(cleanCode);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to join.');
         }
@@ -170,8 +172,8 @@ export default function JoinPage() {
 
     // WebSocket support (if Echo is available)
     useEffect(() => {
-        if (!sessionId || !window.Echo) return;
-        const channel = window.Echo.channel(`session.${sessionId}`);
+        if (!sessionId || !window.Echo || !joinedCode) return;
+        const channel = window.Echo.channel(`session.${joinedCode}`);
         channel.listen('.session_updated', (payload: any) => {
             setSessionStatus(payload.status || null);
             setLocked(payload.locked);
@@ -188,7 +190,7 @@ export default function JoinPage() {
             channel.stopListening('.session_updated');
             channel.stopListening('.results_updated');
         };
-    }, [sessionId, question?.id]);
+    }, [sessionId, joinedCode, question?.id]);
 
     const isClosed = sessionStatus === 'closed';
 

@@ -19,7 +19,8 @@ class SessionUpdated implements ShouldBroadcast
 
     public function broadcastOn(): Channel
     {
-        return new Channel('session.'.$this->session->id);
+        // Public channel keyed by session join code to avoid easy enumeration of numeric IDs.
+        return new Channel('session.'.$this->session->code);
     }
 
     public function broadcastAs(): string

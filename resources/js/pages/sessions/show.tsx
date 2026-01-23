@@ -1,8 +1,8 @@
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { apiFetch } from '@/lib/api';
 import AppLayout from '@/layouts/app-layout';
+import { apiFetch } from '@/lib/api';
 
 type PageProps = { basePath: string };
 type PollOption = { id: number; option_text: string };
@@ -52,8 +52,8 @@ export default function SessionShow() {
     }, [sessionId, basePath]);
 
     useEffect(() => {
-        if (!sessionId || !window.Echo) return;
-        const channel = window.Echo.channel(`session.${sessionId}`);
+        if (!sessionId || !window.Echo || !session?.code) return;
+        const channel = window.Echo.channel(`session.${session.code}`);
         channel.listen('.results_updated', (payload: any) => {
             setResults((prev) => ({ ...prev, [payload.question_id]: payload.results }));
         });
@@ -73,7 +73,7 @@ export default function SessionShow() {
             channel.stopListening('.results_updated');
             channel.stopListening('.session_updated');
         };
-    }, [sessionId]);
+    }, [sessionId, session?.code]);
 
     const currentQuestion = session?.poll.questions.find(
         (question) => question.id === session.current_question_id,

@@ -80,7 +80,7 @@ export default function ProjectorPage() {
     // WebSocket support (if Echo is available)
     useEffect(() => {
         if (!sessionId || !window.Echo) return;
-        const channel = window.Echo.channel(`session.${sessionId}`);
+        const channel = window.Echo.channel(`session.${code.toUpperCase()}`);
         channel.listen('.session_updated', (payload: any) => {
             setSessionStatus(payload.status || null);
             if (payload.status === 'active') {

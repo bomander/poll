@@ -1,7 +1,7 @@
 # WebSocket Events (MVP)
 
 ## Channels
-- `session.{session_id}` (public or presence depending on provider)
+- `session.{code}` (public; code is the 6–8 char join code)
 
 ## Events
 ### results_updated

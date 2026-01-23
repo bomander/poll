@@ -2,6 +2,6 @@
 
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('session.{sessionId}', function () {
+Broadcast::channel('session.{code}', function () {
     return true;
 });
