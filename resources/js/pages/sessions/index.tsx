@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { apiFetch } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import AppLayout from '@/layouts/app-layout';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -38,6 +39,7 @@ const OPTION_COLORS = [
 
 export default function SessionsIndex() {
     const { basePath } = usePage<PageProps>().props;
+    const t = useT();
     const [sessions, setSessions] = useState<Session[]>([]);
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all');
     const [error, setError] = useState<string | null>(null);
@@ -58,17 +60,17 @@ export default function SessionsIndex() {
         apiFetch(`${basePath}/api/sessions`)
             .then(async (res) => {
                 if (!res.ok) {
-                    throw new Error('Failed to load sessions.');
+                    throw new Error(t('sessions_index.errors.load_sessions'));
                 }
                 const data = await res.json();
                 setSessions(data);
             })
-            .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load sessions.'))
+            .catch((err) => setError(err instanceof Error ? err.message : t('sessions_index.errors.load_sessions')))
             .finally(() => setLoading(false));
     }, [basePath]);
 
     const deleteSession = async (sessionId: number) => {
-        const confirm = window.confirm('Vill du radera sessionen? Detta tar bort alla svar.');
+        const confirm = window.confirm(t('sessions_index.confirm_delete'));
         if (!confirm) return;
         setError(null);
         const res = await apiFetch(`${basePath}/api/sessions/${sessionId}`, { method: 'DELETE' });
@@ -77,17 +79,17 @@ export default function SessionsIndex() {
             return;
         }
         const errData = await res.json().catch(() => ({}));
-        setError(errData.message || 'Kunde inte radera sessionen.');
+        setError(errData.message || t('sessions_index.errors.delete_session'));
     };
 
     const closeSession = async (sessionId: number) => {
-        const confirm = window.confirm('Vill du avsluta sessionen?');
+        const confirm = window.confirm(t('sessions_index.confirm_close'));
         if (!confirm) return;
         setError(null);
         const res = await apiFetch(`${basePath}/api/sessions/${sessionId}/close`, { method: 'POST' });
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
-            setError(errData.message || 'Kunde inte avsluta sessionen.');
+            setError(errData.message || t('sessions_index.errors.close_session'));
             return;
         }
         const updated = await res.json();
@@ -113,13 +115,13 @@ export default function SessionsIndex() {
         try {
             const res = await apiFetch(`${basePath}/api/sessions/${sessionId}`);
             if (!res.ok) {
-                throw new Error('Kunde inte hamta sessionen.');
+                throw new Error(t('sessions_index.errors.load_session'));
             }
             const data = await res.json();
             setExpandedDetails((prev) => ({ ...prev, [sessionId]: data }));
             return data;
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Kunde inte hamta sessionen.');
+            setError(err instanceof Error ? err.message : t('sessions_index.errors.load_session'));
         } finally {
             setExpandedLoadingId(null);
         }
@@ -152,13 +154,13 @@ export default function SessionsIndex() {
 
     return (
         <AppLayout>
-            <Head title="Sessions" />
+            <Head title={t('sessions_index.title')} />
             <div className="flex flex-col gap-6 p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-xl font-semibold">Sessions</h1>
+                        <h1 className="text-xl font-semibold">{t('sessions_index.title')}</h1>
                         <p className="text-sm text-muted-foreground">
-                            Pågående och avslutade sessioner per poll.
+                            {t('sessions_index.subtitle')}
                         </p>
                     </div>
                     <div className="flex gap-2 rounded-md border p-1 text-sm">
@@ -171,7 +173,11 @@ export default function SessionsIndex() {
                                 }`}
                                 onClick={() => setStatusFilter(value)}
                             >
-                                {value === 'all' ? 'Alla' : value === 'active' ? 'Pågående' : 'Avslutade'}
+                                {value === 'all'
+                                    ? t('sessions_index.filter.all')
+                                    : value === 'active'
+                                      ? t('sessions_index.filter.active')
+                                      : t('sessions_index.filter.closed')}
                             </button>
                         ))}
                     </div>
@@ -181,9 +187,9 @@ export default function SessionsIndex() {
 
                 <section className="rounded-xl border border-sidebar-border/70 p-6">
                     {loading ? (
-                        <p className="text-sm text-muted-foreground">Laddar...</p>
+                        <p className="text-sm text-muted-foreground">{t('sessions_index.loading')}</p>
                     ) : filteredSessions.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Inga sessioner hittades.</p>
+                        <p className="text-sm text-muted-foreground">{t('sessions_index.empty')}</p>
                     ) : (
                         <div className="grid gap-4">
                             {filteredSessions.map((session) => (
@@ -202,7 +208,7 @@ export default function SessionsIndex() {
                                                         }`}
                                                     />
                                                     <span className="text-lg font-semibold">
-                                                        {session.name || session.poll_title || 'Session'}
+                                                        {session.name || session.poll_title || t('sessions_index.title')}
                                                     </span>
                                                 </button>
                                                 <span
@@ -212,11 +218,13 @@ export default function SessionsIndex() {
                                                             : 'bg-neutral-200 text-neutral-700'
                                                     }`}
                                                 >
-                                                    {session.status === 'active' ? 'Pågående' : 'Avslutad'}
+                                                    {session.status === 'active'
+                                                        ? t('sessions_index.status.active')
+                                                        : t('sessions_index.status.closed')}
                                                 </span>
                                             </div>
                                             <div className="text-sm text-muted-foreground">
-                                                Poll: {session.poll_title || '-'} • Kod: {session.code}
+                                                {t('sessions_index.poll_label')}: {session.poll_title || '-'} • {t('session.code')}: {session.code}
                                             </div>
                                             <div className="text-xs text-muted-foreground">
                                                 Start: {session.started_at || session.created_at || '-'} •
@@ -229,20 +237,20 @@ export default function SessionsIndex() {
                                                 className="rounded-md border px-3 py-2 text-sm"
                                                 href={`${basePath}/sessions/${session.id}`}
                                             >
-                                                Öppna
+                                                {t('sessions_index.open')}
                                             </a>
                                             <a
                                                 className="rounded-md border px-3 py-2 text-sm"
                                                 href={`${basePath}/api/sessions/${session.id}/export`}
                                             >
-                                                Export CSV
+                                                {t('sessions_index.export_csv')}
                                             </a>
                                             <button
                                                 type="button"
                                                 className="rounded-md border px-3 py-2 text-sm"
                                                 onClick={() => openPreview(session.id)}
                                             >
-                                                Snabbvy
+                                                {t('sessions_index.quick_view')}
                                             </button>
                                             <button
                                                 type="button"
@@ -250,7 +258,7 @@ export default function SessionsIndex() {
                                                 onClick={() => closeSession(session.id)}
                                                 disabled={session.status !== 'active'}
                                             >
-                                                Avsluta
+                                                {t('sessions_index.close')}
                                             </button>
                                             <button
                                                 type="button"
@@ -258,21 +266,21 @@ export default function SessionsIndex() {
                                                 onClick={() => deleteSession(session.id)}
                                                 disabled={session.status === 'active'}
                                             >
-                                                Radera
+                                                {t('sessions_index.delete')}
                                             </button>
                                         </div>
                                     </div>
                                     {expandedId === session.id ? (
                                         <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900">
                                             {expandedLoadingId === session.id ? (
-                                                <p className="text-sm text-muted-foreground">Laddar resultat...</p>
+                                                <p className="text-sm text-muted-foreground">{t('sessions_index.loading_results')}</p>
                                             ) : (
                                                 (() => {
                                                     const details = expandedDetails[session.id];
                                                     if (!details || !details.results) {
                                                         return (
                                                             <p className="text-sm text-muted-foreground">
-                                                                Inga resultat att visa.
+                                                                {t('sessions_index.no_results')}
                                                             </p>
                                                         );
                                                     }
@@ -287,7 +295,7 @@ export default function SessionsIndex() {
                                                                         </div>
                                                                         {results.length === 0 ? (
                                                                             <p className="text-xs text-muted-foreground">
-                                                                                Inga roster.
+                                                                                {t('sessions_index.no_votes')}
                                                                             </p>
                                                                         ) : (
                                                                             <div className="space-y-2">

@@ -12,6 +12,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useT } from '@/lib/i18n';
 import { type NavItem } from '@/types';
 
 import AppLogo from './app-logo';
@@ -23,20 +24,21 @@ type PageProps = {
 
 export function AppSidebar() {
     const { basePath, auth } = usePage<PageProps>().props;
+    const t = useT();
 
     const mainNavItems: NavItem[] = [
         {
-            title: 'Dashboard',
+            title: t('nav.dashboard'),
             href: `${basePath}/dashboard`,
             icon: LayoutGrid,
         },
         {
-            title: 'Mina polls',
+            title: t('nav.polls'),
             href: `${basePath}/polls`,
             icon: BarChart3,
         },
         {
-            title: 'Sessions',
+            title: t('nav.sessions'),
             href: `${basePath}/sessions`,
             icon: Radio,
         },
@@ -44,7 +46,7 @@ export function AppSidebar() {
 
     if (auth.user?.is_admin) {
         mainNavItems.push({
-            title: 'Admin',
+            title: t('nav.admin'),
             href: `${basePath}/admin`,
             icon: Shield,
         });

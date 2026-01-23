@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { apiFetch } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import { type BreadcrumbItem } from '@/types';
 
 type PageProps = {
@@ -40,38 +41,33 @@ type Props = {
     stats: Stats;
 };
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-    },
-];
-
 export default function Dashboard({ polls, activeSessions, stats }: Props) {
     const { basePath } = usePage<PageProps>().props;
+    const t = useT();
     const url = (path: string) => `${basePath}/${path}`;
+    const breadcrumbs: BreadcrumbItem[] = [{ title: t('nav.dashboard'), href: '/dashboard' }];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard" />
+            <Head title={t('dashboard.title')} />
             <div className="flex flex-col gap-6 p-6">
                 {/* Stats */}
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>Totalt antal polls</CardDescription>
+                            <CardDescription>{t('dashboard.stats.total_polls')}</CardDescription>
                             <CardTitle className="text-3xl">{stats.total_polls}</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>Genomförda sessioner</CardDescription>
+                            <CardDescription>{t('dashboard.stats.completed_sessions')}</CardDescription>
                             <CardTitle className="text-3xl">{stats.total_sessions}</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>Aktiva sessioner</CardDescription>
+                            <CardDescription>{t('dashboard.stats.active_sessions')}</CardDescription>
                             <CardTitle className="text-3xl text-green-600">{stats.active_sessions}</CardTitle>
                         </CardHeader>
                     </Card>
@@ -81,8 +77,8 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
                 {activeSessions.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Aktiva sessioner</CardTitle>
-                            <CardDescription>Pågående omröstningar</CardDescription>
+                            <CardTitle>{t('dashboard.active_sessions.title')}</CardTitle>
+                            <CardDescription>{t('dashboard.active_sessions.description')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="divide-y">
@@ -91,17 +87,18 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
                                         <div>
                                             <p className="font-medium">{session.poll_title}</p>
                                             <p className="text-sm text-muted-foreground">
-                                                Kod: <span className="font-mono font-bold">{session.code}</span>
-                                                {' '} - {session.response_count} svar - startad {session.started_at}
+                                                {t('dashboard.active_sessions.code')}: <span className="font-mono font-bold">{session.code}</span>
+                                                {' '} - {t('dashboard.active_sessions.responses', { count: session.response_count })}
+                                                {' '} - {t('dashboard.active_sessions.started', { when: session.started_at })}
                                             </p>
                                         </div>
                                         <div className="flex gap-2">
                                             <Button variant="outline" size="sm" asChild>
-                                                <Link href={url(`sessions/${session.id}`)}>Hantera</Link>
+                                                <Link href={url(`sessions/${session.id}`)}>{t('dashboard.active_sessions.manage')}</Link>
                                             </Button>
                                             <Button variant="outline" size="sm" asChild>
                                                 <Link href={url(`projector/${session.code}`)} target="_blank">
-                                                    Projektorvy
+                                                    {t('dashboard.active_sessions.projector')}
                                                 </Link>
                                             </Button>
                                         </div>
@@ -116,19 +113,19 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
-                            <CardTitle>Dina polls</CardTitle>
-                            <CardDescription>Senast uppdaterade</CardDescription>
+                            <CardTitle>{t('dashboard.recent_polls.title')}</CardTitle>
+                            <CardDescription>{t('dashboard.recent_polls.description')}</CardDescription>
                         </div>
                         <Button asChild>
-                            <Link href={url('polls')}>Visa alla / Skapa ny</Link>
+                            <Link href={url('polls')}>{t('dashboard.recent_polls.cta')}</Link>
                         </Button>
                     </CardHeader>
                     <CardContent>
                         {polls.length === 0 ? (
                             <p className="py-8 text-center text-muted-foreground">
-                                Du har inga polls ännu.{' '}
+                                {t('dashboard.recent_polls.empty')}{' '}
                                 <Link href={url('polls')} className="text-primary underline">
-                                    Skapa din första poll
+                                    {t('dashboard.recent_polls.empty_link')}
                                 </Link>
                             </p>
                         ) : (
@@ -138,15 +135,18 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
                                         <div>
                                             <p className="font-medium">{poll.title}</p>
                                             <p className="text-sm text-muted-foreground">
-                                                {poll.questions_count} frågor - {poll.sessions_count} sessioner
+                                                {t('dashboard.recent_polls.questions_sessions', {
+                                                    questions: poll.questions_count,
+                                                    sessions: poll.sessions_count,
+                                                })}
                                             </p>
                                         </div>
                                         <div className="flex gap-2">
                                             <Button variant="outline" size="sm" asChild>
-                                                <Link href={url(`polls/${poll.id}/edit`)}>Redigera</Link>
+                                                <Link href={url(`polls/${poll.id}/edit`)}>{t('dashboard.recent_polls.edit')}</Link>
                                             </Button>
-                                            <Button size="sm" onClick={() => startSession(poll.id, basePath)}>
-                                                Starta session
+                                            <Button size="sm" onClick={() => startSession(poll.id, basePath, t)}>
+                                                {t('dashboard.recent_polls.start_session')}
                                             </Button>
                                         </div>
                                     </div>
@@ -160,7 +160,7 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
                 {stats.total_polls === 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Kom igång</CardTitle>
+                            <CardTitle>{t('dashboard.quick_start.title')}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex items-start gap-4">
@@ -168,9 +168,9 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
                                     1
                                 </div>
                                 <div>
-                                    <p className="font-medium">Skapa en poll</p>
+                                    <p className="font-medium">{t('dashboard.quick_start.step_1_title')}</p>
                                     <p className="text-sm text-muted-foreground">
-                                        Lägg till frågor med svarsalternativ. Du kan ha flera frågor i samma poll.
+                                        {t('dashboard.quick_start.step_1_desc')}
                                     </p>
                                 </div>
                             </div>
@@ -179,9 +179,9 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
                                     2
                                 </div>
                                 <div>
-                                    <p className="font-medium">Starta en session</p>
+                                    <p className="font-medium">{t('dashboard.quick_start.step_2_title')}</p>
                                     <p className="text-sm text-muted-foreground">
-                                        När du startar en session får du en kod som deltagarna använder för att gå med.
+                                        {t('dashboard.quick_start.step_2_desc')}
                                     </p>
                                 </div>
                             </div>
@@ -190,14 +190,14 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
                                     3
                                 </div>
                                 <div>
-                                    <p className="font-medium">Visa resultat live</p>
+                                    <p className="font-medium">{t('dashboard.quick_start.step_3_title')}</p>
                                     <p className="text-sm text-muted-foreground">
-                                        Använd projektorvyn för att visa resultat i realtid på en storskärm.
+                                        {t('dashboard.quick_start.step_3_desc')}
                                     </p>
                                 </div>
                             </div>
                             <Button className="mt-4" asChild>
-                                <Link href={url('polls')}>Skapa din första poll</Link>
+                                <Link href={url('polls')}>{t('dashboard.quick_start.cta')}</Link>
                             </Button>
                         </CardContent>
                     </Card>
@@ -207,8 +207,12 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
     );
 }
 
-async function startSession(pollId: number, basePath: string) {
-    const nameInput = window.prompt('Ange ett namn for sessionen (valfritt)');
+async function startSession(
+    pollId: number,
+    basePath: string,
+    t: (key: string, replacements?: Record<string, string | number>) => string,
+) {
+    const nameInput = window.prompt(t('dashboard.prompt_session_name'));
     const name = nameInput?.trim() || null;
     const res = await apiFetch(`${basePath}/api/polls/${pollId}/sessions`, {
         method: 'POST',

@@ -73,7 +73,7 @@ export default function JoinPage() {
             setSessionStatus(data.status || null);
             setJoinedCode(cleanCode);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to join.');
+            setError(err instanceof Error ? err.message : t('join.errors.join_failed'));
         }
     };
 

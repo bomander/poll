@@ -1,6 +1,144 @@
 <?php
 
 return [
+    'nav' => [
+        'dashboard' => 'Dashboard',
+        'polls' => 'My polls',
+        'sessions' => 'Sessions',
+        'admin' => 'Admin',
+        'navigation_menu' => 'Navigation Menu',
+    ],
+
+    'dashboard' => [
+        'title' => 'Dashboard',
+        'stats' => [
+            'total_polls' => 'Total polls',
+            'completed_sessions' => 'Completed sessions',
+            'active_sessions' => 'Active sessions',
+        ],
+        'active_sessions' => [
+            'title' => 'Active sessions',
+            'description' => 'Ongoing polls',
+            'code' => 'Code',
+            'responses' => ':count responses',
+            'started' => 'started :when',
+            'manage' => 'Manage',
+            'projector' => 'Projector view',
+        ],
+        'recent_polls' => [
+            'title' => 'Recent polls',
+            'description' => 'Your latest polls',
+            'cta' => 'View all / Create new',
+            'empty' => 'You have no polls yet.',
+            'empty_link' => 'Create your first poll',
+            'edit' => 'Edit',
+            'start_session' => 'Start session',
+            'questions_sessions' => ':questions questions • :sessions sessions',
+        ],
+        'quick_start' => [
+            'title' => 'Get started',
+            'step_1_title' => 'Create a poll',
+            'step_1_desc' => 'Add questions and options. You can have multiple questions in one poll.',
+            'step_2_title' => 'Start a session',
+            'step_2_desc' => 'Starting a session gives you a code for participants to join.',
+            'step_3_title' => 'Show results live',
+            'step_3_desc' => 'Use the projector view to show results in real time.',
+            'cta' => 'Create your first poll',
+        ],
+        'prompt_session_name' => 'Enter a session name (optional)',
+    ],
+
+    'polls' => [
+        'title' => 'Polls',
+        'create_title' => 'Create poll',
+        'edit_title' => 'Edit poll',
+        'back' => 'Back',
+        'your_polls' => 'Your polls',
+        'no_polls_yet' => 'No polls yet.',
+        'poll_title_placeholder' => 'Poll title',
+        'description_placeholder' => 'Description (optional)',
+        'question_placeholder' => 'Question :n',
+        'option_placeholder' => 'Option :n',
+        'add_question' => 'Add question',
+        'add_option' => 'Add option',
+        'create' => 'Create poll',
+        'creating' => 'Creating...',
+        'save' => 'Save',
+        'saving' => 'Saving...',
+        'actions' => [
+            'edit' => 'Edit',
+            'start_session' => 'Start session',
+        ],
+        'errors' => [
+            'load_polls' => 'Failed to load polls.',
+            'load_poll' => 'Failed to load poll.',
+            'create_poll' => 'Failed to create poll.',
+            'save_poll' => 'Failed to save poll.',
+            'start_session' => 'Failed to start session.',
+        ],
+        'validation' => [
+            'title_required' => 'Title is required.',
+            'question_text_required' => 'Question text is required.',
+            'option_required' => 'Option is required.',
+            'question_min_options' => 'Question :n needs at least 2 options.',
+            'min_options_summary' => 'At least 2 options are required.',
+            'duplicate_option' => 'Duplicate option.',
+            'question_duplicate_options' => 'Question :n has duplicate options.',
+        ],
+    ],
+
+    'sessions_index' => [
+        'title' => 'Sessions',
+        'subtitle' => 'Active and ended sessions per poll.',
+        'poll_label' => 'Poll',
+        'filter' => [
+            'all' => 'All',
+            'active' => 'Active',
+            'closed' => 'Ended',
+        ],
+        'status' => [
+            'active' => 'Active',
+            'closed' => 'Ended',
+        ],
+        'loading' => 'Loading...',
+        'empty' => 'No sessions found.',
+        'open' => 'Open',
+        'export_csv' => 'Export CSV',
+        'quick_view' => 'Quick view',
+        'close' => 'End',
+        'delete' => 'Delete',
+        'loading_results' => 'Loading results...',
+        'no_results' => 'No results to show.',
+        'no_votes' => 'No votes.',
+        'confirm_delete' => 'Delete this session? This will remove all responses.',
+        'confirm_close' => 'End this session?',
+        'errors' => [
+            'load_sessions' => 'Failed to load sessions.',
+            'delete_session' => 'Could not delete the session.',
+            'close_session' => 'Could not end the session.',
+            'load_session' => 'Could not load the session.',
+        ],
+    ],
+
+    'admin' => [
+        'title' => 'Admin',
+        'panel_title' => 'Admin panel',
+        'status' => [
+            'active' => 'Active',
+            'closed' => 'Ended',
+        ],
+        'responses' => ':count responses',
+        'stats' => [
+            'users' => 'Users',
+            'polls' => 'Polls',
+            'sessions' => 'Sessions',
+            'responses' => 'Total responses',
+            'active_now' => 'Active now',
+        ],
+        'loading' => 'Loading...',
+        'details_load_failed' => 'Could not load details.',
+    ],
+
     'welcome' => [
         'tagline' => 'Live classroom polls',
         'code_placeholder' => 'Enter code',
@@ -22,6 +160,7 @@ return [
         'waiting' => 'Waiting for the teacher to start.',
         'errors' => [
             'invalid_code' => 'Invalid code.',
+            'join_failed' => 'Failed to join.',
             'locked' => 'Question is locked.',
             'closed' => 'Session is closed.',
             'question_changed' => 'Question changed, updating...',
@@ -68,4 +207,3 @@ return [
         'loading' => 'Loading...',
     ],
 ];
-

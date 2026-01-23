@@ -1,6 +1,144 @@
 <?php
 
 return [
+    'nav' => [
+        'dashboard' => 'Dashboard',
+        'polls' => 'Mina polls',
+        'sessions' => 'Sessioner',
+        'admin' => 'Admin',
+        'navigation_menu' => 'Navigationsmeny',
+    ],
+
+    'dashboard' => [
+        'title' => 'Dashboard',
+        'stats' => [
+            'total_polls' => 'Totalt antal polls',
+            'completed_sessions' => 'Genomförda sessioner',
+            'active_sessions' => 'Aktiva sessioner',
+        ],
+        'active_sessions' => [
+            'title' => 'Aktiva sessioner',
+            'description' => 'Pågående omröstningar',
+            'code' => 'Kod',
+            'responses' => ':count svar',
+            'started' => 'startad :when',
+            'manage' => 'Hantera',
+            'projector' => 'Projektorvy',
+        ],
+        'recent_polls' => [
+            'title' => 'Senaste polls',
+            'description' => 'Dina senaste polls',
+            'cta' => 'Visa alla / Skapa ny',
+            'empty' => 'Du har inga polls ännu.',
+            'empty_link' => 'Skapa din första poll',
+            'edit' => 'Redigera',
+            'start_session' => 'Starta session',
+            'questions_sessions' => ':questions frågor • :sessions sessioner',
+        ],
+        'quick_start' => [
+            'title' => 'Kom igång',
+            'step_1_title' => 'Skapa en poll',
+            'step_1_desc' => 'Lägg till frågor med svarsalternativ. Du kan ha flera frågor i samma poll.',
+            'step_2_title' => 'Starta en session',
+            'step_2_desc' => 'När du startar en session får du en kod som deltagarna använder för att gå med.',
+            'step_3_title' => 'Visa resultat live',
+            'step_3_desc' => 'Använd projektorvyn för att visa resultat i realtid på en storskärm.',
+            'cta' => 'Skapa din första poll',
+        ],
+        'prompt_session_name' => 'Ange ett namn för sessionen (valfritt)',
+    ],
+
+    'polls' => [
+        'title' => 'Polls',
+        'create_title' => 'Skapa poll',
+        'edit_title' => 'Redigera poll',
+        'back' => 'Tillbaka',
+        'your_polls' => 'Dina polls',
+        'no_polls_yet' => 'Inga polls ännu.',
+        'poll_title_placeholder' => 'Poll-titel',
+        'description_placeholder' => 'Beskrivning (valfritt)',
+        'question_placeholder' => 'Fråga :n',
+        'option_placeholder' => 'Alternativ :n',
+        'add_question' => 'Lägg till fråga',
+        'add_option' => 'Lägg till alternativ',
+        'create' => 'Skapa poll',
+        'creating' => 'Skapar...',
+        'save' => 'Spara',
+        'saving' => 'Sparar...',
+        'actions' => [
+            'edit' => 'Redigera',
+            'start_session' => 'Starta session',
+        ],
+        'errors' => [
+            'load_polls' => 'Kunde inte hämta polls.',
+            'load_poll' => 'Kunde inte hämta poll.',
+            'create_poll' => 'Kunde inte skapa poll.',
+            'save_poll' => 'Kunde inte spara poll.',
+            'start_session' => 'Kunde inte starta session.',
+        ],
+        'validation' => [
+            'title_required' => 'Titel krävs.',
+            'question_text_required' => 'Frågetext krävs.',
+            'option_required' => 'Alternativ krävs.',
+            'question_min_options' => 'Fråga :n behöver minst 2 alternativ.',
+            'min_options_summary' => 'Minst 2 alternativ krävs.',
+            'duplicate_option' => 'Dubblettalternativ.',
+            'question_duplicate_options' => 'Fråga :n har dubbletter.',
+        ],
+    ],
+
+    'sessions_index' => [
+        'title' => 'Sessioner',
+        'subtitle' => 'Pågående och avslutade sessioner per poll.',
+        'poll_label' => 'Poll',
+        'filter' => [
+            'all' => 'Alla',
+            'active' => 'Pågående',
+            'closed' => 'Avslutade',
+        ],
+        'status' => [
+            'active' => 'Pågående',
+            'closed' => 'Avslutad',
+        ],
+        'loading' => 'Laddar...',
+        'empty' => 'Inga sessioner hittades.',
+        'open' => 'Öppna',
+        'export_csv' => 'Exportera CSV',
+        'quick_view' => 'Snabbvy',
+        'close' => 'Avsluta',
+        'delete' => 'Radera',
+        'loading_results' => 'Laddar resultat...',
+        'no_results' => 'Inga resultat att visa.',
+        'no_votes' => 'Inga röster.',
+        'confirm_delete' => 'Vill du radera sessionen? Detta tar bort alla svar.',
+        'confirm_close' => 'Vill du avsluta sessionen?',
+        'errors' => [
+            'load_sessions' => 'Kunde inte hämta sessioner.',
+            'delete_session' => 'Kunde inte radera sessionen.',
+            'close_session' => 'Kunde inte avsluta sessionen.',
+            'load_session' => 'Kunde inte hämta sessionen.',
+        ],
+    ],
+
+    'admin' => [
+        'title' => 'Admin',
+        'panel_title' => 'Adminpanel',
+        'status' => [
+            'active' => 'Aktiv',
+            'closed' => 'Avslutad',
+        ],
+        'responses' => ':count svar',
+        'stats' => [
+            'users' => 'Användare',
+            'polls' => 'Polls',
+            'sessions' => 'Sessioner',
+            'responses' => 'Totalt svar',
+            'active_now' => 'Aktiva nu',
+        ],
+        'loading' => 'Laddar...',
+        'details_load_failed' => 'Kunde inte ladda detaljer.',
+    ],
+
     'welcome' => [
         'tagline' => 'Live-omröstningar i klassrummet',
         'code_placeholder' => 'Ange kod',
@@ -22,6 +160,7 @@ return [
         'waiting' => 'Väntar på att läraren startar.',
         'errors' => [
             'invalid_code' => 'Ogiltig kod.',
+            'join_failed' => 'Kunde inte gå med.',
             'locked' => 'Frågan är låst.',
             'closed' => 'Sessionen är stängd.',
             'question_changed' => 'Frågan har bytts, uppdaterar...',
@@ -68,4 +207,3 @@ return [
         'loading' => 'Laddar...',
     ],
 ];
-

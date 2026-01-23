@@ -26,6 +26,7 @@ import {
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useActiveUrl } from '@/hooks/use-active-url';
 import { useInitials } from '@/hooks/use-initials';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 
@@ -44,22 +45,23 @@ type PageProps = SharedData & { basePath: string };
 export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<PageProps>();
     const { auth, basePath } = page.props;
+    const t = useT();
     const getInitials = useInitials();
     const { urlIsActive } = useActiveUrl();
 
     const mainNavItems: NavItem[] = [
         {
-            title: 'Dashboard',
+            title: t('nav.dashboard'),
             href: `${basePath}/dashboard`,
             icon: LayoutGrid,
         },
         {
-            title: 'Mina polls',
+            title: t('nav.polls'),
             href: `${basePath}/polls`,
             icon: BarChart3,
         },
         {
-            title: 'Sessions',
+            title: t('nav.sessions'),
             href: `${basePath}/sessions`,
             icon: Radio,
         },
@@ -86,7 +88,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                 className="flex h-full w-64 flex-col items-stretch justify-between bg-sidebar"
                             >
                                 <SheetTitle className="sr-only">
-                                    Navigation Menu
+                                    {t('nav.navigation_menu')}
                                 </SheetTitle>
                                 <SheetHeader className="flex justify-start text-left">
                                     <AppLogoIcon className="h-6 w-6 fill-current text-black dark:text-white" />

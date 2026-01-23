@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { apiFetch } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import { type BreadcrumbItem } from '@/types';
 
 type SessionDetails = {
@@ -18,7 +19,9 @@ type SessionDetails = {
     }[];
 };
 
-function SessionRow({ session, basePath }: { session: Session; basePath: string }) {
+type TFunction = (key: string, replacements?: Record<string, string | number>) => string;
+
+function SessionRow({ session, basePath, t }: { session: Session; basePath: string; t: TFunction }) {
     const [expanded, setExpanded] = useState(false);
     const [details, setDetails] = useState<SessionDetails | null>(null);
     const [loading, setLoading] = useState(false);
@@ -66,7 +69,7 @@ function SessionRow({ session, basePath }: { session: Session; basePath: string 
                                 : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'
                         }`}
                     >
-                        {session.status === 'active' ? 'Aktiv' : 'Avslutad'}
+                        {session.status === 'active' ? t('admin.status.active') : t('admin.status.closed')}
                     </span>
                 </td>
                 <td className="py-2 text-muted-foreground">{session.created_at}</td>
@@ -75,14 +78,14 @@ function SessionRow({ session, basePath }: { session: Session; basePath: string 
                 <tr>
                     <td colSpan={7} className="bg-neutral-50 p-4 dark:bg-neutral-900">
                         {loading ? (
-                            <p className="text-sm text-muted-foreground">Laddar...</p>
+                            <p className="text-sm text-muted-foreground">{t('admin.loading')}</p>
                         ) : details ? (
                             <div className="space-y-4">
                                 {details.questions.map((q) => (
                                     <div key={q.id} className="rounded border p-3">
                                         <p className="font-medium">{q.question_text}</p>
                                         <p className="mb-2 text-xs text-muted-foreground">
-                                            {q.total_responses} svar
+                                            {t('admin.responses', { count: q.total_responses })}
                                         </p>
                                         <div className="space-y-1">
                                             {q.options.map((opt) => {
@@ -111,7 +114,7 @@ function SessionRow({ session, basePath }: { session: Session; basePath: string 
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-sm text-muted-foreground">Kunde inte ladda detaljer.</p>
+                            <p className="text-sm text-muted-foreground">{t('admin.details_load_failed')}</p>
                         )}
                     </td>
                 </tr>
@@ -162,13 +165,13 @@ type Props = {
 
 type PageProps = Props & { basePath: string };
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Admin', href: '/admin' },
-];
-
 export default function AdminIndex({ stats, users: initialUsers, recentSessions, activityByDay }: Props) {
     const { basePath } = usePage<PageProps>().props;
+    const t = useT();
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('nav.dashboard'), href: '/dashboard' },
+        { title: t('nav.admin'), href: '/admin' },
+    ];
     const [users, setUsers] = useState(initialUsers);
     const [banReason, setBanReason] = useState('');
     const [banningUserId, setBanningUserId] = useState<number | null>(null);
@@ -207,39 +210,39 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Admin" />
+            <Head title={t('admin.title')} />
             <div className="flex flex-col gap-6 p-6">
-                <h1 className="text-2xl font-bold">Adminpanel</h1>
+                <h1 className="text-2xl font-bold">{t('admin.panel_title')}</h1>
 
                 {/* Stats */}
                 <div className="grid gap-4 md:grid-cols-5">
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>Anvandare</CardDescription>
+                            <CardDescription>{t('admin.stats.users')}</CardDescription>
                             <CardTitle className="text-3xl">{stats.total_users}</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>Polls</CardDescription>
+                            <CardDescription>{t('admin.stats.polls')}</CardDescription>
                             <CardTitle className="text-3xl">{stats.total_polls}</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>Sessioner</CardDescription>
+                            <CardDescription>{t('admin.stats.sessions')}</CardDescription>
                             <CardTitle className="text-3xl">{stats.total_sessions}</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>Totalt svar</CardDescription>
+                            <CardDescription>{t('admin.stats.responses')}</CardDescription>
                             <CardTitle className="text-3xl">{stats.total_responses}</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>Aktiva nu</CardDescription>
+                            <CardDescription>{t('admin.stats.active_now')}</CardDescription>
                             <CardTitle className="text-3xl text-green-600">{stats.active_sessions}</CardTitle>
                         </CardHeader>
                     </Card>
@@ -397,7 +400,7 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                 </thead>
                                 <tbody>
                                     {recentSessions.map((session) => (
-                                        <SessionRow key={session.id} session={session} basePath={basePath} />
+                                        <SessionRow key={session.id} session={session} basePath={basePath} t={t} />
                                     ))}
                                 </tbody>
                             </table>

@@ -2,6 +2,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 import { apiFetch } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import AppLayout from '@/layouts/app-layout';
 
 type PageProps = { basePath: string };
@@ -26,6 +27,7 @@ type FieldErrors = {
 
 export default function PollIndex() {
     const { basePath } = usePage<PageProps>().props;
+    const t = useT();
     const [polls, setPolls] = useState<Poll[]>([]);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -41,7 +43,7 @@ export default function PollIndex() {
         apiFetch(`${basePath}/api/polls`)
             .then((res) => res.json())
             .then(setPolls)
-            .catch(() => setError('Failed to load polls.'));
+            .catch(() => setError(t('polls.errors.load_polls')));
     }, [basePath]);
 
     const updateQuestion = (index: number, value: string) => {
@@ -101,22 +103,23 @@ export default function PollIndex() {
         };
 
         if (!title.trim()) {
-            errors.push('Title is required.');
-            nextFieldErrors.title = 'Title is required.';
+            const message = t('polls.validation.title_required');
+            errors.push(message);
+            nextFieldErrors.title = message;
         }
 
         questions.forEach((question, qIndex) => {
             const optionTexts = question.options.map((option) => option.option_text.trim());
             const nonEmptyOptions = optionTexts.filter(Boolean);
             if (nonEmptyOptions.length < 2) {
-                errors.push(`Question ${qIndex + 1} needs at least 2 options.`);
-                nextFieldErrors.questions[qIndex].optionsSummary = 'At least 2 options are required.';
+                errors.push(t('polls.validation.question_min_options', { n: qIndex + 1 }));
+                nextFieldErrors.questions[qIndex].optionsSummary = t('polls.validation.min_options_summary');
             }
 
             const qText = question.question_text.trim();
             if (!qText) {
-                errors.push(`Question ${qIndex + 1} is required.`);
-                nextFieldErrors.questions[qIndex].question_text = 'Question is required.';
+                errors.push(t('polls.validation.question_text_required'));
+                nextFieldErrors.questions[qIndex].question_text = t('polls.validation.question_text_required');
             }
 
             const seen = new Map<string, number>();
@@ -126,15 +129,16 @@ export default function PollIndex() {
                 const normalized = optionText.toLowerCase();
                 const firstIndex = seen.get(normalized);
                 if (firstIndex !== undefined) {
-                    nextFieldErrors.questions[qIndex].options[optionIndex] = 'Duplicate option.';
-                    nextFieldErrors.questions[qIndex].options[firstIndex] = 'Duplicate option.';
+                    const message = t('polls.validation.duplicate_option');
+                    nextFieldErrors.questions[qIndex].options[optionIndex] = message;
+                    nextFieldErrors.questions[qIndex].options[firstIndex] = message;
                     hasDuplicate = true;
                 } else {
                     seen.set(normalized, optionIndex);
                 }
             });
             if (hasDuplicate) {
-                errors.push(`Question ${qIndex + 1} has duplicate options.`);
+                errors.push(t('polls.validation.question_duplicate_options', { n: qIndex + 1 }));
             }
         });
 
@@ -166,7 +170,7 @@ export default function PollIndex() {
             });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.message || 'Failed to create poll.');
+                throw new Error(errData.message || t('polls.errors.create_poll'));
             }
             const poll = await res.json();
             setPolls([poll, ...polls]);
@@ -174,7 +178,7 @@ export default function PollIndex() {
             setDescription('');
             setQuestions([{ question_text: '', options: [{ option_text: '' }, { option_text: '' }] }]);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create poll.');
+            setError(err instanceof Error ? err.message : t('polls.errors.create_poll'));
         } finally {
             setLoading(false);
         }
@@ -182,10 +186,10 @@ export default function PollIndex() {
 
     return (
         <AppLayout>
-            <Head title="Polls" />
+            <Head title={t('polls.title')} />
             <div className="flex flex-col gap-6 p-6">
                 <section className="rounded-xl border border-sidebar-border/70 p-6">
-                    <h1 className="text-xl font-semibold">Create poll</h1>
+                    <h1 className="text-xl font-semibold">{t('polls.create_title')}</h1>
                     {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
                 {validationErrors.length > 0 ? (
                     <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -197,7 +201,7 @@ export default function PollIndex() {
                 <div className="mt-4 grid gap-4">
                     <input
                         className="w-full rounded-md border px-3 py-2"
-                        placeholder="Poll title"
+                        placeholder={t('polls.poll_title_placeholder')}
                         value={title}
                         onChange={(event) => {
                             if (validationErrors.length || fieldErrors.questions.length || fieldErrors.title) {
@@ -212,7 +216,7 @@ export default function PollIndex() {
                     ) : null}
                     <textarea
                         className="w-full rounded-md border px-3 py-2"
-                        placeholder="Description (optional)"
+                        placeholder={t('polls.description_placeholder')}
                         value={description}
                         onChange={(event) => {
                             if (validationErrors.length || fieldErrors.questions.length || fieldErrors.title) {
@@ -226,7 +230,7 @@ export default function PollIndex() {
                         <div key={qIndex} className="rounded-lg border p-4">
                             <input
                                 className="w-full rounded-md border px-3 py-2"
-                                placeholder={`Question ${qIndex + 1}`}
+                                placeholder={t('polls.question_placeholder', { n: qIndex + 1 })}
                                 value={question.question_text}
                                 onChange={(event) => updateQuestion(qIndex, event.target.value)}
                             />
@@ -240,7 +244,7 @@ export default function PollIndex() {
                                     <div key={oIndex}>
                                         <input
                                             className="w-full rounded-md border px-3 py-2"
-                                            placeholder={`Option ${oIndex + 1}`}
+                                            placeholder={t('polls.option_placeholder', { n: oIndex + 1 })}
                                             value={option.option_text}
                                             onChange={(event) =>
                                                 updateOption(qIndex, oIndex, event.target.value)
@@ -264,7 +268,7 @@ export default function PollIndex() {
                                         className="text-left text-sm text-blue-600"
                                         onClick={() => addOption(qIndex)}
                                         >
-                                            + Add option
+                                            + {t('polls.add_option')}
                                         </button>
                                     ) : null}
                                 </div>
@@ -275,7 +279,7 @@ export default function PollIndex() {
                             className="text-left text-sm text-blue-600"
                             onClick={addQuestion}
                         >
-                            + Add question
+                            + {t('polls.add_question')}
                         </button>
                         <button
                             type="button"
@@ -283,16 +287,16 @@ export default function PollIndex() {
                             onClick={createPoll}
                             disabled={loading}
                         >
-                            {loading ? 'Creating...' : 'Create poll'}
+                            {loading ? t('polls.creating') : t('polls.create')}
                         </button>
                     </div>
                 </section>
 
                 <section className="rounded-xl border border-sidebar-border/70 p-6">
-                    <h2 className="text-xl font-semibold">Your polls</h2>
+                    <h2 className="text-xl font-semibold">{t('polls.your_polls')}</h2>
                     <div className="mt-4 grid gap-4">
                         {polls.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No polls yet.</p>
+                            <p className="text-sm text-muted-foreground">{t('polls.no_polls_yet')}</p>
                         ) : (
                             polls.map((poll) => (
                                 <div key={poll.id} className="rounded-lg border p-4">
@@ -310,7 +314,7 @@ export default function PollIndex() {
                                                 (window.location.href = `${basePath}/polls/${poll.id}/edit`)
                                             }
                                         >
-                                            Edit
+                                            {t('polls.actions.edit')}
                                         </button>
                                         <button
                                             type="button"
@@ -318,7 +322,7 @@ export default function PollIndex() {
                                             onClick={async () => {
                                                 setError(null);
                                                 try {
-                                                    const nameInput = window.prompt('Ange ett namn for sessionen (valfritt)');
+                                                    const nameInput = window.prompt(t('dashboard.prompt_session_name'));
                                                     const name = nameInput?.trim() || null;
                                                     const res = await apiFetch(
                                                         `${basePath}/api/polls/${poll.id}/sessions`,
@@ -328,16 +332,16 @@ export default function PollIndex() {
                                                         },
                                                     );
                                                     if (!res.ok) {
-                                                        throw new Error('Failed to start session.');
+                                                        throw new Error(t('polls.errors.start_session'));
                                                     }
                                                     const session = await res.json();
                                                     window.location.href = `${basePath}/sessions/${session.id}`;
                                                 } catch (err) {
-                                                    setError(err instanceof Error ? err.message : 'Failed to start session.');
+                                                    setError(err instanceof Error ? err.message : t('polls.errors.start_session'));
                                                 }
                                             }}
                                         >
-                                            Start session
+                                            {t('polls.actions.start_session')}
                                         </button>
                                     </div>
                                 </div>

@@ -2,6 +2,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { apiFetch } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import AppLayout from '@/layouts/app-layout';
 
 type PageProps = { basePath: string };
@@ -25,6 +26,7 @@ type FieldErrors = {
 
 export default function PollEdit() {
     const { basePath } = usePage<PageProps>().props;
+    const t = useT();
     const pollId = useMemo(() => {
         const match = window.location.pathname.match(/polls\/(\d+)/);
         return match ? Number(match[1]) : null;
@@ -44,7 +46,7 @@ export default function PollEdit() {
         apiFetch(`${basePath}/api/polls/${pollId}`)
             .then(async (res) => {
                 if (!res.ok) {
-                    throw new Error('Failed to load poll.');
+                    throw new Error(t('polls.errors.load_poll'));
                 }
                 const data = await res.json();
                 setPoll(data);
@@ -57,7 +59,7 @@ export default function PollEdit() {
                     })),
                 );
             })
-            .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load poll.'));
+            .catch((err) => setError(err instanceof Error ? err.message : t('polls.errors.load_poll')));
     }, [pollId, basePath]);
 
     const updateQuestion = (index: number, value: string) => {
@@ -117,22 +119,24 @@ export default function PollEdit() {
         };
 
         if (!title.trim()) {
-            errors.push('Title is required.');
-            nextFieldErrors.title = 'Title is required.';
+            const message = t('polls.validation.title_required');
+            errors.push(message);
+            nextFieldErrors.title = message;
         }
 
         questions.forEach((question, qIndex) => {
             const optionTexts = question.options.map((option) => option.option_text.trim());
             const nonEmptyOptions = optionTexts.filter(Boolean);
             if (nonEmptyOptions.length < 2) {
-                errors.push(`Question ${qIndex + 1} needs at least 2 options.`);
-                nextFieldErrors.questions[qIndex].optionsSummary = 'At least 2 options are required.';
+                errors.push(t('polls.validation.question_min_options', { n: qIndex + 1 }));
+                nextFieldErrors.questions[qIndex].optionsSummary = t('polls.validation.min_options_summary');
             }
 
             const qText = question.question_text.trim();
             if (!qText) {
-                errors.push(`Question ${qIndex + 1} is required.`);
-                nextFieldErrors.questions[qIndex].question_text = 'Question is required.';
+                const message = t('polls.validation.question_text_required');
+                errors.push(message);
+                nextFieldErrors.questions[qIndex].question_text = message;
             }
 
             const seen = new Map<string, number>();
@@ -142,15 +146,16 @@ export default function PollEdit() {
                 const normalized = optionText.toLowerCase();
                 const firstIndex = seen.get(normalized);
                 if (firstIndex !== undefined) {
-                    nextFieldErrors.questions[qIndex].options[optionIndex] = 'Duplicate option.';
-                    nextFieldErrors.questions[qIndex].options[firstIndex] = 'Duplicate option.';
+                    const message = t('polls.validation.duplicate_option');
+                    nextFieldErrors.questions[qIndex].options[optionIndex] = message;
+                    nextFieldErrors.questions[qIndex].options[firstIndex] = message;
                     hasDuplicate = true;
                 } else {
                     seen.set(normalized, optionIndex);
                 }
             });
             if (hasDuplicate) {
-                errors.push(`Question ${qIndex + 1} has duplicate options.`);
+                errors.push(t('polls.validation.question_duplicate_options', { n: qIndex + 1 }));
             }
         });
 
@@ -183,12 +188,12 @@ export default function PollEdit() {
             });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.message || 'Failed to save poll.');
+                throw new Error(errData.message || t('polls.errors.save_poll'));
             }
             const updated = await res.json();
             setPoll(updated);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save poll.');
+            setError(err instanceof Error ? err.message : t('polls.errors.save_poll'));
         } finally {
             setLoading(false);
         }
@@ -196,16 +201,16 @@ export default function PollEdit() {
 
     return (
         <AppLayout>
-            <Head title="Edit poll" />
+            <Head title={t('polls.edit_title')} />
             <div className="flex flex-col gap-6 p-6">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold">Edit poll</h1>
+                    <h1 className="text-xl font-semibold">{t('polls.edit_title')}</h1>
                     <button
                         type="button"
                         className="rounded-md border px-3 py-2 text-sm"
                         onClick={() => (window.location.href = `${basePath}/polls`)}
                     >
-                        Back
+                        {t('polls.back')}
                     </button>
                 </div>
                 {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -221,7 +226,7 @@ export default function PollEdit() {
                         <div className="grid gap-4">
                             <input
                                 className="w-full rounded-md border px-3 py-2"
-                                placeholder="Poll title"
+                                placeholder={t('polls.poll_title_placeholder')}
                                 value={title}
                                 onChange={(event) => {
                                     if (validationErrors.length || fieldErrors.questions.length || fieldErrors.title) {
@@ -236,7 +241,7 @@ export default function PollEdit() {
                             ) : null}
                             <textarea
                                 className="w-full rounded-md border px-3 py-2"
-                                placeholder="Description (optional)"
+                                placeholder={t('polls.description_placeholder')}
                                 value={description}
                                 onChange={(event) => {
                                     if (validationErrors.length || fieldErrors.questions.length || fieldErrors.title) {
@@ -250,7 +255,7 @@ export default function PollEdit() {
                                 <div key={qIndex} className="rounded-lg border p-4">
                                     <input
                                         className="w-full rounded-md border px-3 py-2"
-                                        placeholder={`Question ${qIndex + 1}`}
+                                        placeholder={t('polls.question_placeholder', { n: qIndex + 1 })}
                                         value={question.question_text}
                                         onChange={(event) =>
                                             updateQuestion(qIndex, event.target.value)
@@ -266,7 +271,7 @@ export default function PollEdit() {
                                             <div key={oIndex}>
                                                 <input
                                                     className="w-full rounded-md border px-3 py-2"
-                                                    placeholder={`Option ${oIndex + 1}`}
+                                                    placeholder={t('polls.option_placeholder', { n: oIndex + 1 })}
                                                     value={option.option_text}
                                                     onChange={(event) =>
                                                         updateOption(qIndex, oIndex, event.target.value)
@@ -290,7 +295,7 @@ export default function PollEdit() {
                                                 className="text-left text-sm text-blue-600"
                                                 onClick={() => addOption(qIndex)}
                                             >
-                                                + Add option
+                                                + {t('polls.add_option')}
                                             </button>
                                         ) : null}
                                     </div>
@@ -301,7 +306,7 @@ export default function PollEdit() {
                                 className="text-left text-sm text-blue-600"
                                 onClick={addQuestion}
                             >
-                                + Add question
+                                + {t('polls.add_question')}
                             </button>
                             <button
                                 type="button"
@@ -309,12 +314,12 @@ export default function PollEdit() {
                                 onClick={savePoll}
                                 disabled={loading}
                             >
-                                {loading ? 'Saving...' : 'Save poll'}
+                                {loading ? t('polls.saving') : t('polls.save')}
                             </button>
                         </div>
                     </section>
                 ) : (
-                    <p className="text-sm text-muted-foreground">Loading...</p>
+                    <p className="text-sm text-muted-foreground">{t('session.loading')}</p>
                 )}
             </div>
         </AppLayout>
