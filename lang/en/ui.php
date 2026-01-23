@@ -338,13 +338,21 @@ return [
     ],
 
     'user_menu' => [
-        'appearance' => 'Appearance',
+        'settings' => 'Settings',
         'log_out' => 'Log out',
     ],
 
     'settings' => [
+        'app' => [
+            'breadcrumb' => 'Settings',
+            'head' => 'Settings',
+            'sr_title' => 'Settings',
+            'title' => 'Settings',
+            'description' => 'App preferences and defaults.',
+            'poll_defaults_placeholder' => 'Poll defaults will be added here (local settings, not Basen).',
+        ],
         'title' => 'Settings',
-        'description' => 'Manage your profile and account settings',
+        'description' => 'App settings',
         'aria_label' => 'Settings',
         'nav' => [
             'profile' => 'Profile',

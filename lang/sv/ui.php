@@ -338,13 +338,21 @@ return [
     ],
 
     'user_menu' => [
-        'appearance' => 'Utseende',
+        'settings' => 'Inställningar',
         'log_out' => 'Logga ut',
     ],
 
     'settings' => [
+        'app' => [
+            'breadcrumb' => 'Inställningar',
+            'head' => 'Inställningar',
+            'sr_title' => 'Inställningar',
+            'title' => 'Inställningar',
+            'description' => 'Appens inställningar och standardval.',
+            'poll_defaults_placeholder' => 'Här lägger vi poll-standardinställningar framöver (lokala inställningar, inte Basen).',
+        ],
         'title' => 'Inställningar',
-        'description' => 'Hantera profil- och kontoinställningar',
+        'description' => 'Appinställningar',
         'aria_label' => 'Inställningar',
         'nav' => [
             'profile' => 'Profil',
