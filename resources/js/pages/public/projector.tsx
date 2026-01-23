@@ -2,6 +2,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { apiFetch } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 
 type PageProps = { basePath: string };
 type PollOption = { id: number; option_text: string };
@@ -27,6 +28,7 @@ const BAR_COLORS = [
 
 export default function ProjectorPage() {
     const { basePath } = usePage<PageProps>().props;
+    const t = useT();
     const code = useMemo(() => {
         const match = window.location.pathname.match(/projector\/(.+)$/);
         return match ? match[1] : '';
@@ -48,7 +50,7 @@ export default function ProjectorPage() {
                 body: JSON.stringify({ code }),
             });
             if (!res.ok) {
-                throw new Error('Ogiltig kod.');
+                throw new Error(t('projector.invalid_code'));
             }
             const data = await res.json();
             setError(null);
@@ -58,7 +60,7 @@ export default function ProjectorPage() {
             setResults(data.results || []);
             setSessionStatus(data.status || null);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load session.');
+            setError(err instanceof Error ? err.message : t('projector.errors.load_failed'));
         }
     };
 
@@ -102,13 +104,13 @@ export default function ProjectorPage() {
 
     return (
         <div className="flex min-h-screen flex-col bg-white dark:bg-neutral-950">
-            <Head title="Projector view" />
+            <Head title={t('projector.title')} />
 
             {/* Header with code */}
             <header className="border-b-2 border-neutral-200 bg-neutral-50 px-8 py-4 dark:border-neutral-800 dark:bg-neutral-900">
                 <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
-                        Ga till <span className="font-semibold text-neutral-800 dark:text-neutral-200">boma.nu/enkat</span> och ange kod{' '}
+                        {t('projector.instruction', { url: 'boma.nu/enkat' })}{' '}
                         <span className="ml-2 rounded-md border-2 border-neutral-300 bg-white px-3 py-1 font-mono text-xl font-bold tracking-widest text-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white">
                             {code}
                         </span>
@@ -129,7 +131,7 @@ export default function ProjectorPage() {
                 <main className="flex flex-1 flex-col px-12 py-10">
                     {sessionStatus === 'closed' ? (
                         <div className="mb-6 rounded-xl border-2 border-amber-200 bg-amber-50 px-6 py-4 text-center text-amber-900">
-                            Sessionen ar avslutad. Resultatet ar slutligt.
+                            {t('projector.ended_banner')}
                         </div>
                     ) : null}
                     {/* Question */}
@@ -200,8 +202,8 @@ export default function ProjectorPage() {
                         <div className="mb-4 text-5xl">
                             <span role="img" aria-label="ended">✓</span>
                         </div>
-                        <h2 className="text-2xl font-semibold">Sessionen ar avslutad</h2>
-                        <p className="mt-2">Inga fler fragor visas</p>
+                        <h2 className="text-2xl font-semibold">{t('projector.ended_title')}</h2>
+                        <p className="mt-2">{t('projector.ended_subtitle')}</p>
                     </div>
                 </div>
             ) : (
@@ -210,8 +212,8 @@ export default function ProjectorPage() {
                         <div className="mb-4 text-6xl">
                             <span role="img" aria-label="waiting">...</span>
                         </div>
-                        <h2 className="text-2xl font-semibold text-neutral-700 dark:text-neutral-200">Vantar pa att fragan visas</h2>
-                        <p className="mt-2 text-neutral-500 dark:text-neutral-400">Lararen startar snart</p>
+                        <h2 className="text-2xl font-semibold text-neutral-700 dark:text-neutral-200">{t('projector.waiting_title')}</h2>
+                        <p className="mt-2 text-neutral-500 dark:text-neutral-400">{t('projector.waiting_subtitle')}</p>
                     </div>
                 </div>
             )}

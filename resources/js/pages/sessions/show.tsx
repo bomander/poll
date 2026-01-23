@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import AppLayout from '@/layouts/app-layout';
 import { apiFetch } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 
 type PageProps = { basePath: string };
 type PollOption = { id: number; option_text: string };
@@ -28,6 +29,7 @@ declare global {
 
 export default function SessionShow() {
     const { basePath } = usePage<PageProps>().props;
+    const t = useT();
     const sessionId = useMemo(() => {
         const match = window.location.pathname.match(/sessions\/(\d+)/);
         return match ? Number(match[1]) : null;
@@ -42,13 +44,13 @@ export default function SessionShow() {
         apiFetch(`${basePath}/api/sessions/${sessionId}`)
             .then(async (res) => {
                 if (!res.ok) {
-                    throw new Error('Failed to load session.');
+                    throw new Error(t('session.load_failed'));
                 }
                 const data = await res.json();
                 setSession(data);
                 setResults(data.results || {});
             })
-            .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load session.'));
+            .catch((err) => setError(err instanceof Error ? err.message : t('session.load_failed')));
     }, [sessionId, basePath]);
 
     useEffect(() => {
@@ -93,7 +95,7 @@ export default function SessionShow() {
             setSession(data);
             setResults(data.results || {});
         } else {
-            setError('Failed to update question.');
+            setError(t('session.update_question_failed'));
         }
     };
 
@@ -108,7 +110,7 @@ export default function SessionShow() {
             setSession(data);
             setResults(data.results || {});
         } else {
-            setError('Failed to update lock state.');
+            setError(t('session.update_lock_failed'));
         }
     };
 
@@ -120,13 +122,13 @@ export default function SessionShow() {
             setSession(data);
             setResults(data.results || {});
         } else {
-            setError('Failed to close session.');
+            setError(t('session.close_failed'));
         }
     };
 
     return (
         <AppLayout>
-            <Head title="Live session" />
+            <Head title={t('session.title')} />
             <div className="flex flex-col gap-6 p-6">
                 {error ? <p className="text-sm text-red-600">{error}</p> : null}
                 {session ? (
@@ -139,7 +141,7 @@ export default function SessionShow() {
                                 </p>
                             ) : null}
                             <p className="mt-2 text-lg">
-                                Code: <span className="font-mono">{session.code}</span>
+                                {t('session.code')}: <span className="font-mono">{session.code}</span>
                             </p>
                             <div className="mt-4 flex flex-wrap gap-3">
                                 <button
@@ -148,13 +150,13 @@ export default function SessionShow() {
                                     onClick={toggleLock}
                                     disabled={isClosed}
                                 >
-                                    {session.locked ? 'Unlock question' : 'Lock question'}
+                                    {session.locked ? t('session.unlock') : t('session.lock')}
                                 </button>
                                 <a
                                     className="rounded-md border px-3 py-2 text-sm"
                                     href={`${basePath}/api/sessions/${session.id}/export`}
                                 >
-                                    Export CSV
+                                    {t('session.export_csv')}
                                 </a>
                                 <button
                                     type="button"
@@ -162,7 +164,7 @@ export default function SessionShow() {
                                     onClick={closeSession}
                                     disabled={isClosed}
                                 >
-                                    End session
+                                    {t('session.end')}
                                 </button>
                                 <a
                                     className="rounded-md border px-3 py-2 text-sm"
@@ -170,14 +172,14 @@ export default function SessionShow() {
                                     target="_blank"
                                     rel="noreferrer"
                                 >
-                                    Open projector view
+                                    {t('session.open_projector')}
                                 </a>
                             </div>
                         </section>
 
                         <section className="grid gap-6 lg:grid-cols-[320px,1fr]">
                             <div className="rounded-xl border border-sidebar-border/70 p-6">
-                                <h2 className="text-lg font-semibold">Questions</h2>
+                                <h2 className="text-lg font-semibold">{t('session.questions')}</h2>
                                 <div className="mt-4 grid gap-2">
                                     {session.poll.questions.map((question) => (
                                         <button
@@ -197,7 +199,7 @@ export default function SessionShow() {
                                 </div>
                             </div>
                             <div className="rounded-xl border border-sidebar-border/70 p-6">
-                                <h2 className="text-lg font-semibold">Live results</h2>
+                                <h2 className="text-lg font-semibold">{t('session.live_results')}</h2>
                                 {currentQuestion ? (
                                     <div className="mt-4 space-y-3">
                                         <p className="text-sm text-muted-foreground">
@@ -220,14 +222,14 @@ export default function SessionShow() {
                                     </div>
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
-                                        No active question.
+                                        {t('session.no_active_question')}
                                     </p>
                                 )}
                             </div>
                         </section>
                     </>
                 ) : (
-                    <p className="text-sm text-muted-foreground">Loading...</p>
+                    <p className="text-sm text-muted-foreground">{t('session.loading')}</p>
                 )}
             </div>
         </AppLayout>

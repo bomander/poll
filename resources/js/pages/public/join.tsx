@@ -2,6 +2,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { apiFetch } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 
 type PageProps = { basePath: string };
 type PollOption = { id: number; option_text: string };
@@ -28,6 +29,7 @@ const OPTION_COLORS = [
 
 export default function JoinPage() {
     const { basePath } = usePage<PageProps>().props;
+    const t = useT();
     const initialCode = useMemo(() => {
         const params = new URLSearchParams(window.location.search);
         return params.get('code')?.toUpperCase() || '';
@@ -59,7 +61,7 @@ export default function JoinPage() {
                 body: JSON.stringify({ code: cleanCode }),
             });
             if (!res.ok) {
-                throw new Error('Ogiltig kod.');
+                throw new Error(t('join.errors.invalid_code'));
             }
             const data = await res.json();
             setSessionId(data.session_id);
@@ -104,29 +106,29 @@ export default function JoinPage() {
 
                 if (message === 'Question is locked.') {
                     setLocked(true);
-                    setError('Fragan ar last.');
+                    setError(t('join.errors.locked'));
                     return;
                 }
 
                 if (message === 'Session is closed.') {
                     setSessionStatus('closed');
-                    setError('Sessionen ar stangd.');
+                    setError(t('join.errors.closed'));
                     return;
                 }
 
                 if (message === 'Not the active question.') {
-                    setError('Fragan har bytts, uppdaterar...');
+                    setError(t('join.errors.question_changed'));
                     await joinSession();
                     return;
                 }
 
                 if (message === 'No respondent token.') {
-                    setError('Anslutningen gick ut, provar igen...');
+                    setError(t('join.errors.token_missing'));
                     await joinSession();
                     return;
                 }
 
-                setError('Kunde inte skicka rost.');
+                setError(t('join.errors.vote_failed'));
             }
         } finally {
             setVoting(false);
@@ -196,9 +198,9 @@ export default function JoinPage() {
 
     return (
         <div className="min-h-screen bg-neutral-100 px-6 py-10 dark:bg-neutral-950">
-            <Head title="Join poll" />
+            <Head title={t('join.title')} />
             <div className="mx-auto max-w-lg rounded-xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white">Svara pa poll</h1>
+                <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white">{t('join.title')}</h1>
                 {pollTitle ? (
                     <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{pollTitle}</p>
                 ) : null}
@@ -231,20 +233,20 @@ export default function JoinPage() {
                                 </div>
                                 {locked ? (
                                     <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400">
-                                        Fragan ar last.
+                                        {t('join.status.locked')}
                                     </p>
                                 ) : isClosed ? (
                                     <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400">
-                                        Sessionen ar stangd.
+                                        {t('join.status.closed')}
                                     </p>
                                 ) : null}
                                 {voting ? (
                                     <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400">
-                                        Skickar...
+                                        {t('join.status.sending')}
                                     </p>
                                 ) : voted ? (
                                     <p className="mt-3 text-sm text-green-700 dark:text-green-400">
-                                        Rost inskickad.
+                                        {t('join.status.submitted')}
                                     </p>
                                 ) : null}
                                 <div className="mt-6 space-y-3">
@@ -269,7 +271,7 @@ export default function JoinPage() {
                             </div>
                         ) : (
                             <p className="mt-6 text-sm text-neutral-600 dark:text-neutral-400">
-                                Vantar pa att lararen startar.
+                                {t('join.waiting')}
                             </p>
                         )}
                     </>
@@ -277,7 +279,7 @@ export default function JoinPage() {
                     <div className="mt-6 grid gap-3">
                         <input
                             className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-neutral-900 placeholder:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder:text-neutral-400"
-                            placeholder="Ange kod"
+                            placeholder={t('join.code_placeholder')}
                             value={code}
                             onChange={(event) => setCode(event.target.value.toUpperCase())}
                         />
@@ -286,7 +288,7 @@ export default function JoinPage() {
                             className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
                             onClick={joinSession}
                         >
-                            Ga med
+                            {t('join.join')}
                         </button>
                     </div>
                 )}

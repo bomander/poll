@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Lang;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -42,6 +43,8 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'basePath' => rtrim($basePath, '/'),
+            'locale' => app()->getLocale(),
+            'translations' => Lang::get('ui'),
             'auth' => [
                 'user' => $request->user(),
             ],

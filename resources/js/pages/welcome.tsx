@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useT } from '@/lib/i18n';
 
 type PageProps = {
     basePath: string;
@@ -10,6 +11,7 @@ type PageProps = {
 
 export default function Welcome() {
     const { basePath, auth } = usePage<PageProps>().props;
+    const t = useT();
     const [code, setCode] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -29,14 +31,14 @@ export default function Welcome() {
             });
 
             if (!res.ok) {
-                setError('Ogiltig eller avslutad kod');
+                setError(t('welcome.errors.invalid_code'));
                 return;
             }
 
             // Koden är giltig, redirecta till join-sidan
             window.location.href = `${basePath}/join?code=${code.trim().toUpperCase()}`;
         } catch {
-            setError('Kunde inte ansluta till servern');
+            setError(t('welcome.errors.network'));
         } finally {
             setLoading(false);
         }
@@ -52,7 +54,7 @@ export default function Welcome() {
                             Enkat
                         </h1>
                         <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-                            Live-omrostningar i klassrummet
+                            {t('welcome.tagline')}
                         </p>
                     </div>
 
@@ -60,7 +62,7 @@ export default function Welcome() {
                         <div>
                             <input
                                 type="text"
-                                placeholder="Ange kod"
+                                placeholder={t('welcome.code_placeholder')}
                                 value={code}
                                 onChange={(e) => {
                                     setCode(e.target.value.toUpperCase());
@@ -73,8 +75,8 @@ export default function Welcome() {
                                 <p className="mt-2 text-center text-sm text-red-600">{error}</p>
                             )}
                         </div>
-                        <Button type="submit" className="w-full h-12" disabled={!code.trim() || loading}>
-                            {loading ? 'Ansluter...' : 'Ga med'}
+                        <Button type="submit" className="h-12 w-full" disabled={!code.trim() || loading}>
+                            {loading ? t('welcome.joining') : t('welcome.join')}
                         </Button>
                     </form>
 
@@ -84,7 +86,7 @@ export default function Welcome() {
                         </div>
                         <div className="relative flex justify-center text-sm">
                             <span className="bg-neutral-50 px-4 text-neutral-500 dark:bg-neutral-950">
-                                eller
+                                {t('welcome.or')}
                             </span>
                         </div>
                     </div>
@@ -92,14 +94,14 @@ export default function Welcome() {
                     <div className="text-center">
                         {auth.user ? (
                             <Button variant="outline" className="w-full" asChild>
-                                <Link href={`${basePath}/dashboard`}>Till Dashboard</Link>
+                                <Link href={`${basePath}/dashboard`}>{t('welcome.dashboard')}</Link>
                             </Button>
                         ) : (
                             <Button variant="outline" className="w-full" asChild>
-                                <Link href={`${basePath}/login`}>Logga in som larare</Link>
+                                <Link href={`${basePath}/login`}>{t('welcome.teacher_login')}</Link>
                             </Button>
                         )}
-                        </div>
+                    </div>
                 </div>
             </div>
         </>
