@@ -68,3 +68,4 @@ return [
         'loading' => 'Loading...',
     ],
 ];
+
