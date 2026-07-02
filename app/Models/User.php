@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'basen_subject',
+        'auth_subject',
         'is_admin',
         'is_banned',
         'ban_reason',
