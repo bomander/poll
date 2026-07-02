@@ -1,19 +1,19 @@
 <?php
 
-use App\Http\Controllers\Auth\BasenOAuthController;
+use App\Http\Controllers\Auth\BomaIdentityController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    Route::get('auth/basen', [BasenOAuthController::class, 'redirect'])
-        ->name('auth.basen');
+    Route::get('auth/boma', [BomaIdentityController::class, 'redirect'])
+        ->name('auth.boma');
 
-    Route::get('auth/basen/callback', [BasenOAuthController::class, 'callback'])
-        ->name('auth.basen.callback');
+    Route::get('auth/boma/callback', [BomaIdentityController::class, 'callback'])
+        ->name('auth.boma.callback');
 
     Route::get('login', function () {
-        return redirect()->route('auth.basen');
+        return redirect()->route('auth.boma');
     })->name('login');
 
     Route::post('login', function () {

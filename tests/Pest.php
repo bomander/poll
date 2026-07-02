@@ -45,3 +45,21 @@ function something()
 {
     // ..
 }
+
+/*
+|--------------------------------------------------------------------------
+| boma.nu-identitet (auth.boma.nu OIDC) — testhjälpare
+|--------------------------------------------------------------------------
+*/
+
+function fakeIdentityLogin(object $test, array $claims): void
+{
+    $mock = Mockery::mock(App\Services\BomaIdentityClient::class);
+    $mock->shouldReceive('exchangeCode')->andReturn(['id_token' => 'stub']);
+    $mock->shouldReceive('verifyIdToken')->andReturn((object) $claims);
+    app()->instance(App\Services\BomaIdentityClient::class, $mock);
+
+    $test->withSession([
+        'boma_identity' => ['state' => 'state-ok', 'verifier' => 'v', 'nonce' => 'n'],
+    ]);
+}

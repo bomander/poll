@@ -35,17 +35,13 @@ return [
         ],
     ],
 
-    'basen' => [
-        'client_id' => env('BASEN_CLIENT_ID'),
-        'client_secret' => env('BASEN_CLIENT_SECRET'),
-        'authorize_url' => env('BASEN_AUTHORIZE_URL'),
-        'token_url' => env('BASEN_TOKEN_URL'),
-        'userinfo_url' => env('BASEN_USERINFO_URL'),
-        'redirect_uri' => env('BASEN_REDIRECT_URI'),
-        'scopes' => env('BASEN_SCOPES', 'profile.read'),
-        'subject_field' => env('BASEN_SUBJECT_FIELD', 'sub'),
-        'email_field' => env('BASEN_EMAIL_FIELD', 'email'),
-        'name_field' => env('BASEN_NAME_FIELD', 'name'),
+    'boma_identity' => [
+        'enabled' => env('BOMA_AUTH_ENABLED', false),
+        'issuer' => rtrim(env('BOMA_AUTH_ISSUER', 'https://auth.boma.nu'), '/'),
+        'resolve_ip' => env('BOMA_AUTH_RESOLVE_IP'),
+        'client_id' => env('BOMA_AUTH_CLIENT_ID'),
+        'client_secret' => env('BOMA_AUTH_CLIENT_SECRET'),
+        'redirect' => env('BOMA_AUTH_REDIRECT_URI', rtrim((string) env('APP_URL'), '/').'/auth/boma/callback'),
     ],
 
 ];
