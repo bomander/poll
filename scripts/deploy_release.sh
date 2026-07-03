@@ -15,6 +15,7 @@ KEEP_DB_BACKUPS=${KEEP_DB_BACKUPS:-10}
 
 # Flaggor
 NO_BUILD=${NO_BUILD:-0}      # 1 = skippa npm build lokalt
+NO_COMPOSER=${NO_COMPOSER:-0} # 1 = skippa composer install lokalt (skickar med vendor/)
 RUN_MIGRATIONS=${RUN_MIGRATIONS:-1}  # 1 = kör php artisan migrate --force på servern
 RUN_SEEDERS=${RUN_SEEDERS:-1}        # 1 = kör specifika seeders (idempotent)
 
@@ -41,12 +42,20 @@ RELEASE=$(date +%Y%m%d%H%M%S)
 BUILD_DIR=$(mktemp -d "${TMPDIR:-/tmp}/enkat-deploy.XXXXXX")
 LOCAL_RELEASE="${BUILD_DIR}/release"
 
+export COMPOSER_CACHE_DIR="${COMPOSER_CACHE_DIR:-${BUILD_DIR}/composer-cache}"
+mkdir -p "$COMPOSER_CACHE_DIR"
+
 rsync -az --delete \
-  --exclude='.git' --exclude='node_modules' --exclude='vendor' \
+  --exclude='.git' --exclude='node_modules' \
+  $([[ "$NO_COMPOSER" -eq 0 ]] && echo "--exclude=vendor") \
   --exclude='.env' --exclude='storage' --exclude='database/database.sqlite' \
   ./ "${LOCAL_RELEASE}"
 
-(cd "${LOCAL_RELEASE}" && COMPOSER_NO_DEV=1 COMPOSER_MEMORY_LIMIT=-1 composer install --prefer-dist --optimize-autoloader --no-interaction --no-scripts)
+if [[ "$NO_COMPOSER" -eq 0 ]]; then
+  (cd "${LOCAL_RELEASE}" && COMPOSER_NO_DEV=1 COMPOSER_MEMORY_LIMIT=-1 composer install --prefer-dist --optimize-autoloader --no-interaction --no-scripts)
+else
+  echo "[local] skip composer install (NO_COMPOSER=1)"
+fi
 
 # Rensa genererade cachefiler som kan innehålla dev-provider (t.ex. Pail)
 rm -f "${LOCAL_RELEASE}/bootstrap/cache/packages.php" "${LOCAL_RELEASE}/bootstrap/cache/services.php"

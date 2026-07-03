@@ -8,6 +8,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type PageProps = { basePath: string };
+type PollType = 'multiple_choice' | 'word_cloud';
 type Session = {
     id: number;
     name?: string | null;
@@ -20,10 +21,13 @@ type Session = {
     ended_at?: string | null;
 };
 type PollQuestion = { id: number; question_text: string };
+type MultipleChoiceResult = { option_id: number; option_text: string; count: number; percent: number };
+type WordCloudResult = { answer_text: string; count: number; percent: number };
+type ResultItem = MultipleChoiceResult | WordCloudResult;
 type SessionDetails = {
     current_question_id?: number | null;
-    poll: { questions: PollQuestion[] };
-    results?: Record<number, { option_id: number; option_text: string; count: number; percent: number }[]>;
+    poll: { type: PollType; questions: PollQuestion[] };
+    results?: Record<number, ResultItem[]>;
 };
 
 const OPTION_COLORS = [
@@ -299,22 +303,39 @@ export default function SessionsIndex() {
                                                                             </p>
                                                                         ) : (
                                                                             <div className="space-y-2">
-                                                                                {results.map((result) => (
-                                                                                    <div key={result.option_id}>
-                                                                                        <div className="flex justify-between text-xs text-neutral-700">
-                                                                                            <span>{result.option_text}</span>
-                                                                                            <span>{result.count}</span>
-                                                                                        </div>
-                                                                                        <div className="mt-1 h-2 rounded-full bg-neutral-200">
-                                                                                            <div
-                                                                                                className="h-2 rounded-full bg-black"
-                                                                                                style={{
-                                                                                                    width: `${result.percent}%`,
-                                                                                                }}
-                                                                                            />
-                                                                                        </div>
-                                                                                    </div>
-                                                                                ))}
+                                                                                {details.poll.type === 'word_cloud'
+                                                                                    ? (results as WordCloudResult[]).map((result, index) => (
+                                                                                          <div key={`${result.answer_text}-${index}`}>
+                                                                                              <div className="flex justify-between text-xs text-neutral-700">
+                                                                                                  <span>{result.answer_text}</span>
+                                                                                                  <span>{result.count}</span>
+                                                                                              </div>
+                                                                                              <div className="mt-1 h-2 rounded-full bg-neutral-200">
+                                                                                                  <div
+                                                                                                      className="h-2 rounded-full bg-black"
+                                                                                                      style={{
+                                                                                                          width: `${result.percent}%`,
+                                                                                                      }}
+                                                                                                  />
+                                                                                              </div>
+                                                                                          </div>
+                                                                                      ))
+                                                                                    : (results as MultipleChoiceResult[]).map((result) => (
+                                                                                          <div key={result.option_id}>
+                                                                                              <div className="flex justify-between text-xs text-neutral-700">
+                                                                                                  <span>{result.option_text}</span>
+                                                                                                  <span>{result.count}</span>
+                                                                                              </div>
+                                                                                              <div className="mt-1 h-2 rounded-full bg-neutral-200">
+                                                                                                  <div
+                                                                                                      className="h-2 rounded-full bg-black"
+                                                                                                      style={{
+                                                                                                          width: `${result.percent}%`,
+                                                                                                      }}
+                                                                                                  />
+                                                                                              </div>
+                                                                                          </div>
+                                                                                      ))}
                                                                             </div>
                                                                         )}
                                                                     </div>
@@ -375,14 +396,34 @@ export default function SessionsIndex() {
 
                             {previewResults.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">{t('sessions_index.no_votes')}</p>
+                            ) : previewDetails.poll.type === 'word_cloud' ? (
+                                <div className="flex flex-wrap justify-center gap-3">
+                                    {(previewResults as WordCloudResult[]).map((result, index) => {
+                                        const color = OPTION_COLORS[index % OPTION_COLORS.length];
+                                        const fontSize = 14 + Math.min(30, (result.percent / 100) * 42);
+                                        return (
+                                            <div
+                                                key={`${result.answer_text}-${index}`}
+                                                className="rounded-full border px-4 py-2 font-semibold"
+                                                style={{
+                                                    borderColor: color,
+                                                    color,
+                                                    backgroundColor: `${color}15`,
+                                                    fontSize,
+                                                    lineHeight: 1.1,
+                                                }}
+                                            >
+                                                {result.answer_text}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             ) : (
                                 <div className="flex items-end justify-center gap-6" style={{ height: '280px' }}>
-                                    {previewResults.map((result, index) => {
+                                    {(previewResults as MultipleChoiceResult[]).map((result, index) => {
                                         const color = OPTION_COLORS[index % OPTION_COLORS.length];
                                         const heightPercent =
-                                            previewMaxPercent > 0
-                                                ? (result.percent / previewMaxPercent) * 100
-                                                : 0;
+                                            previewMaxPercent > 0 ? (result.percent / previewMaxPercent) * 100 : 0;
                                         return (
                                             <div
                                                 key={result.option_id}

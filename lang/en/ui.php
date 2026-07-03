@@ -39,7 +39,7 @@ return [
         'quick_start' => [
             'title' => 'Get started',
             'step_1_title' => 'Create a poll',
-            'step_1_desc' => 'Add questions and options. You can have multiple questions in one poll.',
+            'step_1_desc' => 'Add one question and options.',
             'step_2_title' => 'Start a session',
             'step_2_desc' => 'Starting a session gives you a code for participants to join.',
             'step_3_title' => 'Show results live',
@@ -58,6 +58,14 @@ return [
         'no_polls_yet' => 'No polls yet.',
         'poll_title_placeholder' => 'Poll title',
         'description_placeholder' => 'Description (optional)',
+        'type_label' => 'Type',
+        'types' => [
+            'multiple_choice' => 'Multiple choice',
+            'word_cloud' => 'Word cloud',
+        ],
+        'type_help' => [
+            'word_cloud' => 'Participants write a word or short phrase.',
+        ],
         'question_placeholder' => 'Question :n',
         'option_placeholder' => 'Option :n',
         'add_question' => 'Add question',
@@ -201,9 +209,15 @@ return [
         'code_placeholder' => 'Enter code',
         'join' => 'Join',
         'waiting' => 'Waiting for the teacher to start.',
+        'word_cloud' => [
+            'placeholder' => 'Type your answer',
+            'submit' => 'Submit',
+        ],
         'errors' => [
+            'code_required' => 'Enter a code.',
             'invalid_code' => 'Invalid code.',
             'join_failed' => 'Failed to join.',
+            'throttled' => 'Too many requests, please try again in a moment.',
             'locked' => 'Question is locked.',
             'closed' => 'Session is closed.',
             'question_changed' => 'Question changed, updating...',

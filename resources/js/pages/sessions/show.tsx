@@ -8,8 +8,12 @@ import { useT } from '@/lib/i18n';
 type PageProps = { basePath: string };
 type PollOption = { id: number; option_text: string };
 type PollQuestion = { id: number; question_text: string; options: PollOption[] };
-type Poll = { id: number; title: string; questions: PollQuestion[] };
-type Results = Record<number, { option_id: number; option_text: string; count: number; percent: number }[]>;
+type PollType = 'multiple_choice' | 'word_cloud';
+type Poll = { id: number; title: string; type: PollType; questions: PollQuestion[] };
+type MultipleChoiceResult = { option_id: number; option_text: string; count: number; percent: number };
+type WordCloudResult = { answer_text: string; count: number; percent: number };
+type ResultItem = MultipleChoiceResult | WordCloudResult;
+type Results = Record<number, ResultItem[]>;
 type Session = {
     id: number;
     code: string;
@@ -205,20 +209,35 @@ export default function SessionShow() {
                                         <p className="text-sm text-muted-foreground">
                                             {currentQuestion.question_text}
                                         </p>
-                                        {currentResults.map((result) => (
-                                            <div key={result.option_id}>
-                                                <div className="flex justify-between text-sm">
-                                                    <span>{result.option_text}</span>
-                                                    <span>{result.count}</span>
-                                                </div>
-                                                <div className="mt-1 h-2 rounded-full bg-neutral-200">
-                                                    <div
-                                                        className="h-2 rounded-full bg-black"
-                                                        style={{ width: `${result.percent}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
+                                        {session?.poll.type === 'word_cloud'
+                                            ? (currentResults as WordCloudResult[]).map((result, index) => (
+                                                  <div key={`${result.answer_text}-${index}`}>
+                                                      <div className="flex justify-between text-sm">
+                                                          <span>{result.answer_text}</span>
+                                                          <span>{result.count}</span>
+                                                      </div>
+                                                      <div className="mt-1 h-2 rounded-full bg-neutral-200">
+                                                          <div
+                                                              className="h-2 rounded-full bg-black"
+                                                              style={{ width: `${result.percent}%` }}
+                                                          />
+                                                      </div>
+                                                  </div>
+                                              ))
+                                            : (currentResults as MultipleChoiceResult[]).map((result) => (
+                                                  <div key={result.option_id}>
+                                                      <div className="flex justify-between text-sm">
+                                                          <span>{result.option_text}</span>
+                                                          <span>{result.count}</span>
+                                                      </div>
+                                                      <div className="mt-1 h-2 rounded-full bg-neutral-200">
+                                                          <div
+                                                              className="h-2 rounded-full bg-black"
+                                                              style={{ width: `${result.percent}%` }}
+                                                          />
+                                                      </div>
+                                                  </div>
+                                              ))}
                                     </div>
                                 ) : (
                                     <p className="text-sm text-muted-foreground">

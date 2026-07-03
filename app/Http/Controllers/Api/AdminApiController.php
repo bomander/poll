@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\PollResponse;
+use App\Models\PollQuestion;
 use App\Models\PollSession;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -60,32 +61,62 @@ class AdminApiController extends Controller
         }
 
         $session->load(['poll.questions.options']);
+        $pollType = $session->poll?->type ?? 'multiple_choice';
 
-        $questions = $session->poll->questions->map(function ($question) use ($session) {
-            $counts = PollResponse::query()
-                ->where('session_id', $session->id)
-                ->where('question_id', $question->id)
-                ->select('option_id', DB::raw('count(*) as total'))
-                ->groupBy('option_id')
-                ->pluck('total', 'option_id');
-
-            $totalResponses = $counts->sum();
-
-            return [
-                'id' => $question->id,
-                'question_text' => $question->question_text,
-                'options' => $question->options->map(fn($option) => [
-                    'id' => $option->id,
-                    'option_text' => $option->option_text,
-                    'count' => (int) ($counts[$option->id] ?? 0),
-                ]),
-                'total_responses' => $totalResponses,
-            ];
+        $questions = $session->poll->questions->map(function ($question) use ($pollType, $session) {
+            return $this->questionDetailsForSession($pollType, $session, $question);
         });
 
         return response()->json([
             'session_id' => $session->id,
+            'poll_type' => $pollType,
             'questions' => $questions,
         ]);
+    }
+
+    private function questionDetailsForSession(string $pollType, PollSession $session, PollQuestion $question): array
+    {
+        if ($pollType === 'word_cloud') {
+            $counts = PollResponse::query()
+                ->where('session_id', $session->id)
+                ->where('question_id', $question->id)
+                ->whereNotNull('answer_text')
+                ->select('answer_text', DB::raw('count(*) as total'))
+                ->groupBy('answer_text')
+                ->orderByDesc('total')
+                ->get();
+
+            $totalResponses = (int) $counts->sum('total');
+
+            return [
+                'id' => $question->id,
+                'question_text' => $question->question_text,
+                'answers' => $counts->map(fn ($row) => [
+                    'answer_text' => $row->answer_text,
+                    'count' => (int) $row->total,
+                ]),
+                'total_responses' => $totalResponses,
+            ];
+        }
+
+        $counts = PollResponse::query()
+            ->where('session_id', $session->id)
+            ->where('question_id', $question->id)
+            ->select('option_id', DB::raw('count(*) as total'))
+            ->groupBy('option_id')
+            ->pluck('total', 'option_id');
+
+        $totalResponses = $counts->sum();
+
+        return [
+            'id' => $question->id,
+            'question_text' => $question->question_text,
+            'options' => $question->options->map(fn ($option) => [
+                'id' => $option->id,
+                'option_text' => $option->option_text,
+                'count' => (int) ($counts[$option->id] ?? 0),
+            ]),
+            'total_responses' => $totalResponses,
+        ];
     }
 }

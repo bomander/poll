@@ -154,19 +154,20 @@ class SessionController extends Controller
         $this->authorizeSession($request, $session);
 
         $session->load('poll.questions.options');
+        $pollType = $session->poll?->type ?? 'multiple_choice';
 
         $filename = 'session-'.$session->id.'-results.csv';
 
-        return response()->streamDownload(function () use ($session) {
+        return response()->streamDownload(function () use ($session, $pollType) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, ['question', 'option', 'count', 'percent']);
 
             foreach ($session->poll->questions as $question) {
-                $results = $this->resultsForQuestion($session, $question);
+                $results = $this->resultsForQuestion($pollType, $session, $question);
                 foreach ($results as $result) {
                     fputcsv($handle, [
                         $question->question_text,
-                        $result['option_text'],
+                        $result['option_text'] ?? $result['answer_text'] ?? '',
                         $result['count'],
                         $result['percent'],
                     ]);
@@ -207,9 +208,10 @@ class SessionController extends Controller
         ];
 
         if ($includeResults) {
+            $pollType = $session->poll?->type ?? 'multiple_choice';
             $results = [];
             foreach ($session->poll->questions as $question) {
-                $results[$question->id] = $this->resultsForQuestion($session, $question);
+                $results[$question->id] = $this->resultsForQuestion($pollType, $session, $question);
             }
             $payload['results'] = $results;
         }
@@ -217,8 +219,33 @@ class SessionController extends Controller
         return $payload;
     }
 
-    private function resultsForQuestion(PollSession $session, PollQuestion $question): array
+    private function resultsForQuestion(string $pollType, PollSession $session, PollQuestion $question): array
     {
+        if ($pollType === 'word_cloud') {
+            $counts = PollResponse::query()
+                ->where('session_id', $session->id)
+                ->where('question_id', $question->id)
+                ->whereNotNull('answer_text')
+                ->select('answer_text', DB::raw('count(*) as total'))
+                ->groupBy('answer_text')
+                ->orderByDesc('total')
+                ->limit(50)
+                ->get();
+
+            $total = (int) $counts->sum('total');
+
+            return $counts->map(function ($row) use ($total) {
+                $count = (int) $row->total;
+                $percent = $total > 0 ? round(($count / $total) * 100, 2) : 0;
+
+                return [
+                    'answer_text' => $row->answer_text,
+                    'count' => $count,
+                    'percent' => $percent,
+                ];
+            })->all();
+        }
+
         $counts = PollResponse::query()
             ->where('session_id', $session->id)
             ->where('question_id', $question->id)

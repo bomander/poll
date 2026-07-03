@@ -8,10 +8,12 @@ import AppLayout from '@/layouts/app-layout';
 type PageProps = { basePath: string };
 type PollOption = { option_text: string };
 type PollQuestion = { question_text: string; options: PollOption[] };
+type PollType = 'multiple_choice' | 'word_cloud';
 type Poll = {
     id: number;
     title: string;
     description?: string | null;
+    type?: PollType;
     questions: PollQuestion[];
 };
 type QuestionErrors = {
@@ -33,6 +35,7 @@ export default function PollEdit() {
     }, []);
 
     const [poll, setPoll] = useState<Poll | null>(null);
+    const [pollType, setPollType] = useState<PollType>('multiple_choice');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [questions, setQuestions] = useState<PollQuestion[]>([]);
@@ -52,14 +55,24 @@ export default function PollEdit() {
                 setPoll(data);
                 setTitle(data.title);
                 setDescription(data.description || '');
+                setPollType((data.type as PollType) || 'multiple_choice');
                 setQuestions(
                     (data.questions?.length ? [data.questions[0]] : []).map((q: any) => ({
                         question_text: q.question_text,
-                        options: (q.options || []).map((o: any) => ({ option_text: o.option_text })),
+                        options:
+                            ((data.type as PollType) || 'multiple_choice') === 'multiple_choice'
+                                ? (q.options || []).map((o: any) => ({ option_text: o.option_text }))
+                                : [],
                     })),
                 );
                 if (!data.questions?.length) {
-                    setQuestions([{ question_text: '', options: [{ option_text: '' }, { option_text: '' }] }]);
+                    const type = ((data.type as PollType) || 'multiple_choice') as PollType;
+                    setQuestions([
+                        {
+                            question_text: '',
+                            options: type === 'multiple_choice' ? [{ option_text: '' }, { option_text: '' }] : [],
+                        },
+                    ]);
                 }
             })
             .catch((err) => setError(err instanceof Error ? err.message : t('polls.errors.load_poll')));
@@ -123,7 +136,7 @@ export default function PollEdit() {
         questions.forEach((question, qIndex) => {
             const optionTexts = question.options.map((option) => option.option_text.trim());
             const nonEmptyOptions = optionTexts.filter(Boolean);
-            if (nonEmptyOptions.length < 2) {
+            if (pollType === 'multiple_choice' && nonEmptyOptions.length < 2) {
                 errors.push(t('polls.validation.question_min_options', { n: qIndex + 1 }));
                 nextFieldErrors.questions[qIndex].optionsSummary = t('polls.validation.min_options_summary');
             }
@@ -133,6 +146,10 @@ export default function PollEdit() {
                 const message = t('polls.validation.question_text_required');
                 errors.push(message);
                 nextFieldErrors.questions[qIndex].question_text = message;
+            }
+
+            if (pollType !== 'multiple_choice') {
+                return;
             }
 
             const seen = new Map<string, number>();
@@ -173,9 +190,10 @@ export default function PollEdit() {
             const payload = {
                 title: title.trim(),
                 description: description.trim() || null,
+                type: pollType,
                 questions: questions.map((q) => ({
                     question_text: q.question_text.trim(),
-                    options: q.options.map((o) => o.option_text.trim()),
+                    options: pollType === 'multiple_choice' ? q.options.map((o) => o.option_text.trim()) : [],
                 })),
             };
             const res = await apiFetch(`${basePath}/api/polls/${pollId}`, {
@@ -247,6 +265,40 @@ export default function PollEdit() {
                                     setDescription(event.target.value);
                                 }}
                             />
+                            <label className="grid gap-1 text-sm">
+                                <span className="text-muted-foreground">{t('polls.type_label')}</span>
+                                <select
+                                    className="w-full rounded-md border px-3 py-2"
+                                    value={pollType}
+                                    onChange={(event) => {
+                                        const nextType = event.target.value as PollType;
+                                        setPollType(nextType);
+
+                                        if (validationErrors.length || fieldErrors.questions.length || fieldErrors.title) {
+                                            setValidationErrors([]);
+                                            setFieldErrors({ questions: [] });
+                                        }
+
+                                        setQuestions((prev) =>
+                                            prev.map((q) => ({
+                                                ...q,
+                                                options:
+                                                    nextType === 'multiple_choice'
+                                                        ? q.options.length >= 2
+                                                            ? q.options
+                                                            : [{ option_text: '' }, { option_text: '' }]
+                                                        : [],
+                                            })),
+                                        );
+                                    }}
+                                >
+                                    <option value="multiple_choice">{t('polls.types.multiple_choice')}</option>
+                                    <option value="word_cloud">{t('polls.types.word_cloud')}</option>
+                                </select>
+                                {pollType === 'word_cloud' ? (
+                                    <span className="text-xs text-muted-foreground">{t('polls.type_help.word_cloud')}</span>
+                                ) : null}
+                            </label>
                             {questions.map((question, qIndex) => (
                                 <div key={qIndex} className="rounded-lg border p-4">
                                     <input
@@ -262,39 +314,39 @@ export default function PollEdit() {
                                             {fieldErrors.questions[qIndex]?.question_text}
                                         </p>
                                     ) : null}
-                                    <div className="mt-3 grid gap-2">
-                                        {question.options.map((option, oIndex) => (
-                                            <div key={oIndex}>
-                                                <input
-                                                    className="w-full rounded-md border px-3 py-2"
-                                                    placeholder={t('polls.option_placeholder', { n: oIndex + 1 })}
-                                                    value={option.option_text}
-                                                    onChange={(event) =>
-                                                        updateOption(qIndex, oIndex, event.target.value)
-                                                    }
-                                                />
-                                                {fieldErrors.questions[qIndex]?.options[oIndex] ? (
-                                                    <p className="mt-1 text-xs text-red-600">
-                                                        {fieldErrors.questions[qIndex]?.options[oIndex]}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                        ))}
-                                        {fieldErrors.questions[qIndex]?.optionsSummary ? (
-                                            <p className="text-xs text-red-600">
-                                                {fieldErrors.questions[qIndex]?.optionsSummary}
-                                            </p>
-                                        ) : null}
-                                        {question.options.length < 8 ? (
-                                            <button
-                                                type="button"
-                                                className="text-left text-sm text-blue-600"
-                                                onClick={() => addOption(qIndex)}
-                                            >
-                                                + {t('polls.add_option')}
-                                            </button>
-                                        ) : null}
-                                    </div>
+                                    {pollType === 'multiple_choice' ? (
+                                        <div className="mt-3 grid gap-2">
+                                            {question.options.map((option, oIndex) => (
+                                                <div key={oIndex}>
+                                                    <input
+                                                        className="w-full rounded-md border px-3 py-2"
+                                                        placeholder={t('polls.option_placeholder', { n: oIndex + 1 })}
+                                                        value={option.option_text}
+                                                        onChange={(event) => updateOption(qIndex, oIndex, event.target.value)}
+                                                    />
+                                                    {fieldErrors.questions[qIndex]?.options[oIndex] ? (
+                                                        <p className="mt-1 text-xs text-red-600">
+                                                            {fieldErrors.questions[qIndex]?.options[oIndex]}
+                                                        </p>
+                                                    ) : null}
+                                                </div>
+                                            ))}
+                                            {fieldErrors.questions[qIndex]?.optionsSummary ? (
+                                                <p className="text-xs text-red-600">
+                                                    {fieldErrors.questions[qIndex]?.optionsSummary}
+                                                </p>
+                                            ) : null}
+                                            {question.options.length < 8 ? (
+                                                <button
+                                                    type="button"
+                                                    className="text-left text-sm text-blue-600"
+                                                    onClick={() => addOption(qIndex)}
+                                                >
+                                                    + {t('polls.add_option')}
+                                                </button>
+                                            ) : null}
+                                        </div>
+                                    ) : null}
                                 </div>
                             ))}
                             <button

@@ -39,7 +39,7 @@ return [
         'quick_start' => [
             'title' => 'Kom igång',
             'step_1_title' => 'Skapa en poll',
-            'step_1_desc' => 'Lägg till frågor med svarsalternativ. Du kan ha flera frågor i samma poll.',
+            'step_1_desc' => 'Lägg till en fråga och svarsalternativ.',
             'step_2_title' => 'Starta en session',
             'step_2_desc' => 'När du startar en session får du en kod som deltagarna använder för att gå med.',
             'step_3_title' => 'Visa resultat live',
@@ -58,6 +58,14 @@ return [
         'no_polls_yet' => 'Inga polls ännu.',
         'poll_title_placeholder' => 'Poll-titel',
         'description_placeholder' => 'Beskrivning (valfritt)',
+        'type_label' => 'Typ',
+        'types' => [
+            'multiple_choice' => 'Flervalsfråga',
+            'word_cloud' => 'Ordmoln',
+        ],
+        'type_help' => [
+            'word_cloud' => 'Deltagare skriver ett ord eller en kort fras.',
+        ],
         'question_placeholder' => 'Fråga :n',
         'option_placeholder' => 'Alternativ :n',
         'add_question' => 'Lägg till fråga',
@@ -201,9 +209,15 @@ return [
         'code_placeholder' => 'Ange kod',
         'join' => 'Gå med',
         'waiting' => 'Väntar på att läraren startar.',
+        'word_cloud' => [
+            'placeholder' => 'Skriv ditt svar',
+            'submit' => 'Skicka',
+        ],
         'errors' => [
+            'code_required' => 'Ange en kod.',
             'invalid_code' => 'Ogiltig kod.',
             'join_failed' => 'Kunde inte gå med.',
+            'throttled' => 'För många förfrågningar, försök igen om en stund.',
             'locked' => 'Frågan är låst.',
             'closed' => 'Sessionen är stängd.',
             'question_changed' => 'Frågan har bytts, uppdaterar...',

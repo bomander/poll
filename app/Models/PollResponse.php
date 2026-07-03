@@ -13,6 +13,7 @@ class PollResponse extends Model
         'session_id',
         'question_id',
         'option_id',
+        'answer_text',
         'respondent_key',
     ];
 

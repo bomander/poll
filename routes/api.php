@@ -30,6 +30,6 @@ Route::middleware(['web', 'auth'])->group(function () {
 });
 
 Route::middleware('web')->group(function () {
-    Route::post('/join', [JoinController::class, 'store'])->middleware('throttle:30,1');
+    Route::post('/join', [JoinController::class, 'store'])->middleware('throttle:120,1');
     Route::post('/sessions/{session}/vote', [VoteController::class, 'store'])->middleware('throttle:120,1');
 });

@@ -21,6 +21,7 @@ class JoinController extends Controller
         $session = PollSession::where('code', $code)->firstOrFail();
 
         $session->load('poll', 'currentQuestion.options');
+        $pollType = $session->poll?->type ?? 'multiple_choice';
 
         // Use cookie-based token for respondent identification
         $cookieName = "enkat_r_{$session->id}";
@@ -30,7 +31,7 @@ class JoinController extends Controller
         }
         
         $question = $session->currentQuestion;
-        $results = $question ? $this->resultsForQuestion($session->id, $question->id) : [];
+        $results = $question ? $this->resultsForQuestion($pollType, $session->id, $question->id) : [];
 
         // Check if user already voted on current question
         $hasVoted = false;
@@ -47,6 +48,7 @@ class JoinController extends Controller
             'status' => $session->status,
             'locked' => $session->locked,
             'poll_title' => $session->poll?->title,
+            'poll_type' => $pollType,
             'current_question' => $question,
             'results' => $results,
             'has_voted' => $hasVoted,
@@ -63,8 +65,33 @@ class JoinController extends Controller
         );
     }
 
-    private function resultsForQuestion(int $sessionId, int $questionId): array
+    private function resultsForQuestion(string $pollType, int $sessionId, int $questionId): array
     {
+        if ($pollType === 'word_cloud') {
+            $counts = PollResponse::query()
+                ->where('session_id', $sessionId)
+                ->where('question_id', $questionId)
+                ->whereNotNull('answer_text')
+                ->select('answer_text', DB::raw('count(*) as total'))
+                ->groupBy('answer_text')
+                ->orderByDesc('total')
+                ->limit(50)
+                ->get();
+
+            $total = (int) $counts->sum('total');
+
+            return $counts->map(function ($row) use ($total) {
+                $count = (int) $row->total;
+                $percent = $total > 0 ? round(($count / $total) * 100, 2) : 0;
+
+                return [
+                    'answer_text' => $row->answer_text,
+                    'count' => $count,
+                    'percent' => $percent,
+                ];
+            })->all();
+        }
+
         $counts = PollResponse::query()
             ->where('session_id', $sessionId)
             ->where('question_id', $questionId)

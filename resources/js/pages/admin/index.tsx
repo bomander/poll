@@ -11,11 +11,13 @@ import { type BreadcrumbItem } from '@/types';
 
 type SessionDetails = {
     session_id: number;
+    poll_type: 'multiple_choice' | 'word_cloud';
     questions: {
         id: number;
         question_text: string;
         total_responses: number;
-        options: { id: number; option_text: string; count: number }[];
+        options?: { id: number; option_text: string; count: number }[];
+        answers?: { answer_text: string; count: number }[];
     }[];
 };
 
@@ -88,27 +90,51 @@ function SessionRow({ session, basePath, t }: { session: Session; basePath: stri
                                             {t('admin.responses', { count: q.total_responses })}
                                         </p>
                                         <div className="space-y-1">
-                                            {q.options.map((opt) => {
-                                                const percent = q.total_responses > 0 
-                                                    ? Math.round((opt.count / q.total_responses) * 100) 
-                                                    : 0;
-                                                return (
-                                                    <div key={opt.id} className="flex items-center gap-2 text-sm">
-                                                        <div className="w-32 truncate">{opt.option_text}</div>
-                                                        <div className="flex-1">
-                                                            <div className="h-4 rounded bg-neutral-200 dark:bg-neutral-700">
-                                                                <div
-                                                                    className="h-4 rounded bg-blue-500"
-                                                                    style={{ width: `${percent}%` }}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="w-16 text-right text-muted-foreground">
-                                                            {opt.count} ({percent}%)
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
+                                            {details.poll_type === 'word_cloud'
+                                                ? (q.answers || []).map((answer, index) => {
+                                                      const percent =
+                                                          q.total_responses > 0
+                                                              ? Math.round((answer.count / q.total_responses) * 100)
+                                                              : 0;
+                                                      return (
+                                                          <div key={`${answer.answer_text}-${index}`} className="flex items-center gap-2 text-sm">
+                                                              <div className="w-32 truncate">{answer.answer_text}</div>
+                                                              <div className="flex-1">
+                                                                  <div className="h-4 rounded bg-neutral-200 dark:bg-neutral-700">
+                                                                      <div
+                                                                          className="h-4 rounded bg-blue-500"
+                                                                          style={{ width: `${percent}%` }}
+                                                                      />
+                                                                  </div>
+                                                              </div>
+                                                              <div className="w-16 text-right text-muted-foreground">
+                                                                  {answer.count} ({percent}%)
+                                                              </div>
+                                                          </div>
+                                                      );
+                                                  })
+                                                : (q.options || []).map((opt) => {
+                                                      const percent =
+                                                          q.total_responses > 0
+                                                              ? Math.round((opt.count / q.total_responses) * 100)
+                                                              : 0;
+                                                      return (
+                                                          <div key={opt.id} className="flex items-center gap-2 text-sm">
+                                                              <div className="w-32 truncate">{opt.option_text}</div>
+                                                              <div className="flex-1">
+                                                                  <div className="h-4 rounded bg-neutral-200 dark:bg-neutral-700">
+                                                                      <div
+                                                                          className="h-4 rounded bg-blue-500"
+                                                                          style={{ width: `${percent}%` }}
+                                                                      />
+                                                                  </div>
+                                                              </div>
+                                                              <div className="w-16 text-right text-muted-foreground">
+                                                                  {opt.count} ({percent}%)
+                                                              </div>
+                                                          </div>
+                                                      );
+                                                  })}
                                         </div>
                                     </div>
                                 ))}

@@ -295,3 +295,51 @@ it('accepts lowercase join codes and returns closed sessions', function () {
         'status' => 'closed',
     ]);
 });
+
+it('supports word cloud polls and stores text responses', function () {
+    $user = User::factory()->create();
+
+    $create = $this->actingAs($user)->postJson('/api/polls', [
+        'title' => 'Word cloud',
+        'description' => null,
+        'type' => 'word_cloud',
+        'questions' => [
+            [
+                'question_text' => 'One word?',
+                'options' => [],
+            ],
+        ],
+    ]);
+
+    $create->assertCreated();
+    $pollId = $create->json('id');
+
+    $session = $this->actingAs($user)->postJson("/api/polls/{$pollId}/sessions", [
+        'name' => null,
+    ]);
+    $session->assertOk();
+
+    $sessionId = $session->json('id');
+    $questionId = $session->json('current_question_id');
+
+    $cookieName = "enkat_r_{$sessionId}";
+    $join = $this->postJson('/api/join', ['code' => $session->json('code')]);
+    $join->assertOk()->assertCookie($cookieName);
+
+    $token = 'student-word-cloud';
+
+    $vote = $this->withCredentials()
+        ->withCookie($cookieName, $token)
+        ->postJson("/api/sessions/{$sessionId}/vote", [
+            'question_id' => $questionId,
+            'answer_text' => 'Hej',
+        ]);
+
+    $vote->assertOk();
+    $vote->assertJsonFragment(['answer_text' => 'hej']);
+    $this->assertDatabaseHas('responses', [
+        'session_id' => $sessionId,
+        'question_id' => $questionId,
+        'answer_text' => 'hej',
+    ]);
+});

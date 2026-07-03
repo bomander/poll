@@ -16,14 +16,23 @@ class VoteController extends Controller
     public function store(Request $request, PollSession $session)
     {
         $session->loadMissing('poll');
-        if (($session->poll->type ?? 'multiple_choice') !== 'multiple_choice') {
-            return response()->json(['message' => 'Voting is not supported for this poll type yet.'], 409);
+        $pollType = $session->poll->type ?? 'multiple_choice';
+
+        $rules = [
+            'question_id' => ['required', 'integer'],
+        ];
+
+        if ($pollType === 'multiple_choice') {
+            $rules['option_id'] = ['required', 'integer'];
+            $rules['answer_text'] = ['prohibited'];
+        } elseif ($pollType === 'word_cloud') {
+            $rules['answer_text'] = ['required', 'string', 'max:200'];
+            $rules['option_id'] = ['prohibited'];
+        } else {
+            return response()->json(['message' => 'Unknown poll type.'], 409);
         }
 
-        $data = $request->validate([
-            'question_id' => ['required', 'integer'],
-            'option_id' => ['required', 'integer'],
-        ]);
+        $data = $request->validate($rules);
 
         if ($session->status !== 'active') {
             return response()->json(['message' => 'Session is closed.'], 409);
@@ -49,9 +58,22 @@ class VoteController extends Controller
             ->where('id', $data['question_id'])
             ->firstOrFail();
 
-        PollOption::where('question_id', $question->id)
-            ->where('id', $data['option_id'])
-            ->firstOrFail();
+        $optionId = null;
+        $answerText = null;
+
+        if ($pollType === 'multiple_choice') {
+            $optionId = (int) $data['option_id'];
+            PollOption::where('question_id', $question->id)
+                ->where('id', $optionId)
+                ->firstOrFail();
+        }
+
+        if ($pollType === 'word_cloud') {
+            $answerText = $this->normalizeAnswerText($data['answer_text']);
+            if ($answerText === '') {
+                return response()->json(['message' => 'Answer cannot be empty.'], 422);
+            }
+        }
 
         $respondentKey = hash('sha256', $token);
 
@@ -65,11 +87,12 @@ class VoteController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($session, $question, $data, $respondentKey) {
+            DB::transaction(function () use ($session, $question, $respondentKey, $optionId, $answerText) {
                 PollResponse::create([
                     'session_id' => $session->id,
                     'question_id' => $question->id,
-                    'option_id' => $data['option_id'],
+                    'option_id' => $optionId,
+                    'answer_text' => $answerText,
                     'respondent_key' => $respondentKey,
                 ]);
             });
@@ -81,7 +104,7 @@ class VoteController extends Controller
             throw $exception;
         }
 
-        $results = $this->resultsForQuestion($session, $question);
+        $results = $this->resultsForQuestion($session, $question, $pollType);
 
         broadcast(new ResultsUpdated($session, $question->id, $results))->toOthers();
 
@@ -90,8 +113,33 @@ class VoteController extends Controller
         ]);
     }
 
-    private function resultsForQuestion(PollSession $session, PollQuestion $question): array
+    private function resultsForQuestion(PollSession $session, PollQuestion $question, string $pollType): array
     {
+        if ($pollType === 'word_cloud') {
+            $counts = PollResponse::query()
+                ->where('session_id', $session->id)
+                ->where('question_id', $question->id)
+                ->whereNotNull('answer_text')
+                ->select('answer_text', DB::raw('count(*) as total'))
+                ->groupBy('answer_text')
+                ->orderByDesc('total')
+                ->limit(50)
+                ->get();
+
+            $total = (int) $counts->sum('total');
+
+            return $counts->map(function ($row) use ($total) {
+                $count = (int) $row->total;
+                $percent = $total > 0 ? round(($count / $total) * 100, 2) : 0;
+
+                return [
+                    'answer_text' => $row->answer_text,
+                    'count' => $count,
+                    'percent' => $percent,
+                ];
+            })->all();
+        }
+
         $counts = PollResponse::query()
             ->where('session_id', $session->id)
             ->where('question_id', $question->id)
@@ -114,5 +162,13 @@ class VoteController extends Controller
                 'percent' => $percent,
             ];
         })->all();
+    }
+
+    private function normalizeAnswerText(string $text): string
+    {
+        $text = trim($text);
+        $text = preg_replace('/\\s+/u', ' ', $text) ?? $text;
+
+        return mb_strtolower($text, 'UTF-8');
     }
 }
