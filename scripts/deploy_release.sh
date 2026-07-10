@@ -19,6 +19,10 @@ NO_COMPOSER=${NO_COMPOSER:-0} # 1 = skippa composer install lokalt (skickar med 
 RUN_MIGRATIONS=${RUN_MIGRATIONS:-1}  # 1 = kör php artisan migrate --force på servern
 RUN_SEEDERS=${RUN_SEEDERS:-1}        # 1 = kör specifika seeders (idempotent)
 
+ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+GIT_COMMIT=$(git -C "$ROOT_DIR" rev-parse HEAD)
+GIT_DIRTY=$(git -C "$ROOT_DIR" status --porcelain | wc -l | tr -d ' ')
+
 ########################################
 # 0) Förutsättningar
 ########################################
@@ -78,7 +82,7 @@ rsync -az --delete \
 ########################################
 echo "[remote] prepare release, migrate, caches, current"
 ssh "$SSH_HOST" bash -lc "set -euo pipefail; \
-APP_PATH='$APP_PATH'; RELEASE='$RELEASE'; \
+APP_PATH='$APP_PATH'; RELEASE='$RELEASE'; GIT_COMMIT='$GIT_COMMIT'; GIT_DIRTY='$GIT_DIRTY'; \
 NEW=\"\${APP_PATH}/releases/\${RELEASE}\"; \
 mkdir -p \"\${APP_PATH}/shared/storage/framework/cache\" \"\${APP_PATH}/shared/storage/framework/sessions\" \"\${APP_PATH}/shared/storage/framework/views\" \"\${APP_PATH}/shared/storage/logs\" \"\${APP_PATH}/shared/database\" \"\${APP_PATH}/releases\"; \
 mkdir -p \"\${APP_PATH}/shared/storage/app\"; \
@@ -103,6 +107,7 @@ ls -1 | sort | head -n -$KEEP_DB_BACKUPS | xargs -r -I{} rm -f {}; \
 cd \"\${NEW}\"; \
 if [[ '$RUN_MIGRATIONS' == '1' ]]; then php artisan migrate --force; fi; \
 if [[ '$RUN_SEEDERS' == '1' ]]; then php artisan db:seed --class=AdminUserSeeder --no-interaction --force || true; fi; \
+printf 'release=%s\ncommit=%s\ndirty_files=%s\ndeployed_at=%s\n' '$RELEASE' '$GIT_COMMIT' '$GIT_DIRTY' \"\$(date -Iseconds)\" > \"\${NEW}/.release-meta\"; \
 ln -snf \"\${NEW}\" \"\${APP_PATH}/current\"; \
 # Städa äldre releaser
 cd \"\${APP_PATH}/releases\"; \
