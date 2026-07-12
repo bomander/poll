@@ -107,6 +107,7 @@ ls -1 | sort | head -n -$KEEP_DB_BACKUPS | xargs -r -I{} rm -f {}; \
 cd \"\${NEW}\"; \
 if [[ '$RUN_MIGRATIONS' == '1' ]]; then php artisan migrate --force; fi; \
 if [[ '$RUN_SEEDERS' == '1' ]]; then php artisan db:seed --class=AdminUserSeeder --no-interaction --force || true; fi; \
+php artisan about --only=environment --no-ansi >/dev/null; \
 printf 'release=%s\ncommit=%s\ndirty_files=%s\ndeployed_at=%s\n' '$RELEASE' '$GIT_COMMIT' '$GIT_DIRTY' \"\$(date -Iseconds)\" > \"\${NEW}/.release-meta\"; \
 ln -snf \"\${NEW}\" \"\${APP_PATH}/current\"; \
 # Städa äldre releaser
