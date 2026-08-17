@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\BomaIdentityClient;
+use App\Support\OidcLoginTransactions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +28,7 @@ class BomaIdentityController extends Controller
         $state = Str::random(64);
         $verifier = Str::random(96);
         $nonce = Str::random(64);
-        $request->session()->put('boma_identity', [
+        OidcLoginTransactions::store($request, [
             'state' => $state,
             'verifier' => $verifier,
             'nonce' => $nonce,
@@ -55,8 +56,8 @@ class BomaIdentityController extends Controller
     {
         abort_unless(config('services.boma_identity.enabled'), 404);
 
-        $transaction = $request->session()->pull('boma_identity');
         $state = $request->string('state')->toString();
+        $transaction = OidcLoginTransactions::pull($request, $state);
 
         if (! is_array($transaction)
             || $state === ''

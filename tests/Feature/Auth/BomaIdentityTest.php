@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Services\BomaIdentityClient;
 
 beforeEach(function () {
     config([
@@ -39,6 +40,25 @@ test('identity routes 404 when sso is disabled', function () {
 
 test('callback without a login transaction redirects safely home', function () {
     $this->get(route('auth.boma.callback'))->assertRedirect(route('home'));
+});
+
+test('parallel login attempts keep separate transactions', function () {
+    $identity = Mockery::mock(BomaIdentityClient::class);
+    $identity->shouldReceive('discovery')->twice()->andReturn([
+        'authorization_endpoint' => 'https://auth.test/oauth/authorize',
+    ]);
+    app()->instance(BomaIdentityClient::class, $identity);
+
+    $first = $this->get(route('auth.boma'));
+    $second = $this->get(route('auth.boma'));
+    parse_str((string) parse_url($first->headers->get('Location'), PHP_URL_QUERY), $firstQuery);
+    parse_str((string) parse_url($second->headers->get('Location'), PHP_URL_QUERY), $secondQuery);
+
+    expect($firstQuery['state'])->not->toBe($secondQuery['state'])
+        ->and(session('boma_identity_transactions'))->toHaveKeys([
+            $firstQuery['state'],
+            $secondQuery['state'],
+        ]);
 });
 
 test('callback signs in a new teacher linked by sub', function () {
