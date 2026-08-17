@@ -279,9 +279,9 @@ return [
     'auth' => [
         'login' => [
             'title' => 'Log in to your account',
-            'description' => 'Use Basen to authenticate',
+            'description' => 'Use your shared boma.nu account',
             'head' => 'Log in',
-            'sign_in_with_basen' => 'Sign in with Basen',
+            'sign_in_with_boma' => 'Sign in with your boma.nu account',
             'no_account' => "Don't have an account?",
             'sign_up' => 'Sign up',
         ],
@@ -364,7 +364,7 @@ return [
             'sr_title' => 'Settings',
             'title' => 'Settings',
             'description' => 'App preferences and defaults.',
-            'poll_defaults_placeholder' => 'Poll defaults will be added here (local settings, not Basen).',
+            'poll_defaults_placeholder' => 'Poll defaults will be added here. They are stored only in Enkät.',
         ],
         'title' => 'Settings',
         'description' => 'App settings',

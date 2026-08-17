@@ -8,7 +8,7 @@ anonymously with a short code and vote once per question.
 - Backend: Laravel (PHP 8.x)
 - Frontend: React (Vite)
 - Realtime: WebSockets (Laravel Reverb/Pusher/Socket.IO-compatible)
-- Auth: OAuth via Basen (teachers only)
+- Auth: OpenID Connect via the shared boma.nu account at auth.boma.nu (teachers only)
 
 ## Project docs
 - `docs/requirements.md` - MVP scope and constraints
@@ -33,4 +33,4 @@ anonymously with a short code and vote once per question.
 - Sessions are per live run; no cross-session analytics in MVP.
 - Exports are aggregated CSV per session only.
 - Realtime uses Laravel broadcasting; set `BROADCAST_CONNECTION` and Pusher/Reverb env values.
-- OAuth uses Basen; configure `BASEN_*` env vars in production.
+- Teacher sign-in uses Authorization Code with PKCE against auth.boma.nu; configure the `BOMA_AUTH_*` variables in production.

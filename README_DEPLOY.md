@@ -45,12 +45,11 @@ Skriptet gör:
 2. Skapar en ny release på servern och rsync:ar upp koden
 3. Länkar `shared/.env`, `shared/storage` och `shared/database.sqlite` in i releasen
 4. Kör Composer i prod-läge utan scripts, rensar cache, kör migrations (kan stängas av)
-5. Kör seeders (Admin) om env-variabler finns
-6. Sätter `current` → nya releasen (atomiskt byte)
-7. Kopierar `current/public/` till `~/public_html/enkat` och patchar `index.php`
-8. Städar gamla releaser (behåller 5)
-9. Gör enkel health check på `/login`
-10. Tar automatisk backup av SQLite-databasen före migreringar (roterar, behåller 10)
+5. Sätter `current` → nya releasen (atomiskt byte)
+6. Kopierar `current/public/` till `~/public_html/enkat` och patchar `index.php`
+7. Städar gamla releaser (behåller 5)
+8. Gör enkel health check på `/login`
+9. Tar automatisk backup av SQLite-databasen före migreringar (roterar, behåller 10)
 
 Exempel (från din dator):
 ```bash
@@ -106,14 +105,23 @@ DB_DATABASE=/home/<user>/apps/enkat/shared/database/database.sqlite
 
 SESSION_DRIVER=file
 SESSION_LIFETIME=120
+SESSION_COOKIE=enkat_session
+SESSION_PATH=/enkat/
+SESSION_SECURE_COOKIE=true
 
-# Admin user (first user)
-ADMIN_NAME=Admin
-ADMIN_EMAIL=admin@boma.nu
-ADMIN_PASSWORD=change-me
+BOMA_AUTH_ENABLED=true
+BOMA_AUTH_ISSUER=https://auth.boma.nu
+BOMA_AUTH_CLIENT_ID=<client-id>
+BOMA_AUTH_CLIENT_SECRET=<client-secret>
+BOMA_AUTH_REDIRECT_URI=https://boma.nu/enkat/auth/boma/callback
 ENV
 php artisan key:generate --force
 ```
+
+Lärare loggar in med sitt gemensamma boma.nu-konto. Enkät har inga lokala
+registrerings-, lösenords- eller återställningsvägar. Callback-adressen måste
+vara registrerad för Enkäts klient i auth-tjänsten. Ange aldrig klienthemligheten
+i dokumentation, Git eller chatt.
 
 2) Rensa caches
 ```bash

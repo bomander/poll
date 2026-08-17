@@ -16,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Basen sköter autentisering. Förhindra att Fortify registrerar lokala auth-routes.
+        // auth.boma.nu sköter autentisering. Förhindra att Fortify registrerar lokala auth-routes.
         if (class_exists(Fortify::class)) {
             Fortify::ignoreRoutes();
         }

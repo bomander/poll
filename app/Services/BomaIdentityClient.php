@@ -11,7 +11,7 @@ use stdClass;
 
 /**
  * OIDC client against the shared boma.nu identity provider (auth.boma.nu).
- * Mirrors the reference implementation used by Basen.
+ * OIDC client for the shared boma.nu identity provider.
  */
 class BomaIdentityClient
 {

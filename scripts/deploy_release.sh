@@ -17,11 +17,15 @@ KEEP_DB_BACKUPS=${KEEP_DB_BACKUPS:-10}
 NO_BUILD=${NO_BUILD:-0}      # 1 = skippa npm build lokalt
 NO_COMPOSER=${NO_COMPOSER:-0} # 1 = skippa composer install lokalt (skickar med vendor/)
 RUN_MIGRATIONS=${RUN_MIGRATIONS:-1}  # 1 = kör php artisan migrate --force på servern
-RUN_SEEDERS=${RUN_SEEDERS:-1}        # 1 = kör specifika seeders (idempotent)
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 GIT_COMMIT=$(git -C "$ROOT_DIR" rev-parse HEAD)
 GIT_DIRTY=$(git -C "$ROOT_DIR" status --porcelain | wc -l | tr -d ' ')
+
+if [[ "$GIT_DIRTY" != "0" ]]; then
+  echo "Deploy avbruten: arbetskopian innehåller $GIT_DIRTY ocommittade filer." >&2
+  exit 1
+fi
 
 ########################################
 # 0) Förutsättningar
@@ -88,6 +92,10 @@ mkdir -p \"\${APP_PATH}/shared/storage/framework/cache\" \"\${APP_PATH}/shared/s
 mkdir -p \"\${APP_PATH}/shared/storage/app\"; \
 echo \"\${RELEASE}\" > \"\${APP_PATH}/shared/storage/app/build.txt\"; \
 [ -f \"\${APP_PATH}/shared/.env\" ] || touch \"\${APP_PATH}/shared/.env\"; \
+[ \"\$(grep -E '^APP_URL=' \"\${APP_PATH}/shared/.env\" | tail -n 1 | cut -d= -f2-)\" = 'https://boma.nu/enkat' ] || { echo 'Fel APP_URL' >&2; exit 1; }; \
+[ \"\$(grep -E '^BOMA_AUTH_REDIRECT_URI=' \"\${APP_PATH}/shared/.env\" | tail -n 1 | cut -d= -f2-)\" = 'https://boma.nu/enkat/auth/boma/callback' ] || { echo 'Fel BOMA_AUTH_REDIRECT_URI' >&2; exit 1; }; \
+[ \"\$(grep -E '^SESSION_COOKIE=' \"\${APP_PATH}/shared/.env\" | tail -n 1 | cut -d= -f2-)\" = 'enkat_session' ] || { echo 'Fel SESSION_COOKIE' >&2; exit 1; }; \
+[ \"\$(grep -E '^SESSION_PATH=' \"\${APP_PATH}/shared/.env\" | tail -n 1 | cut -d= -f2-)\" = '/enkat/' ] || { echo 'Fel SESSION_PATH' >&2; exit 1; }; \
 [ -f \"\${APP_PATH}/shared/database/database.sqlite\" ] || { mkdir -p \"\${APP_PATH}/shared/database\"; touch \"\${APP_PATH}/shared/database/database.sqlite\"; }; \
 mkdir -p \"\${APP_PATH}/shared/backups\"; \
 ln -snf \"\${APP_PATH}/shared/.env\" \"\${NEW}/.env\"; \
@@ -106,7 +114,6 @@ cd \"\${APP_PATH}/shared/backups\"; \
 ls -1 | sort | head -n -$KEEP_DB_BACKUPS | xargs -r -I{} rm -f {}; \
 cd \"\${NEW}\"; \
 if [[ '$RUN_MIGRATIONS' == '1' ]]; then php artisan migrate --force; fi; \
-if [[ '$RUN_SEEDERS' == '1' ]]; then php artisan db:seed --class=AdminUserSeeder --no-interaction --force || true; fi; \
 php artisan about --only=environment --no-ansi >/dev/null; \
 printf 'release=%s\ncommit=%s\ndirty_files=%s\ndeployed_at=%s\n' '$RELEASE' '$GIT_COMMIT' '$GIT_DIRTY' \"\$(date -Iseconds)\" > \"\${NEW}/.release-meta\"; \
 ln -snf \"\${NEW}\" \"\${APP_PATH}/current\"; \

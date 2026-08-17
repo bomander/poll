@@ -279,9 +279,9 @@ return [
     'auth' => [
         'login' => [
             'title' => 'Logga in',
-            'description' => 'Använd Basen för att logga in',
+            'description' => 'Använd ditt gemensamma boma.nu-konto',
             'head' => 'Logga in',
-            'sign_in_with_basen' => 'Logga in med Basen',
+            'sign_in_with_boma' => 'Logga in med boma.nu-kontot',
             'no_account' => 'Har du inget konto?',
             'sign_up' => 'Skapa konto',
         ],
@@ -364,7 +364,7 @@ return [
             'sr_title' => 'Inställningar',
             'title' => 'Inställningar',
             'description' => 'Appens inställningar och standardval.',
-            'poll_defaults_placeholder' => 'Här lägger vi poll-standardinställningar framöver (lokala inställningar, inte Basen).',
+            'poll_defaults_placeholder' => 'Här lägger vi standardinställningar för omröstningar framöver. De sparas bara i Enkät.',
         ],
         'title' => 'Inställningar',
         'description' => 'Appinställningar',

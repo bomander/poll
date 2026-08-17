@@ -3,8 +3,8 @@
 All endpoints are prefixed with `/api`.
 
 ## Auth (teacher)
-- `GET /auth/basen/redirect` -> starts OAuth flow
-- `GET /auth/basen/callback` -> handles OAuth callback
+- `GET /auth/boma` -> starts the OpenID Connect flow against auth.boma.nu
+- `GET /auth/boma/callback` -> verifies the OpenID Connect callback
 - `POST /auth/logout` -> end session
 
 ## Polls (teacher)
