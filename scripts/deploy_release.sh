@@ -7,7 +7,7 @@ set -euo pipefail
 ########################################
 # Konfiguration (anpassa vid behov)
 ########################################
-SSH_HOST=${SSH_HOST:-"nrnqv@delta.hostup.se"}
+SSH_HOST=${SSH_HOST:-"hostup"}
 APP_PATH=${APP_PATH:-"/home/nrnqv/apps/enkat"}           # rot för releases/current/shared
 WEB_ROOT=${WEB_ROOT:-"/home/nrnqv/public_html/enkat"}    # publik webbmapp
 KEEP_RELEASES=${KEEP_RELEASES:-5}
@@ -32,12 +32,19 @@ fi
 ########################################
 command -v rsync >/dev/null 2>&1 || { echo "rsync saknas"; exit 1; }
 command -v ssh >/dev/null 2>&1 || { echo "ssh saknas"; exit 1; }
+command -v composer >/dev/null 2>&1 || { echo "composer saknas"; exit 1; }
+command -v curl >/dev/null 2>&1 || { echo "curl saknas"; exit 1; }
+command -v npm >/dev/null 2>&1 || { echo "npm saknas"; exit 1; }
+
+composer audit --no-dev --locked --no-interaction
+npm audit
 
 ########################################
 # 1) Bygg frontenden lokalt
 ########################################
 if [[ "$NO_BUILD" -eq 0 ]]; then
-  echo "[local] npm run build"
+  echo "[local] npm ci && npm run build"
+  npm ci --prefer-offline
   npm run build
 else
   echo "[local] skip build (NO_BUILD=1)"
@@ -49,6 +56,7 @@ fi
 RELEASE=$(date +%Y%m%d%H%M%S)
 BUILD_DIR=$(mktemp -d "${TMPDIR:-/tmp}/enkat-deploy.XXXXXX")
 LOCAL_RELEASE="${BUILD_DIR}/release"
+trap 'rm -rf "$BUILD_DIR"' EXIT
 
 export COMPOSER_CACHE_DIR="${COMPOSER_CACHE_DIR:-${BUILD_DIR}/composer-cache}"
 mkdir -p "$COMPOSER_CACHE_DIR"
@@ -104,7 +112,8 @@ mkdir -p \"\${NEW}/database\"; \
 ln -snf \"\${APP_PATH}/shared/database/database.sqlite\" \"\${NEW}/database/database.sqlite\"; \
 cd \"\${NEW}\"; \
 rm -f bootstrap/cache/*.php || true; \
-php artisan config:clear || true; php artisan route:clear || true; php artisan view:clear || true; \
+composer audit --no-dev --locked --no-interaction; \
+php artisan config:clear; php artisan route:clear; php artisan view:clear; \
 # Säkerhetskopiera databasen innan migreringar
 if [ -f \"\${APP_PATH}/shared/database/database.sqlite\" ]; then \
   cp -a \"\${APP_PATH}/shared/database/database.sqlite\" \"\${APP_PATH}/shared/backups/database-\${RELEASE}.sqlite\"; \
@@ -119,7 +128,8 @@ printf 'release=%s\ncommit=%s\ndirty_files=%s\ndeployed_at=%s\n' '$RELEASE' '$GI
 ln -snf \"\${NEW}\" \"\${APP_PATH}/current\"; \
 # Städa äldre releaser
 cd \"\${APP_PATH}/releases\"; \
-ls -1 | sort | head -n -$KEEP_RELEASES | xargs -r -I{} rm -rf {} \
+ls -1 | sort | head -n -$KEEP_RELEASES | xargs -r -I{} rm -rf {}; \
+touch /home/nrnqv/.lsphp_restart.txt \
 "
 
 ########################################
@@ -159,22 +169,21 @@ INDEXEOF
 scp -q "$INDEX_TMP" "$SSH_HOST:$WEB_ROOT/index.php"
 rm -f "$INDEX_TMP"
 
-# Rensa OPCache via HTTP för att tvinga omladdning av PHP-filer
-ssh "$SSH_HOST" "echo '<?php if(function_exists(\"opcache_reset\")) { opcache_reset(); echo \"cleared\"; } ?>' > $WEB_ROOT/opcache_clear.php"
-curl -sk "https://boma.nu/enkat/opcache_clear.php" || true
-ssh "$SSH_HOST" "rm -f $WEB_ROOT/opcache_clear.php"
+echo "[check] exakt release, beroenden och OIDC-start"
+ssh "$SSH_HOST" "set -euo pipefail;
+grep -Fx 'commit=$GIT_COMMIT' '$APP_PATH/current/.release-meta';
+grep -Fx 'dirty_files=0' '$APP_PATH/current/.release-meta';
+cd '$APP_PATH/current';
+composer audit --no-dev --locked --no-interaction;
+"
 
-########################################
-# 6) Health check (innehålls-koll, inte bara status)
-########################################
-echo "[check] GET https://boma.nu/enkat/login"
-if command -v curl >/dev/null 2>&1; then
-  set +e
-  RESPONSE=$(curl -sI https://boma.nu/enkat/login 2>/dev/null | head -1)
-  echo "$RESPONSE" | grep -qE "302|200" && echo "OK: $RESPONSE" || echo "VARNING: $RESPONSE"
-  set -e
-else
-  echo "(curl saknas lokalt – hoppar över health check)"
-fi
+AUTH_HEADERS="$(mktemp)"
+trap 'rm -rf "$BUILD_DIR"; rm -f "$AUTH_HEADERS"' EXIT
+curl --retry 6 --retry-delay 2 --retry-all-errors --fail --silent --show-error \
+  --dump-header "$AUTH_HEADERS" --output /dev/null \
+  'https://boma.nu/enkat/auth/boma'
+grep -qi '^location: https://auth\.boma\.nu/' "$AUTH_HEADERS"
+grep -Eqi '^set-cookie: XSRF-TOKEN=.*path=/enkat/([;[:space:]]|$)' "$AUTH_HEADERS"
+grep -Eqi '^set-cookie: enkat_session=.*path=/enkat/([;[:space:]]|$)' "$AUTH_HEADERS"
 
 echo "[done] Deploy klar: release $RELEASE"
