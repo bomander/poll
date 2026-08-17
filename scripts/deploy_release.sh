@@ -85,7 +85,7 @@ rsync -az --delete \
 # 4) Server-steg: länka shared, migrering, caches, current
 ########################################
 echo "[remote] prepare release, migrate, caches, current"
-ssh "$SSH_HOST" bash -lc "set -euo pipefail; \
+ssh "$SSH_HOST" "set -euo pipefail; \
 APP_PATH='$APP_PATH'; RELEASE='$RELEASE'; GIT_COMMIT='$GIT_COMMIT'; GIT_DIRTY='$GIT_DIRTY'; \
 NEW=\"\${APP_PATH}/releases/\${RELEASE}\"; \
 mkdir -p \"\${APP_PATH}/shared/storage/framework/cache\" \"\${APP_PATH}/shared/storage/framework/sessions\" \"\${APP_PATH}/shared/storage/framework/views\" \"\${APP_PATH}/shared/storage/logs\" \"\${APP_PATH}/shared/database\" \"\${APP_PATH}/releases\"; \
