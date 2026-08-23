@@ -3,13 +3,14 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     /**
@@ -23,6 +24,11 @@ class User extends Authenticatable
         'password',
         'basen_subject',
         'auth_subject',
+        'identity_disabled_at',
+        'identity_application_revoked_at',
+        'identity_deleted_at',
+        'identity_quarantine_until',
+        'identity_session_version',
         'is_admin',
         'is_banned',
         'ban_reason',
@@ -50,6 +56,11 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_admin' => 'boolean',
             'is_banned' => 'boolean',
+            'identity_disabled_at' => 'datetime',
+            'identity_application_revoked_at' => 'datetime',
+            'identity_deleted_at' => 'datetime',
+            'identity_quarantine_until' => 'datetime',
+            'identity_session_version' => 'integer',
         ];
     }
 

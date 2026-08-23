@@ -96,8 +96,16 @@ class BomaIdentityController extends Controller
                 ]);
             }
 
+            if ($user->identity_disabled_at !== null
+                || $user->identity_deleted_at !== null
+                || $user->identity_quarantine_until !== null) {
+                throw new \RuntimeException('Kontot är inte aktivt i tjänsten.');
+            }
+
+            $user->forceFill(['identity_application_revoked_at' => null])->save();
             Auth::login($user, true);
             $request->session()->regenerate();
+            $request->session()->put('boma_identity_session_version', (int) $user->identity_session_version);
 
             return redirect()->intended(route('dashboard'));
         } catch (Throwable $e) {

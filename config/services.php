@@ -42,6 +42,11 @@ return [
         'client_id' => env('BOMA_AUTH_CLIENT_ID'),
         'client_secret' => env('BOMA_AUTH_CLIENT_SECRET'),
         'redirect' => env('BOMA_AUTH_REDIRECT_URI', rtrim((string) env('APP_URL'), '/').'/auth/boma/callback'),
+        'events' => [
+            'enabled' => env('BOMA_AUTH_EVENTS_ENABLED', false),
+            'subject_hash_key' => env('BOMA_AUTH_EVENT_SUBJECT_HASH_KEY'),
+            'receipt_retention_days' => (int) env('BOMA_AUTH_EVENT_RECEIPT_RETENTION_DAYS', 90),
+        ],
     ],
 
 ];
