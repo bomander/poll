@@ -104,6 +104,9 @@ echo \"\${RELEASE}\" > \"\${APP_PATH}/shared/storage/app/build.txt\"; \
 [ \"\$(grep -E '^BOMA_AUTH_REDIRECT_URI=' \"\${APP_PATH}/shared/.env\" | tail -n 1 | cut -d= -f2-)\" = 'https://boma.nu/enkat/auth/boma/callback' ] || { echo 'Fel BOMA_AUTH_REDIRECT_URI' >&2; exit 1; }; \
 [ \"\$(grep -E '^SESSION_COOKIE=' \"\${APP_PATH}/shared/.env\" | tail -n 1 | cut -d= -f2-)\" = 'enkat_session' ] || { echo 'Fel SESSION_COOKIE' >&2; exit 1; }; \
 [ \"\$(grep -E '^SESSION_PATH=' \"\${APP_PATH}/shared/.env\" | tail -n 1 | cut -d= -f2-)\" = '/enkat/' ] || { echo 'Fel SESSION_PATH' >&2; exit 1; }; \
+grep -Eq '^BOMA_AUTH_EVENTS_ENABLED=(true|false|\"true\"|\"false\")$' \"\${APP_PATH}/shared/.env\" || { echo 'Fel BOMA_AUTH_EVENTS_ENABLED' >&2; exit 1; }; \
+grep -Eq '^BOMA_AUTH_EVENT_RECEIPT_RETENTION_DAYS=(90|\"90\")$' \"\${APP_PATH}/shared/.env\" || { echo 'BOMA_AUTH_EVENT_RECEIPT_RETENTION_DAYS måste vara 90' >&2; exit 1; }; \
+if grep -Eq '^BOMA_AUTH_EVENTS_ENABLED=(true|\"true\")$' \"\${APP_PATH}/shared/.env\"; then grep -Eq '^BOMA_AUTH_EVENT_SUBJECT_HASH_KEY=([^\"[:space:]][^\"[:space:]]*|\"[^\"[:space:]][^\"]*\")$' \"\${APP_PATH}/shared/.env\" || { echo 'BOMA_AUTH_EVENT_SUBJECT_HASH_KEY krävs när identitetshändelser är aktiverade' >&2; exit 1; }; fi; \
 [ -f \"\${APP_PATH}/shared/database/database.sqlite\" ] || { mkdir -p \"\${APP_PATH}/shared/database\"; touch \"\${APP_PATH}/shared/database/database.sqlite\"; }; \
 mkdir -p \"\${APP_PATH}/shared/backups\"; \
 ln -snf \"\${APP_PATH}/shared/.env\" \"\${NEW}/.env\"; \
