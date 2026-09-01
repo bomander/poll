@@ -1,5 +1,9 @@
 declare module 'wordcloud' {
-    const WordCloud: any;
+    type WordCloudEngine = (
+        canvas: HTMLCanvasElement,
+        options: Record<string, unknown>,
+    ) => void;
+
+    const WordCloud: WordCloudEngine & { stop?: () => void };
     export default WordCloud;
 }
-

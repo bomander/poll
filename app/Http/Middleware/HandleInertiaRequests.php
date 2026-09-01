@@ -62,17 +62,17 @@ class HandleInertiaRequests extends Middleware
      */
     private function loadUiTranslations(?string $locale): array
     {
-        if (!is_string($locale) || $locale === '') {
+        if (! is_string($locale) || $locale === '') {
             return [];
         }
 
         $path = base_path('lang/'.$locale.'/ui.php');
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             return [];
         }
 
         $loaded = require $path;
-        if (!is_array($loaded)) {
+        if (! is_array($loaded)) {
             return [];
         }
 

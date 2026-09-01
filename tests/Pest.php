@@ -1,5 +1,9 @@
 <?php
 
+use App\Services\BomaIdentityClient;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -11,8 +15,8 @@
 |
 */
 
-pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
     ->in('Feature');
 
 /*
@@ -54,10 +58,10 @@ function something()
 
 function fakeIdentityLogin(object $test, array $claims): void
 {
-    $mock = Mockery::mock(App\Services\BomaIdentityClient::class);
+    $mock = Mockery::mock(BomaIdentityClient::class);
     $mock->shouldReceive('exchangeCode')->andReturn(['id_token' => 'stub']);
     $mock->shouldReceive('verifyIdToken')->andReturn((object) $claims);
-    app()->instance(App\Services\BomaIdentityClient::class, $mock);
+    app()->instance(BomaIdentityClient::class, $mock);
 
     $test->withSession([
         'boma_identity' => ['state' => 'state-ok', 'verifier' => 'v', 'nonce' => 'n'],

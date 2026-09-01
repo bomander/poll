@@ -24,7 +24,8 @@ class DashboardController extends Controller
         $activeSessions = PollSession::query()
             ->whereHas('poll', fn ($q) => $q->where('user_id', $user->id))
             ->where('status', 'active')
-            ->with(['poll:id,title', 'responses'])
+            ->with('poll:id,title')
+            ->withCount('responses')
             ->orderByDesc('started_at')
             ->get()
             ->map(fn ($session) => [
@@ -32,7 +33,7 @@ class DashboardController extends Controller
                 'code' => $session->code,
                 'poll_title' => $session->poll->title,
                 'poll_id' => $session->poll_id,
-                'response_count' => $session->responses->count(),
+                'response_count' => (int) $session->responses_count,
                 'started_at' => $session->started_at->diffForHumans(),
             ]);
 

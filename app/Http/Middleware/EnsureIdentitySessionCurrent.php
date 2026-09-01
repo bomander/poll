@@ -13,16 +13,21 @@ class EnsureIdentitySessionCurrent
     {
         $user = $request->user();
 
-        if (! $user || $user->auth_subject === null) {
+        if (! $user) {
             return $next($request);
         }
 
-        $sessionVersion = (int) $request->session()->get('boma_identity_session_version', 0);
-        $active = $user->identity_disabled_at === null
-            && $user->identity_application_revoked_at === null
-            && $user->identity_deleted_at === null
-            && $user->identity_quarantine_until === null
-            && $sessionVersion === (int) $user->identity_session_version;
+        $active = ! $user->is_banned;
+
+        if ($user->auth_subject !== null) {
+            $sessionVersion = (int) $request->session()->get('boma_identity_session_version', 0);
+            $active = $active
+                && $user->identity_disabled_at === null
+                && $user->identity_application_revoked_at === null
+                && $user->identity_deleted_at === null
+                && $user->identity_quarantine_until === null
+                && $sessionVersion === (int) $user->identity_session_version;
+        }
 
         if ($active) {
             return $next($request);

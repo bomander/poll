@@ -127,6 +127,38 @@ class IdentityEventTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_older_disable_cannot_override_a_newer_enable_or_close_a_poll(): void
+    {
+        $this->enableEvents();
+        $subject = (string) Str::uuid();
+        $user = User::factory()->create(['auth_subject' => $subject]);
+        $poll = Poll::query()->create(['user_id' => $user->getKey(), 'title' => 'Test']);
+        $session = PollSession::query()->create([
+            'poll_id' => $poll->getKey(),
+            'code' => 'ORDER123',
+            'status' => 'active',
+            'locked' => false,
+        ]);
+        $enabledAt = now()->subMinute()->startOfSecond();
+
+        $this->eventRequest($this->eventToken([
+            'sub' => $subject,
+            'event' => 'subject.enabled',
+            'occurred_at' => $enabledAt->toRfc3339String(),
+        ]))->assertOk();
+        $this->eventRequest($this->eventToken([
+            'sub' => $subject,
+            'event' => 'subject.disabled',
+            'occurred_at' => $enabledAt->copy()->subMinute()->toRfc3339String(),
+        ]))->assertOk();
+
+        $user->refresh();
+        $this->assertNull($user->identity_disabled_at);
+        $this->assertTrue($user->identity_status_changed_at?->equalTo($enabledAt));
+        $this->assertSame('active', $session->fresh()->status);
+        $this->assertFalse($session->fresh()->locked);
+    }
+
     public function test_disabling_identity_closes_owned_public_poll_sessions(): void
     {
         $this->enableEvents();

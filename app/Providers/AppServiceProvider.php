@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Session\PrivacySessionManager;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -16,6 +18,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton('session', fn (Application $app): PrivacySessionManager => new PrivacySessionManager($app));
+
         // auth.boma.nu sköter autentisering. Förhindra att Fortify registrerar lokala auth-routes.
         if (class_exists(Fortify::class)) {
             Fortify::ignoreRoutes();

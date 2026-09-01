@@ -11,3 +11,10 @@ test('authenticated users can open appearance settings', function () {
         ->assertInertia(fn (Assert $page) => $page->component('settings/appearance'));
 });
 
+test('invalid appearance cookies are not inserted into the page script', function () {
+    $this->withUnencryptedCookie('appearance', "dark';alert(1);//")
+        ->get(route('home'))
+        ->assertOk()
+        ->assertSee("const appearance = 'system';", false)
+        ->assertDontSee('alert(1)', false);
+});

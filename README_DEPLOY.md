@@ -41,15 +41,16 @@ scripts/deploy_release.sh
 ```
 
 Skriptet gör:
-1. Bygger Vite-assets lokalt (kan stängas av med `NO_BUILD=1`)
-2. Skapar en ny release på servern och rsync:ar upp koden
-3. Länkar `shared/.env`, `shared/storage` och `shared/database.sqlite` in i releasen
-4. Kör Composer i prod-läge utan scripts, rensar cache, kör migrations (kan stängas av)
-5. Sätter `current` → nya releasen (atomiskt byte)
-6. Kopierar `current/public/` till `~/public_html/enkat` och patchar `index.php`
-7. Städar gamla releaser (behåller 5)
-8. Gör enkel health check på `/login`
-9. Tar automatisk backup av SQLite-databasen före migreringar (roterar, behåller 10)
+1. Kör tester, kodkontroller och beroendegranskningar.
+2. Bygger Vite-assets lokalt för `/enkat/build/`.
+3. Skapar en isolerad release med exakta produktionsberoenden.
+4. Länkar persistenta miljö-, lagrings- och databasfiler.
+5. Tar en transaktionssäker SQLite-backup och verifierar dess integritet.
+6. Kör migreringar och bygger Laravel-cacher.
+7. Förbereder publika filer och växlar `current` atomiskt.
+8. Kontrollerar exakt release via `X-Boma-Release` och återställer automatiskt vid fel.
+9. Installerar schemaläggaren och verifierar OIDC, cookies, CSRF, filrättigheter och databas.
+10. Städar först därefter gamla releaser och backuper (20 av vardera som standard).
 
 Exempel (från din dator):
 ```bash
@@ -68,7 +69,7 @@ Flaggor:
 
 ### Viktig konfiguration för undermapp
 
-- `vite.config.ts` har `base: '/enkat/'` → korrekta asset-URL:er i prod.
+- Deployskriptet bygger med `VITE_BASE_PATH=/enkat/build/`; lokal `.env` kan använda `/build/`.
 - `APP_URL` i `.env` → `https://boma.nu/enkat`
 - `.htaccess` i `~/public_html/enkat` bör innehålla:
   ```apache
@@ -91,7 +92,7 @@ Flaggor:
 ```bash
 cd /home/<user>/apps/enkat/current
 cat > .env <<'ENV'
-APP_NAME=Enkat
+APP_NAME=Enkät
 APP_ENV=production
 APP_KEY=
 APP_DEBUG=false
@@ -103,8 +104,9 @@ LOG_LEVEL=warning
 DB_CONNECTION=sqlite
 DB_DATABASE=/home/<user>/apps/enkat/shared/database/database.sqlite
 
-SESSION_DRIVER=file
+SESSION_DRIVER=database
 SESSION_LIFETIME=120
+SESSION_ENCRYPT=true
 SESSION_COOKIE=enkat_session
 SESSION_PATH=/enkat/
 SESSION_SECURE_COOKIE=true
@@ -114,14 +116,23 @@ BOMA_AUTH_ISSUER=https://auth.boma.nu
 BOMA_AUTH_CLIENT_ID=<client-id>
 BOMA_AUTH_CLIENT_SECRET=<client-secret>
 BOMA_AUTH_REDIRECT_URI=https://boma.nu/enkat/auth/boma/callback
+BOMA_AUTH_EVENTS_ENABLED=false
+BOMA_AUTH_EVENT_RECEIPT_RETENTION_DAYS=90
 ENV
 php artisan key:generate --force
 ```
+
+Appens databasdrivrutin använder återkallningsbara sessioner men lagrar inte
+IP-adress eller user-agent.
 
 Lärare loggar in med sitt gemensamma boma.nu-konto. Enkät har inga lokala
 registrerings-, lösenords- eller återställningsvägar. Callback-adressen måste
 vara registrerad för Enkäts klient i auth-tjänsten. Ange aldrig klienthemligheten
 i dokumentation, Git eller chatt.
+
+Aktivera identitetshändelser först när auth-tjänsten är konfigurerad att skicka
+dem till Enkät. När `BOMA_AUTH_EVENTS_ENABLED=true` krävs även en separat,
+hemlig `BOMA_AUTH_EVENT_SUBJECT_HASH_KEY`.
 
 2) Rensa caches
 ```bash
@@ -133,7 +144,8 @@ php artisan config:clear && php artisan route:clear && php artisan view:clear
 ### Regelbunden uppdatering (varje release)
 
 1) Kör deployskriptet lokalt (se "Skript för deploy")
-2) Testa snabbt: `https://boma.nu/enkat/login` ska visa en inloggningssida
+2) Skriptet verifierar själv den exakta publika releasen, inloggningsstarten,
+   sessionscookies och CSRF-skyddet innan det rapporterar klart.
 
 ---
 
@@ -172,7 +184,7 @@ ssh <user>@<server> 'rsync -az --delete /home/<user>/apps/enkat/current/public/ 
   - Se till att `shared/storage/…` finns och att `storage` i releasen länkas mot `shared/storage`.
 
 - **Assets har fel URL**
-  - Se `vite.config.ts` → `base: '/enkat/'`. Bygg om.
+  - Kontrollera `VITE_BASE_PATH`. Produktion ska byggas för `/enkat/build/`.
 
 - **Rättigheter**
   - På delad hosting brukar `chmod -R 775 ~/apps/enkat/shared/storage` räcka.

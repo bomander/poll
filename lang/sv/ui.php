@@ -33,6 +33,7 @@ return [
             'empty' => 'Du har inga polls ännu.',
             'empty_link' => 'Skapa din första poll',
             'edit' => 'Redigera',
+            'clone_to_edit' => 'Kopiera för att ändra',
             'start_session' => 'Starta session',
             'questions_sessions' => ':questions frågor • :sessions sessioner',
         ],
@@ -74,8 +75,12 @@ return [
         'creating' => 'Skapar...',
         'save' => 'Spara',
         'saving' => 'Sparar...',
+        'copy_suffix' => '(kopia)',
+        'history_locked' => 'Har sessioner och kan inte ändras.',
+        'history_locked_edit' => 'Den här pollen har sessioner och är låst för att bevara historiska resultat. Skapa en kopia om du vill ändra den.',
         'actions' => [
             'edit' => 'Redigera',
+            'clone' => 'Skapa kopia',
             'start_session' => 'Starta session',
         ],
         'errors' => [
@@ -83,6 +88,7 @@ return [
             'load_poll' => 'Kunde inte hämta poll.',
             'create_poll' => 'Kunde inte skapa poll.',
             'save_poll' => 'Kunde inte spara poll.',
+            'clone_poll' => 'Kunde inte skapa en kopia.',
             'start_session' => 'Kunde inte starta session.',
         ],
         'validation' => [
@@ -166,6 +172,10 @@ return [
             'confirm' => 'Bekräfta',
             'cancel' => 'Avbryt',
             'disable' => 'Stäng av',
+            'enable' => 'Återaktivera',
+            'active' => 'Aktiv',
+            'banned' => 'Avstängd',
+            'role_admin' => 'Admin',
         ],
         'recent_sessions' => [
             'title' => 'Senaste sessioner',
@@ -265,6 +275,7 @@ return [
         'update_lock_failed' => 'Kunde inte uppdatera låsning.',
         'close_failed' => 'Kunde inte avsluta sessionen.',
         'code' => 'Kod',
+        'name' => 'Session',
         'lock' => 'Lås fråga',
         'unlock' => 'Lås upp fråga',
         'export_csv' => 'Exportera CSV',

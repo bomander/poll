@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table): void {
             $table->timestamp('identity_disabled_at')->nullable();
+            $table->timestamp('identity_status_changed_at')->nullable();
             $table->timestamp('identity_application_revoked_at')->nullable();
             $table->timestamp('identity_deleted_at')->nullable();
             $table->timestamp('identity_quarantine_until')->nullable()->index();
@@ -35,6 +36,7 @@ return new class extends Migration
             $table->dropIndex(['identity_quarantine_until']);
             $table->dropColumn([
                 'identity_disabled_at',
+                'identity_status_changed_at',
                 'identity_application_revoked_at',
                 'identity_deleted_at',
                 'identity_quarantine_until',

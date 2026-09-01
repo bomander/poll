@@ -38,33 +38,54 @@ class IdentityEventProcessor
 
                 $occurredAt = $identityEvent['occurred_at'];
                 $event = $identityEvent['event'];
+                $revokeSessions = $event === 'subject.sessions_revoked';
+                $closePollSessions = false;
 
                 if ($event === 'subject.disabled') {
-                    if ($user->identity_disabled_at === null
-                        || $user->identity_disabled_at->getTimestamp() <= $occurredAt->getTimestamp()) {
+                    if ($user->identity_status_changed_at === null
+                        || $user->identity_status_changed_at->getTimestamp() <= $occurredAt->getTimestamp()) {
                         $user->identity_disabled_at = $occurredAt;
+                        $user->identity_status_changed_at = $occurredAt;
+                        $revokeSessions = true;
+                        $closePollSessions = true;
                     }
                 } elseif ($event === 'subject.enabled') {
                     if ($user->identity_deleted_at === null
-                        && ($user->identity_disabled_at === null
-                            || $user->identity_disabled_at->getTimestamp() < $occurredAt->getTimestamp())) {
+                        && $user->identity_quarantine_until === null
+                        && ($user->identity_status_changed_at === null
+                            || $user->identity_status_changed_at->getTimestamp() < $occurredAt->getTimestamp())) {
                         $user->identity_disabled_at = null;
+                        $user->identity_status_changed_at = $occurredAt;
                     }
                 } elseif ($event === 'subject.application_revoked') {
                     if ($user->identity_application_revoked_at === null
                         || $user->identity_application_revoked_at->getTimestamp() <= $occurredAt->getTimestamp()) {
                         $user->identity_application_revoked_at = $occurredAt;
+                        $revokeSessions = true;
+                        $closePollSessions = true;
                     }
                 } elseif ($event === 'subject.deleted') {
                     if ($user->identity_deleted_at === null
                         || $user->identity_deleted_at->getTimestamp() <= $occurredAt->getTimestamp()) {
                         $user->identity_deleted_at = $occurredAt;
+                    }
+                    if ($user->identity_disabled_at === null
+                        || $user->identity_disabled_at->getTimestamp() < $occurredAt->getTimestamp()) {
                         $user->identity_disabled_at = $occurredAt;
+                    }
+                    if ($user->identity_quarantine_until === null
+                        || $user->identity_quarantine_until->getTimestamp() < $identityEvent['quarantine_until']->getTimestamp()) {
                         $user->identity_quarantine_until = $identityEvent['quarantine_until'];
                     }
+                    if ($user->identity_status_changed_at === null
+                        || $user->identity_status_changed_at->getTimestamp() < $occurredAt->getTimestamp()) {
+                        $user->identity_status_changed_at = $occurredAt;
+                    }
+                    $revokeSessions = true;
+                    $closePollSessions = true;
                 }
 
-                if ($event !== 'subject.enabled') {
+                if ($revokeSessions) {
                     $user->remember_token = null;
                     $user->identity_session_version = (int) $user->identity_session_version + 1;
                     DB::table((string) config('session.table', 'sessions'))
@@ -72,7 +93,7 @@ class IdentityEventProcessor
                         ->delete();
                 }
 
-                if (in_array($event, ['subject.disabled', 'subject.application_revoked', 'subject.deleted'], true)) {
+                if ($closePollSessions) {
                     PollSession::query()
                         ->whereHas('poll', fn ($query) => $query->where('user_id', $user->getKey()))
                         ->where('status', 'active')

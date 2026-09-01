@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\AddSecurityHeaders;
+use App\Http\Middleware\AttachReleaseHeader;
 use App\Http\Middleware\EnsureIdentitySessionCurrent;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -18,13 +20,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [EnsureIdentitySessionCurrent::class]);
+        $middleware->web(append: [
+            AddSecurityHeaders::class,
+            AttachReleaseHeader::class,
+            EnsureIdentitySessionCurrent::class,
+        ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
-
-        $middleware->validateCsrfTokens(except: [
-            'api/*',
-        ]);
 
         $middleware->web(append: [
             HandleAppearance::class,

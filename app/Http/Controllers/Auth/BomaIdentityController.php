@@ -34,9 +34,7 @@ class BomaIdentityController extends Controller
             'nonce' => $nonce,
         ]);
 
-        $discovery = $identity->discovery();
-        $authorizationEndpoint = $discovery['authorization_endpoint'] ?? null;
-        abort_unless(is_string($authorizationEndpoint) && $authorizationEndpoint !== '', 502);
+        $authorizationEndpoint = $identity->authorizationEndpoint();
 
         $query = http_build_query([
             'client_id' => config('services.boma_identity.client_id'),
@@ -121,9 +119,23 @@ class BomaIdentityController extends Controller
 
     protected function findOrCreateUser(string $sub, string $email, string $name): User
     {
+        $email = Str::lower(trim($email));
+        $name = trim($name);
         $user = User::query()->where('auth_subject', $sub)->first();
 
         if ($user) {
+            if ($this->loginIsBlocked($user)) {
+                return $user;
+            }
+
+            $emailOwner = User::query()
+                ->whereRaw('lower(email) = ?', [$email])
+                ->whereKeyNot($user->getKey())
+                ->exists();
+            if ($emailOwner) {
+                throw new \RuntimeException('E-postadressen används redan av ett annat konto.');
+            }
+
             $user->update([
                 'name' => $name ?: $user->name,
                 'email' => $email,
@@ -134,11 +146,20 @@ class BomaIdentityController extends Controller
         }
 
         // Engångsfallback via verifierad e-post för konton från Basen-tiden.
-        $user = User::query()->whereNull('auth_subject')->where('email', $email)->first();
+        $user = User::query()
+            ->whereNull('auth_subject')
+            ->whereRaw('lower(email) = ?', [$email])
+            ->first();
 
         if ($user) {
+            if ($this->loginIsBlocked($user)) {
+                return $user;
+            }
+
             $user->update([
                 'auth_subject' => $sub,
+                'name' => $name ?: $user->name,
+                'email' => $email,
                 'email_verified_at' => $user->email_verified_at ?: now(),
             ]);
 
@@ -152,5 +173,13 @@ class BomaIdentityController extends Controller
             'password' => Str::random(32),
             'email_verified_at' => now(),
         ]);
+    }
+
+    private function loginIsBlocked(User $user): bool
+    {
+        return $user->is_banned
+            || $user->identity_disabled_at !== null
+            || $user->identity_deleted_at !== null
+            || $user->identity_quarantine_until !== null;
     }
 }

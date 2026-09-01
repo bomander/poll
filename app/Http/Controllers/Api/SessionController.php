@@ -2,43 +2,61 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\ResultsUpdated;
-use App\Events\SessionUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Poll;
 use App\Models\PollQuestion;
 use App\Models\PollSession;
-use App\Models\PollResponse;
+use App\Services\PollResultBuilder;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class SessionController extends Controller
 {
+    public function __construct(private readonly PollResultBuilder $results) {}
+
     public function store(Request $request, Poll $poll)
     {
         abort_unless($poll->user_id === $request->user()->id, 403);
+
+        if ($poll->sessions()->where('status', 'active')->exists()) {
+            return response()->json([
+                'message' => 'This poll already has an active session.',
+            ], 409);
+        }
 
         $data = $request->validate([
             'name' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $session = DB::transaction(function () use ($poll, $data) {
-            $code = $this->generateCode();
-            $firstQuestion = $poll->questions()->orderBy('order_index')->first();
+        try {
+            $session = DB::transaction(function () use ($poll, $data) {
+                $code = $this->generateCode();
+                $firstQuestion = $poll->questions()->orderBy('order_index')->first();
 
-            return PollSession::create([
-                'poll_id' => $poll->id,
-                'code' => $code,
-                'name' => $data['name'] ?? null,
-                'status' => 'active',
-                'current_question_id' => $firstQuestion?->id,
-                'locked' => false,
-                'started_at' => now(),
-            ]);
-        });
+                abort_if($firstQuestion === null, 422, 'The poll has no question.');
 
-        broadcast(new SessionUpdated($session))->toOthers();
+                return PollSession::create([
+                    'poll_id' => $poll->id,
+                    'code' => $code,
+                    'name' => $data['name'] ?? null,
+                    'status' => 'active',
+                    'current_question_id' => $firstQuestion?->id,
+                    'locked' => false,
+                    'started_at' => now(),
+                ]);
+            });
+        } catch (QueryException $exception) {
+            if (str_contains($exception->getMessage(), 'poll_sessions_one_active_per_poll')
+                || str_contains($exception->getMessage(), 'poll_sessions.poll_id')) {
+                return response()->json([
+                    'message' => 'This poll already has an active session.',
+                ], 409);
+            }
+
+            throw $exception;
+        }
 
         return response()->json($this->sessionPayload($session));
     }
@@ -97,8 +115,6 @@ class SessionController extends Controller
             'ended_at' => now(),
         ]);
 
-        broadcast(new SessionUpdated($session))->toOthers();
-
         return response()->json($this->sessionPayload($session, true));
     }
 
@@ -123,8 +139,6 @@ class SessionController extends Controller
             'locked' => false,
         ]);
 
-        broadcast(new SessionUpdated($session))->toOthers();
-
         return response()->json($this->sessionPayload($session, true));
     }
 
@@ -144,8 +158,6 @@ class SessionController extends Controller
             'locked' => $data['locked'],
         ]);
 
-        broadcast(new SessionUpdated($session))->toOthers();
-
         return response()->json($this->sessionPayload($session, true));
     }
 
@@ -163,11 +175,11 @@ class SessionController extends Controller
             fputcsv($handle, ['question', 'option', 'count', 'percent']);
 
             foreach ($session->poll->questions as $question) {
-                $results = $this->resultsForQuestion($pollType, $session, $question);
+                $results = $this->results->forQuestion($pollType, $session, $question, null);
                 foreach ($results as $result) {
                     fputcsv($handle, [
-                        $question->question_text,
-                        $result['option_text'] ?? $result['answer_text'] ?? '',
+                        $this->safeCsvCell($question->question_text),
+                        $this->safeCsvCell($result['option_text'] ?? $result['answer_text'] ?? ''),
                         $result['count'],
                         $result['percent'],
                     ]);
@@ -193,6 +205,11 @@ class SessionController extends Controller
         return $code;
     }
 
+    private function safeCsvCell(string $value): string
+    {
+        return preg_match('/^[=+\-@\t\r]/u', $value) === 1 ? "'{$value}" : $value;
+    }
+
     private function sessionPayload(PollSession $session, bool $includeResults = false): array
     {
         $session->loadMissing('poll.questions.options', 'currentQuestion.options');
@@ -211,60 +228,11 @@ class SessionController extends Controller
             $pollType = $session->poll?->type ?? 'multiple_choice';
             $results = [];
             foreach ($session->poll->questions as $question) {
-                $results[$question->id] = $this->resultsForQuestion($pollType, $session, $question);
+                $results[$question->id] = $this->results->forQuestion($pollType, $session, $question);
             }
             $payload['results'] = $results;
         }
 
         return $payload;
-    }
-
-    private function resultsForQuestion(string $pollType, PollSession $session, PollQuestion $question): array
-    {
-        if ($pollType === 'word_cloud') {
-            $counts = PollResponse::query()
-                ->where('session_id', $session->id)
-                ->where('question_id', $question->id)
-                ->whereNotNull('answer_text')
-                ->select('answer_text', DB::raw('count(*) as total'))
-                ->groupBy('answer_text')
-                ->orderByDesc('total')
-                ->limit(50)
-                ->get();
-
-            $total = (int) $counts->sum('total');
-
-            return $counts->map(function ($row) use ($total) {
-                $count = (int) $row->total;
-                $percent = $total > 0 ? round(($count / $total) * 100, 2) : 0;
-
-                return [
-                    'answer_text' => $row->answer_text,
-                    'count' => $count,
-                    'percent' => $percent,
-                ];
-            })->all();
-        }
-
-        $counts = PollResponse::query()
-            ->where('session_id', $session->id)
-            ->where('question_id', $question->id)
-            ->select('option_id', DB::raw('count(*) as total'))
-            ->groupBy('option_id')
-            ->pluck('total', 'option_id');
-
-        $total = $counts->sum();
-
-        return $question->options->map(function ($option) use ($counts, $total) {
-            $count = (int) ($counts[$option->id] ?? 0);
-            $percent = $total > 0 ? round(($count / $total) * 100, 2) : 0;
-
-            return [
-                'option_id' => $option->id,
-                'option_text' => $option->option_text,
-                'count' => $count,
-                'percent' => $percent,
-            ];
-        })->all();
     }
 }

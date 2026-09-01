@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { apiFetch } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 import { type SharedData } from '@/types';
 
@@ -25,9 +26,8 @@ export default function Welcome() {
         setLoading(true);
 
         try {
-            const res = await fetch(`${basePath}/api/join`, {
+            const res = await apiFetch(`${basePath}/api/join`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code: code.trim().toUpperCase() }),
             });
 
@@ -70,13 +70,19 @@ export default function Welcome() {
                                     setError(null);
                                 }}
                                 maxLength={8}
-                                className="h-14 w-full rounded-md border border-neutral-300 bg-white text-center text-xl font-mono tracking-wider text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-800 dark:text-white dark:placeholder:text-neutral-500"
+                                className="h-14 w-full rounded-md border border-neutral-300 bg-white text-center font-mono text-xl tracking-wider text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-800 dark:text-white dark:placeholder:text-neutral-500"
                             />
                             {error && (
-                                <p className="mt-2 text-center text-sm text-red-600">{error}</p>
+                                <p className="mt-2 text-center text-sm text-red-600">
+                                    {error}
+                                </p>
                             )}
                         </div>
-                        <Button type="submit" className="h-12 w-full" disabled={!code.trim() || loading}>
+                        <Button
+                            type="submit"
+                            className="h-12 w-full"
+                            disabled={!code.trim() || loading}
+                        >
                             {loading ? t('welcome.joining') : t('welcome.join')}
                         </Button>
                     </form>
@@ -94,12 +100,24 @@ export default function Welcome() {
 
                     <div className="text-center">
                         {auth.user ? (
-                            <Button variant="outline" className="w-full" asChild>
-                                <Link href={`${basePath}/dashboard`}>{t('welcome.dashboard')}</Link>
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                asChild
+                            >
+                                <Link href={`${basePath}/dashboard`}>
+                                    {t('welcome.dashboard')}
+                                </Link>
                             </Button>
                         ) : (
-                            <Button variant="outline" className="w-full" asChild>
-                                <Link href={`${basePath}/login`}>{t('welcome.teacher_login')}</Link>
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                asChild
+                            >
+                                <Link href={`${basePath}/login`}>
+                                    {t('welcome.teacher_login')}
+                                </Link>
                             </Button>
                         )}
                     </div>

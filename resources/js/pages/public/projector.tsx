@@ -1,5 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { apiFetch } from '@/lib/api';
 import { useT } from '@/lib/i18n';
@@ -7,16 +7,28 @@ import { useT } from '@/lib/i18n';
 type PageProps = { basePath: string };
 type PollType = 'multiple_choice' | 'word_cloud';
 type PollOption = { id: number; option_text: string };
-type PollQuestion = { id: number; question_text: string; options: PollOption[] };
-type MultipleChoiceResult = { option_id: number; option_text: string; count: number; percent: number };
+type PollQuestion = {
+    id: number;
+    question_text: string;
+    options: PollOption[];
+};
+type MultipleChoiceResult = {
+    option_id: number;
+    option_text: string;
+    count: number;
+    percent: number;
+};
 type WordCloudResult = { answer_text: string; count: number; percent: number };
 type Results = MultipleChoiceResult[] | WordCloudResult[];
-
-declare global {
-    interface Window {
-        Echo?: any;
-    }
-}
+type JoinResponse = {
+    session_id: number;
+    status: 'active' | 'closed';
+    poll_title: string | null;
+    poll_type: PollType;
+    current_question: PollQuestion | null;
+    results: Results;
+    total_responses: number;
+};
 
 const BAR_COLORS = [
     '#3B82F6', // blue
@@ -29,7 +41,10 @@ const BAR_COLORS = [
     '#F97316', // orange
 ];
 
-type WordCloudEngine = (canvas: HTMLCanvasElement, options: Record<string, unknown>) => void;
+type WordCloudEngine = (
+    canvas: HTMLCanvasElement,
+    options: Record<string, unknown>,
+) => void;
 type WordCloudModule = WordCloudEngine & { stop?: () => void };
 
 function stableHash(input: string): number {
@@ -44,7 +59,7 @@ function stableHash(input: string): number {
 function mulberry32(seed: number): () => number {
     let t = seed >>> 0;
     return () => {
-        t += 0x6D2B79F5;
+        t += 0x6d2b79f5;
         let x = t;
         x = Math.imul(x ^ (x >>> 15), x | 1);
         x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
@@ -108,7 +123,10 @@ export default function ProjectorPage() {
     const [pollType, setPollType] = useState<PollType>('multiple_choice');
     const [question, setQuestion] = useState<PollQuestion | null>(null);
     const [results, setResults] = useState<Results>([]);
-    const [sessionStatus, setSessionStatus] = useState<'active' | 'closed' | null>(null);
+    const [totalResponses, setTotalResponses] = useState(0);
+    const [sessionStatus, setSessionStatus] = useState<
+        'active' | 'closed' | null
+    >(null);
     const [error, setError] = useState<string | null>(null);
     const [wordCloudLoaded, setWordCloudLoaded] = useState(false);
 
@@ -118,9 +136,7 @@ export default function ProjectorPage() {
     const renderTimerRef = useRef<number | null>(null);
     const lastWordCloudSignatureRef = useRef<string | null>(null);
 
-    const totalVotes = useMemo(() => results.reduce((sum, r) => sum + (r as any).count, 0), [results]);
-
-    const loadSession = async () => {
+    const loadSession = useCallback(async () => {
         try {
             const res = await apiFetch(`${basePath}/api/join`, {
                 method: 'POST',
@@ -132,60 +148,50 @@ export default function ProjectorPage() {
             if (!res.ok) {
                 throw new Error(t('projector.invalid_code'));
             }
-            const data = await res.json();
-            const nextPollType = (data.poll_type as PollType) || 'multiple_choice';
-            const nextResults = (data.results || []) as Results;
+            const data = (await res.json()) as JoinResponse;
+            const nextPollType = data.poll_type || 'multiple_choice';
+            const nextResults = data.results || [];
             setError(null);
             setSessionId(data.session_id);
             setPollTitle(data.poll_title || null);
             setPollType(nextPollType);
             setQuestion(data.current_question);
-            setResults((prev) => (resultsEqual(nextPollType, prev, nextResults) ? prev : nextResults));
+            setResults((prev) =>
+                resultsEqual(nextPollType, prev, nextResults)
+                    ? prev
+                    : nextResults,
+            );
+            setTotalResponses(data.total_responses || 0);
             setSessionStatus(data.status || null);
         } catch (err) {
-            setError(err instanceof Error ? err.message : t('projector.errors.load_failed'));
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : t('projector.errors.load_failed'),
+            );
         }
-    };
+    }, [basePath, code, t]);
 
     useEffect(() => {
-        if (code) {
-            loadSession();
-        }
-    }, [code]);
+        if (!code) return;
+        const timer = window.setTimeout(() => void loadSession(), 0);
+
+        return () => window.clearTimeout(timer);
+    }, [code, loadSession]);
 
     // Polling fallback - keep a slow refresh to recover if websockets fail.
     useEffect(() => {
         if (!sessionId || sessionStatus === 'closed') return;
-        const intervalMs = window.Echo ? 15000 : 5000;
         const interval = setInterval(() => {
             loadSession();
-        }, intervalMs);
+        }, 5000);
         return () => clearInterval(interval);
-    }, [sessionId, code, sessionStatus]);
+    }, [sessionId, sessionStatus, loadSession]);
 
-    // WebSocket support (if Echo is available)
-    useEffect(() => {
-        if (!sessionId || !window.Echo) return;
-        const channel = window.Echo.channel(`session.${code.toUpperCase()}`);
-        channel.listen('.session_updated', (payload: any) => {
-            setSessionStatus(payload.status || null);
-            if (payload.status === 'active') {
-                loadSession();
-            }
-        });
-        channel.listen('.results_updated', (payload: any) => {
-            if (payload.question_id === question?.id) {
-                const nextResults = (payload.results || []) as Results;
-                setResults((prev) => (resultsEqual(pollType, prev, nextResults) ? prev : nextResults));
-            }
-        });
-        return () => {
-            channel.stopListening('.session_updated');
-            channel.stopListening('.results_updated');
-        };
-    }, [sessionId, question?.id, pollType]);
-
-    const maxPercent = useMemo(() => Math.max(...results.map((r) => (r as any).percent), 1), [results]);
+    const maxPercent = useMemo(
+        () => Math.max(...results.map((result) => result.percent), 1),
+        [results],
+    );
 
     useEffect(() => {
         if (pollType !== 'word_cloud') return;
@@ -195,7 +201,7 @@ export default function ProjectorPage() {
             if (wordCloudEngineRef.current) return;
             const mod = await import('wordcloud');
             if (cancelled) return;
-            wordCloudEngineRef.current = ((mod as any).default ?? (mod as any)) as WordCloudModule;
+            wordCloudEngineRef.current = mod.default;
             setWordCloudLoaded(true);
         })();
 
@@ -239,7 +245,9 @@ export default function ProjectorPage() {
 
         const buildList = (counts: Map<string, number>) => {
             const entries = Array.from(counts.entries());
-            entries.sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0], 'sv'));
+            entries.sort(
+                (a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'sv'),
+            );
             return entries.slice(0, 50);
         };
 
@@ -248,23 +256,37 @@ export default function ProjectorPage() {
             const entries = buildList(counts);
             const maxCount = Math.max(...entries.map(([, count]) => count), 1);
 
-            const list = entries.map(([text, count]) => [text, Math.sqrt(count)] as [string, number]);
-            const weightFactor = Math.max(10, Math.min(canvas.width, canvas.height) / 10) / Math.sqrt(maxCount);
-            const seed = stableHash(entries.map(([text]) => text).sort((a, b) => a.localeCompare(b, 'sv')).join('|'));
+            const list = entries.map(
+                ([text, count]) => [text, Math.sqrt(count)] as [string, number],
+            );
+            const weightFactor =
+                Math.max(10, Math.min(canvas.width, canvas.height) / 10) /
+                Math.sqrt(maxCount);
+            const seed = stableHash(
+                entries
+                    .map(([text]) => text)
+                    .sort((a, b) => a.localeCompare(b, 'sv'))
+                    .join('|'),
+            );
             const random = mulberry32(seed);
 
             WordCloud.stop?.();
             WordCloud(canvas, {
                 list,
                 weightFactor,
-                gridSize: Math.max(8, Math.floor(Math.min(canvas.width, canvas.height) / 40)),
+                gridSize: Math.max(
+                    8,
+                    Math.floor(Math.min(canvas.width, canvas.height) / 40),
+                ),
                 rotateRatio: 0,
                 shuffle: false,
                 drawOutOfBound: false,
                 clearCanvas: true,
                 backgroundColor: 'transparent',
-                fontFamily: 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial',
-                color: (word: string) => BAR_COLORS[stableHash(word) % BAR_COLORS.length],
+                fontFamily:
+                    'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial',
+                color: (word: string) =>
+                    BAR_COLORS[stableHash(word) % BAR_COLORS.length],
                 random,
             });
 
@@ -294,18 +316,26 @@ export default function ProjectorPage() {
                         <span className="ml-2 rounded-md border-2 border-neutral-300 bg-white px-3 py-1 font-mono text-xl font-bold tracking-widest text-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white">
                             {code}
                         </span>
-                        {pollTitle ? <span className="ml-3 text-neutral-400 dark:text-neutral-500">- {pollTitle}</span> : null}
+                        {pollTitle ? (
+                            <span className="ml-3 text-neutral-400 dark:text-neutral-500">
+                                - {pollTitle}
+                            </span>
+                        ) : null}
                     </div>
                     <div className="flex items-center gap-2 rounded-full border-2 border-neutral-200 bg-white px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800">
                         <div className="h-3 w-3 rounded-full bg-emerald-500" />
-                        <span className="font-semibold text-neutral-700 dark:text-neutral-200">{totalVotes}</span>
+                        <span className="font-semibold text-neutral-700 dark:text-neutral-200">
+                            {totalResponses}
+                        </span>
                     </div>
                 </div>
             </header>
 
             {error ? (
                 <div className="flex flex-1 items-center justify-center">
-                    <p className="text-xl text-red-600 dark:text-red-400">{error}</p>
+                    <p className="text-xl text-red-600 dark:text-red-400">
+                        {error}
+                    </p>
                 </div>
             ) : question ? (
                 <main className="flex flex-1 flex-col px-12 py-10">
@@ -315,7 +345,7 @@ export default function ProjectorPage() {
                         </div>
                     ) : null}
                     {/* Question */}
-                    <h1 className="text-center text-4xl font-bold leading-tight text-neutral-900 dark:text-white">
+                    <h1 className="text-center text-4xl leading-tight font-bold text-neutral-900 dark:text-white">
                         {question.question_text}
                     </h1>
 
@@ -324,64 +354,94 @@ export default function ProjectorPage() {
                             {/* Bar chart - using grid to ensure aligned baselines */}
                             <div className="mt-8 flex flex-1 flex-col justify-end">
                                 {/* Bars row - fixed height container */}
-                                <div className="flex items-end justify-center gap-8" style={{ height: '50vh' }}>
-                                    {(results as MultipleChoiceResult[]).map((result, index) => {
-                                        const color = BAR_COLORS[index % BAR_COLORS.length];
-                                        const heightPercent = maxPercent > 0 ? (result.percent / maxPercent) * 100 : 0;
+                                <div
+                                    className="flex items-end justify-center gap-8"
+                                    style={{ height: '50vh' }}
+                                >
+                                    {(results as MultipleChoiceResult[]).map(
+                                        (result, index) => {
+                                            const color =
+                                                BAR_COLORS[
+                                                    index % BAR_COLORS.length
+                                                ];
+                                            const heightPercent =
+                                                maxPercent > 0
+                                                    ? (result.percent /
+                                                          maxPercent) *
+                                                      100
+                                                    : 0;
 
-                                        return (
-                                            <div
-                                                key={result.option_id}
-                                                className="flex h-full flex-col items-center justify-end"
-                                                style={{ flex: '1 1 0', maxWidth: '180px' }}
-                                            >
-                                                <div className="mb-2 text-3xl font-bold transition-all duration-500" style={{ color }}>
-                                                    {result.count}
-                                                </div>
+                                            return (
                                                 <div
-                                                    className="w-full rounded-t-lg transition-all duration-500 ease-out"
+                                                    key={result.option_id}
+                                                    className="flex h-full flex-col items-center justify-end"
                                                     style={{
-                                                        backgroundColor: color,
-                                                        height: heightPercent > 0 ? `${Math.max(heightPercent, 5)}%` : '8px',
-                                                        minHeight: '8px',
+                                                        flex: '1 1 0',
+                                                        maxWidth: '180px',
                                                     }}
-                                                />
-                                            </div>
-                                        );
-                                    })}
+                                                >
+                                                    <div
+                                                        className="mb-2 text-3xl font-bold transition-all duration-500"
+                                                        style={{ color }}
+                                                    >
+                                                        {result.count}
+                                                    </div>
+                                                    <div
+                                                        className="w-full rounded-t-lg transition-all duration-500 ease-out"
+                                                        style={{
+                                                            backgroundColor:
+                                                                color,
+                                                            height:
+                                                                heightPercent >
+                                                                0
+                                                                    ? `${Math.max(heightPercent, 5)}%`
+                                                                    : '8px',
+                                                            minHeight: '8px',
+                                                        }}
+                                                    />
+                                                </div>
+                                            );
+                                        },
+                                    )}
                                 </div>
 
                                 {/* Labels row - fixed height, all labels aligned */}
                                 <div className="mt-2 flex justify-center gap-8">
-                                    {(results as MultipleChoiceResult[]).map((result, index) => {
-                                        const color = BAR_COLORS[index % BAR_COLORS.length];
+                                    {(results as MultipleChoiceResult[]).map(
+                                        (result, index) => {
+                                            const color =
+                                                BAR_COLORS[
+                                                    index % BAR_COLORS.length
+                                                ];
 
-                                        return (
-                                            <div
-                                                key={result.option_id}
-                                                className="flex h-24 items-center justify-center rounded-lg border-2 px-3 py-2 text-center"
-                                                style={{
-                                                    flex: '1 1 0',
-                                                    maxWidth: '180px',
-                                                    borderColor: color,
-                                                    backgroundColor: `${color}15`,
-                                                }}
-                                            >
-                                                <span className="line-clamp-3 text-base font-semibold text-neutral-800 dark:text-neutral-100">
-                                                    {result.option_text}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
+                                            return (
+                                                <div
+                                                    key={result.option_id}
+                                                    className="flex h-24 items-center justify-center rounded-lg border-2 px-3 py-2 text-center"
+                                                    style={{
+                                                        flex: '1 1 0',
+                                                        maxWidth: '180px',
+                                                        borderColor: color,
+                                                        backgroundColor: `${color}15`,
+                                                    }}
+                                                >
+                                                    <span className="line-clamp-3 text-base font-semibold text-neutral-800 dark:text-neutral-100">
+                                                        {result.option_text}
+                                                    </span>
+                                                </div>
+                                            );
+                                        },
+                                    )}
                                 </div>
                             </div>
                         </>
                     ) : (
                         <div className="mt-8 flex flex-1 flex-col">
-                            <div
-                                className="relative flex flex-1 items-center justify-center rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950"
-                            >
-                                <canvas ref={wordCloudCanvasRef} className="h-full w-full" />
+                            <div className="relative flex flex-1 items-center justify-center rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
+                                <canvas
+                                    ref={wordCloudCanvasRef}
+                                    className="h-full w-full"
+                                />
                                 {(results as WordCloudResult[]).length === 0 ? (
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <p className="text-lg text-neutral-500 dark:text-neutral-400">
@@ -404,7 +464,9 @@ export default function ProjectorPage() {
                                 ✓
                             </span>
                         </div>
-                        <h2 className="text-2xl font-semibold">{t('projector.ended_title')}</h2>
+                        <h2 className="text-2xl font-semibold">
+                            {t('projector.ended_title')}
+                        </h2>
                         <p className="mt-2">{t('projector.ended_subtitle')}</p>
                     </div>
                 </div>
@@ -419,8 +481,12 @@ export default function ProjectorPage() {
                                 ...
                             </span>
                         </div>
-                        <h2 className="text-2xl font-semibold text-neutral-700 dark:text-neutral-200">{t('projector.waiting_title')}</h2>
-                        <p className="mt-2 text-neutral-500 dark:text-neutral-400">{t('projector.waiting_subtitle')}</p>
+                        <h2 className="text-2xl font-semibold text-neutral-700 dark:text-neutral-200">
+                            {t('projector.waiting_title')}
+                        </h2>
+                        <p className="mt-2 text-neutral-500 dark:text-neutral-400">
+                            {t('projector.waiting_subtitle')}
+                        </p>
                     </div>
                 </div>
             )}

@@ -11,7 +11,6 @@ use stdClass;
 
 /**
  * OIDC client against the shared boma.nu identity provider (auth.boma.nu).
- * OIDC client for the shared boma.nu identity provider.
  */
 class BomaIdentityClient
 {
@@ -71,6 +70,11 @@ class BomaIdentityClient
         return $this->validateClaims($claims, $expectedNonce);
     }
 
+    public function authorizationEndpoint(): string
+    {
+        return $this->requiredEndpoint($this->discovery(), 'authorization_endpoint');
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -102,6 +106,7 @@ class BomaIdentityClient
             || ($authorizedParty !== null && $authorizedParty !== $clientId)
             || ! is_string($claims->sub ?? null)
             || $claims->sub === ''
+            || $expectedNonce === ''
             || ! is_string($claims->nonce ?? null)
             || ! hash_equals($expectedNonce, $claims->nonce)) {
             throw new RuntimeException('ID-tokenens identitetsuppgifter är ogiltiga.');

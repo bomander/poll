@@ -28,7 +28,7 @@ test('local registration and password routes are not available', function () {
 test('logout works for authenticated users', function () {
     $this->actingAs(User::factory()->create());
 
-    $this->post(route('logout'))->assertRedirect('/');
+    $this->post(route('logout'))->assertRedirect(route('home'));
 });
 
 test('identity routes 404 when sso is disabled', function () {
@@ -44,9 +44,8 @@ test('callback without a login transaction redirects safely home', function () {
 
 test('parallel login attempts keep separate transactions', function () {
     $identity = Mockery::mock(BomaIdentityClient::class);
-    $identity->shouldReceive('discovery')->twice()->andReturn([
-        'authorization_endpoint' => 'https://auth.test/oauth/authorize',
-    ]);
+    $identity->shouldReceive('authorizationEndpoint')->twice()
+        ->andReturn('https://auth.test/oauth/authorize');
     app()->instance(BomaIdentityClient::class, $identity);
 
     $first = $this->get(route('auth.boma'));
@@ -129,4 +128,29 @@ test('callback rejects an unverified email without creating a user', function ()
 
     $this->assertGuest();
     expect(User::query()->count())->toBe(0);
+});
+
+test('blocked identity data is not changed during a rejected login', function () {
+    $disabledAt = now()->subDay()->startOfSecond();
+    $user = User::factory()->create([
+        'auth_subject' => 'sub-disabled',
+        'name' => 'Oförändrad',
+        'email' => 'old@example.test',
+        'identity_disabled_at' => $disabledAt,
+    ]);
+
+    fakeIdentityLogin($this, [
+        'sub' => 'sub-disabled',
+        'email' => 'new@example.test',
+        'email_verified' => true,
+        'name' => 'Nytt namn',
+    ]);
+
+    $this->get(route('auth.boma.callback', ['state' => 'state-ok', 'code' => 'x']))
+        ->assertRedirect(route('home'));
+
+    $this->assertGuest();
+    expect($user->refresh()->name)->toBe('Oförändrad')
+        ->and($user->email)->toBe('old@example.test')
+        ->and($user->identity_disabled_at?->equalTo($disabledAt))->toBeTrue();
 });

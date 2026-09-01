@@ -33,6 +33,7 @@ return [
             'empty' => 'You have no polls yet.',
             'empty_link' => 'Create your first poll',
             'edit' => 'Edit',
+            'clone_to_edit' => 'Copy to edit',
             'start_session' => 'Start session',
             'questions_sessions' => ':questions questions • :sessions sessions',
         ],
@@ -74,8 +75,12 @@ return [
         'creating' => 'Creating...',
         'save' => 'Save',
         'saving' => 'Saving...',
+        'copy_suffix' => '(copy)',
+        'history_locked' => 'Has sessions and cannot be changed.',
+        'history_locked_edit' => 'This poll has sessions and is locked to preserve historical results. Create a copy if you want to change it.',
         'actions' => [
             'edit' => 'Edit',
+            'clone' => 'Create copy',
             'start_session' => 'Start session',
         ],
         'errors' => [
@@ -83,6 +88,7 @@ return [
             'load_poll' => 'Failed to load poll.',
             'create_poll' => 'Failed to create poll.',
             'save_poll' => 'Failed to save poll.',
+            'clone_poll' => 'Failed to create a copy.',
             'start_session' => 'Failed to start session.',
         ],
         'validation' => [
@@ -166,6 +172,10 @@ return [
             'confirm' => 'Confirm',
             'cancel' => 'Cancel',
             'disable' => 'Disable',
+            'enable' => 'Reactivate',
+            'active' => 'Active',
+            'banned' => 'Disabled',
+            'role_admin' => 'Admin',
         ],
         'recent_sessions' => [
             'title' => 'Recent sessions',
@@ -265,6 +275,7 @@ return [
         'update_lock_failed' => 'Failed to update lock state.',
         'close_failed' => 'Failed to close session.',
         'code' => 'Code',
+        'name' => 'Session',
         'lock' => 'Lock question',
         'unlock' => 'Unlock question',
         'export_csv' => 'Export CSV',

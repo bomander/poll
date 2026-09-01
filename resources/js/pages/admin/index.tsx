@@ -3,7 +3,13 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { apiFetch } from '@/lib/api';
 import { useT } from '@/lib/i18n';
@@ -21,9 +27,20 @@ type SessionDetails = {
     }[];
 };
 
-type TFunction = (key: string, replacements?: Record<string, string | number>) => string;
+type TFunction = (
+    key: string,
+    replacements?: Record<string, string | number>,
+) => string;
 
-function SessionRow({ session, basePath, t }: { session: Session; basePath: string; t: TFunction }) {
+function SessionRow({
+    session,
+    basePath,
+    t,
+}: {
+    session: Session;
+    basePath: string;
+    t: TFunction;
+}) {
     const [expanded, setExpanded] = useState(false);
     const [details, setDetails] = useState<SessionDetails | null>(null);
     const [loading, setLoading] = useState(false);
@@ -36,7 +53,9 @@ function SessionRow({ session, basePath, t }: { session: Session; basePath: stri
         if (!details) {
             setLoading(true);
             try {
-                const res = await apiFetch(`${basePath}/api/admin/sessions/${session.id}`);
+                const res = await apiFetch(
+                    `${basePath}/api/admin/sessions/${session.id}`,
+                );
                 if (res.ok) {
                     setDetails(await res.json());
                 }
@@ -56,12 +75,18 @@ function SessionRow({ session, basePath, t }: { session: Session; basePath: stri
                         onClick={toggleExpand}
                         className="flex h-6 w-6 items-center justify-center rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     >
-                        {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        {expanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                        ) : (
+                            <ChevronRight className="h-4 w-4" />
+                        )}
                     </button>
                 </td>
                 <td className="py-2 font-mono">{session.code}</td>
                 <td className="py-2">{session.poll_title}</td>
-                <td className="py-2 text-muted-foreground">{session.user_name}</td>
+                <td className="py-2 text-muted-foreground">
+                    {session.user_name}
+                </td>
                 <td className="py-2 text-right">{session.responses_count}</td>
                 <td className="py-2">
                     <span
@@ -71,76 +96,134 @@ function SessionRow({ session, basePath, t }: { session: Session; basePath: stri
                                 : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400'
                         }`}
                     >
-                        {session.status === 'active' ? t('admin.status.active') : t('admin.status.closed')}
+                        {session.status === 'active'
+                            ? t('admin.status.active')
+                            : t('admin.status.closed')}
                     </span>
                 </td>
-                <td className="py-2 text-muted-foreground">{session.created_at}</td>
+                <td className="py-2 text-muted-foreground">
+                    {session.created_at}
+                </td>
             </tr>
             {expanded && (
                 <tr>
-                    <td colSpan={7} className="bg-neutral-50 p-4 dark:bg-neutral-900">
+                    <td
+                        colSpan={7}
+                        className="bg-neutral-50 p-4 dark:bg-neutral-900"
+                    >
                         {loading ? (
-                            <p className="text-sm text-muted-foreground">{t('admin.loading')}</p>
+                            <p className="text-sm text-muted-foreground">
+                                {t('admin.loading')}
+                            </p>
                         ) : details ? (
                             <div className="space-y-4">
                                 {details.questions.map((q) => (
-                                    <div key={q.id} className="rounded border p-3">
-                                        <p className="font-medium">{q.question_text}</p>
+                                    <div
+                                        key={q.id}
+                                        className="rounded border p-3"
+                                    >
+                                        <p className="font-medium">
+                                            {q.question_text}
+                                        </p>
                                         <p className="mb-2 text-xs text-muted-foreground">
-                                            {t('admin.responses', { count: q.total_responses })}
+                                            {t('admin.responses', {
+                                                count: q.total_responses,
+                                            })}
                                         </p>
                                         <div className="space-y-1">
                                             {details.poll_type === 'word_cloud'
-                                                ? (q.answers || []).map((answer, index) => {
-                                                      const percent =
-                                                          q.total_responses > 0
-                                                              ? Math.round((answer.count / q.total_responses) * 100)
-                                                              : 0;
-                                                      return (
-                                                          <div key={`${answer.answer_text}-${index}`} className="flex items-center gap-2 text-sm">
-                                                              <div className="w-32 truncate">{answer.answer_text}</div>
-                                                              <div className="flex-1">
-                                                                  <div className="h-4 rounded bg-neutral-200 dark:bg-neutral-700">
-                                                                      <div
-                                                                          className="h-4 rounded bg-blue-500"
-                                                                          style={{ width: `${percent}%` }}
-                                                                      />
+                                                ? (q.answers || []).map(
+                                                      (answer, index) => {
+                                                          const percent =
+                                                              q.total_responses >
+                                                              0
+                                                                  ? Math.round(
+                                                                        (answer.count /
+                                                                            q.total_responses) *
+                                                                            100,
+                                                                    )
+                                                                  : 0;
+                                                          return (
+                                                              <div
+                                                                  key={`${answer.answer_text}-${index}`}
+                                                                  className="flex items-center gap-2 text-sm"
+                                                              >
+                                                                  <div className="w-32 truncate">
+                                                                      {
+                                                                          answer.answer_text
+                                                                      }
+                                                                  </div>
+                                                                  <div className="flex-1">
+                                                                      <div className="h-4 rounded bg-neutral-200 dark:bg-neutral-700">
+                                                                          <div
+                                                                              className="h-4 rounded bg-blue-500"
+                                                                              style={{
+                                                                                  width: `${percent}%`,
+                                                                              }}
+                                                                          />
+                                                                      </div>
+                                                                  </div>
+                                                                  <div className="w-16 text-right text-muted-foreground">
+                                                                      {
+                                                                          answer.count
+                                                                      }{' '}
+                                                                      ({percent}
+                                                                      %)
                                                                   </div>
                                                               </div>
-                                                              <div className="w-16 text-right text-muted-foreground">
-                                                                  {answer.count} ({percent}%)
-                                                              </div>
-                                                          </div>
-                                                      );
-                                                  })
-                                                : (q.options || []).map((opt) => {
-                                                      const percent =
-                                                          q.total_responses > 0
-                                                              ? Math.round((opt.count / q.total_responses) * 100)
-                                                              : 0;
-                                                      return (
-                                                          <div key={opt.id} className="flex items-center gap-2 text-sm">
-                                                              <div className="w-32 truncate">{opt.option_text}</div>
-                                                              <div className="flex-1">
-                                                                  <div className="h-4 rounded bg-neutral-200 dark:bg-neutral-700">
-                                                                      <div
-                                                                          className="h-4 rounded bg-blue-500"
-                                                                          style={{ width: `${percent}%` }}
-                                                                      />
+                                                          );
+                                                      },
+                                                  )
+                                                : (q.options || []).map(
+                                                      (opt) => {
+                                                          const percent =
+                                                              q.total_responses >
+                                                              0
+                                                                  ? Math.round(
+                                                                        (opt.count /
+                                                                            q.total_responses) *
+                                                                            100,
+                                                                    )
+                                                                  : 0;
+                                                          return (
+                                                              <div
+                                                                  key={opt.id}
+                                                                  className="flex items-center gap-2 text-sm"
+                                                              >
+                                                                  <div className="w-32 truncate">
+                                                                      {
+                                                                          opt.option_text
+                                                                      }
+                                                                  </div>
+                                                                  <div className="flex-1">
+                                                                      <div className="h-4 rounded bg-neutral-200 dark:bg-neutral-700">
+                                                                          <div
+                                                                              className="h-4 rounded bg-blue-500"
+                                                                              style={{
+                                                                                  width: `${percent}%`,
+                                                                              }}
+                                                                          />
+                                                                      </div>
+                                                                  </div>
+                                                                  <div className="w-16 text-right text-muted-foreground">
+                                                                      {
+                                                                          opt.count
+                                                                      }{' '}
+                                                                      ({percent}
+                                                                      %)
                                                                   </div>
                                                               </div>
-                                                              <div className="w-16 text-right text-muted-foreground">
-                                                                  {opt.count} ({percent}%)
-                                                              </div>
-                                                          </div>
-                                                      );
-                                                  })}
+                                                          );
+                                                      },
+                                                  )}
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-sm text-muted-foreground">{t('admin.details_load_failed')}</p>
+                            <p className="text-sm text-muted-foreground">
+                                {t('admin.details_load_failed')}
+                            </p>
                         )}
                     </td>
                 </tr>
@@ -159,8 +242,6 @@ type User = {
     polls_count: number;
     sessions_count: number;
     responses_count: number;
-    created_at: string;
-    last_login: string;
 };
 
 type Session = {
@@ -169,7 +250,6 @@ type Session = {
     status: string;
     poll_title: string;
     user_name: string;
-    user_email: string;
     responses_count: number;
     created_at: string;
 };
@@ -191,12 +271,17 @@ type Props = {
 
 type PageProps = Props & { basePath: string };
 
-export default function AdminIndex({ stats, users: initialUsers, recentSessions, activityByDay }: Props) {
+export default function AdminIndex({
+    stats,
+    users: initialUsers,
+    recentSessions,
+    activityByDay,
+}: Props) {
     const { basePath } = usePage<PageProps>().props;
     const t = useT();
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: t('nav.dashboard'), href: '/dashboard' },
-        { title: t('nav.admin'), href: '/admin' },
+        { title: t('nav.dashboard'), href: `${basePath}/dashboard` },
+        { title: t('nav.admin'), href: `${basePath}/admin` },
     ];
     const [users, setUsers] = useState(initialUsers);
     const [banReason, setBanReason] = useState('');
@@ -206,12 +291,21 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
     const banUser = async (userId: number) => {
         setLoading(true);
         try {
-            const res = await apiFetch(`${basePath}/api/admin/users/${userId}/ban`, {
-                method: 'POST',
-                body: JSON.stringify({ reason: banReason }),
-            });
+            const res = await apiFetch(
+                `${basePath}/api/admin/users/${userId}/ban`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({ reason: banReason }),
+                },
+            );
             if (res.ok) {
-                setUsers(users.map(u => u.id === userId ? { ...u, is_banned: true, ban_reason: banReason } : u));
+                setUsers(
+                    users.map((u) =>
+                        u.id === userId
+                            ? { ...u, is_banned: true, ban_reason: banReason }
+                            : u,
+                    ),
+                );
                 setBanningUserId(null);
                 setBanReason('');
             }
@@ -223,11 +317,20 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
     const unbanUser = async (userId: number) => {
         setLoading(true);
         try {
-            const res = await apiFetch(`${basePath}/api/admin/users/${userId}/unban`, {
-                method: 'POST',
-            });
+            const res = await apiFetch(
+                `${basePath}/api/admin/users/${userId}/unban`,
+                {
+                    method: 'POST',
+                },
+            );
             if (res.ok) {
-                setUsers(users.map(u => u.id === userId ? { ...u, is_banned: false, ban_reason: null } : u));
+                setUsers(
+                    users.map((u) =>
+                        u.id === userId
+                            ? { ...u, is_banned: false, ban_reason: null }
+                            : u,
+                    ),
+                );
             }
         } finally {
             setLoading(false);
@@ -244,32 +347,52 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                 <div className="grid gap-4 md:grid-cols-5">
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>{t('admin.stats.users')}</CardDescription>
-                            <CardTitle className="text-3xl">{stats.total_users}</CardTitle>
+                            <CardDescription>
+                                {t('admin.stats.users')}
+                            </CardDescription>
+                            <CardTitle className="text-3xl">
+                                {stats.total_users}
+                            </CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>{t('admin.stats.polls')}</CardDescription>
-                            <CardTitle className="text-3xl">{stats.total_polls}</CardTitle>
+                            <CardDescription>
+                                {t('admin.stats.polls')}
+                            </CardDescription>
+                            <CardTitle className="text-3xl">
+                                {stats.total_polls}
+                            </CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>{t('admin.stats.sessions')}</CardDescription>
-                            <CardTitle className="text-3xl">{stats.total_sessions}</CardTitle>
+                            <CardDescription>
+                                {t('admin.stats.sessions')}
+                            </CardDescription>
+                            <CardTitle className="text-3xl">
+                                {stats.total_sessions}
+                            </CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>{t('admin.stats.responses')}</CardDescription>
-                            <CardTitle className="text-3xl">{stats.total_responses}</CardTitle>
+                            <CardDescription>
+                                {t('admin.stats.responses')}
+                            </CardDescription>
+                            <CardTitle className="text-3xl">
+                                {stats.total_responses}
+                            </CardTitle>
                         </CardHeader>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardDescription>{t('admin.stats.active_now')}</CardDescription>
-                            <CardTitle className="text-3xl text-green-600">{stats.active_sessions}</CardTitle>
+                            <CardDescription>
+                                {t('admin.stats.active_now')}
+                            </CardDescription>
+                            <CardTitle className="text-3xl text-green-600">
+                                {stats.active_sessions}
+                            </CardTitle>
                         </CardHeader>
                     </Card>
                 </div>
@@ -278,25 +401,39 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                 <Card>
                     <CardHeader>
                         <CardTitle>{t('admin.activity.title')}</CardTitle>
-                        <CardDescription>{t('admin.activity.description')}</CardDescription>
+                        <CardDescription>
+                            {t('admin.activity.description')}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="flex h-32 items-end gap-1">
-                            {Object.entries(activityByDay).map(([date, count]) => {
-                                const maxCount = Math.max(...Object.values(activityByDay), 1);
-                                const height = (count / maxCount) * 100;
-                                return (
-                                    <div
-                                        key={date}
-                                        className="flex-1 rounded-t bg-blue-500 transition-all"
-                                        style={{ height: `${Math.max(height, 2)}%` }}
-                                        title={t('admin.activity.bar_title', { date, count })}
-                                    />
-                                );
-                            })}
+                            {Object.entries(activityByDay).map(
+                                ([date, count]) => {
+                                    const maxCount = Math.max(
+                                        ...Object.values(activityByDay),
+                                        1,
+                                    );
+                                    const height = (count / maxCount) * 100;
+                                    return (
+                                        <div
+                                            key={date}
+                                            className="flex-1 rounded-t bg-blue-500 transition-all"
+                                            style={{
+                                                height: `${Math.max(height, 2)}%`,
+                                            }}
+                                            title={t(
+                                                'admin.activity.bar_title',
+                                                { date, count },
+                                            )}
+                                        />
+                                    );
+                                },
+                            )}
                         </div>
                         {Object.keys(activityByDay).length === 0 && (
-                            <p className="text-sm text-muted-foreground">{t('admin.activity.empty')}</p>
+                            <p className="text-sm text-muted-foreground">
+                                {t('admin.activity.empty')}
+                            </p>
                         )}
                     </CardContent>
                 </Card>
@@ -305,45 +442,84 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                 <Card>
                     <CardHeader>
                         <CardTitle>{t('admin.users.title')}</CardTitle>
-                        <CardDescription>{t('admin.users.description')}</CardDescription>
+                        <CardDescription>
+                            {t('admin.users.description')}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b text-left">
-                                        <th className="pb-2 font-medium">{t('admin.users.columns.name')}</th>
-                                        <th className="pb-2 font-medium">{t('admin.users.columns.email')}</th>
-                                        <th className="pb-2 font-medium text-right">{t('admin.users.columns.polls')}</th>
-                                        <th className="pb-2 font-medium text-right">{t('admin.users.columns.sessions')}</th>
-                                        <th className="pb-2 font-medium text-right">{t('admin.users.columns.responses')}</th>
-                                        <th className="pb-2 font-medium">{t('admin.users.columns.status')}</th>
-                                        <th className="pb-2 font-medium">{t('admin.users.columns.action')}</th>
+                                        <th className="pb-2 font-medium">
+                                            {t('admin.users.columns.name')}
+                                        </th>
+                                        <th className="pb-2 font-medium">
+                                            {t('admin.users.columns.email')}
+                                        </th>
+                                        <th className="pb-2 text-right font-medium">
+                                            {t('admin.users.columns.polls')}
+                                        </th>
+                                        <th className="pb-2 text-right font-medium">
+                                            {t('admin.users.columns.sessions')}
+                                        </th>
+                                        <th className="pb-2 text-right font-medium">
+                                            {t('admin.users.columns.responses')}
+                                        </th>
+                                        <th className="pb-2 font-medium">
+                                            {t('admin.users.columns.status')}
+                                        </th>
+                                        <th className="pb-2 font-medium">
+                                            {t('admin.users.columns.action')}
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {users.map((user) => (
-                                        <tr key={user.id} className={`border-b ${user.is_banned ? 'bg-red-50 dark:bg-red-950' : ''}`}>
+                                        <tr
+                                            key={user.id}
+                                            className={`border-b ${user.is_banned ? 'bg-red-50 dark:bg-red-950' : ''}`}
+                                        >
                                             <td className="py-2">
                                                 {user.name}
                                                 {user.is_admin && (
                                                     <span className="ml-2 rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                                                        Admin
+                                                        {t(
+                                                            'admin.users.role_admin',
+                                                        )}
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="py-2 text-muted-foreground">{user.email}</td>
-                                            <td className="py-2 text-right">{user.polls_count}</td>
-                                            <td className="py-2 text-right">{user.sessions_count}</td>
-                                            <td className="py-2 text-right">{user.responses_count}</td>
+                                            <td className="py-2 text-muted-foreground">
+                                                {user.email}
+                                            </td>
+                                            <td className="py-2 text-right">
+                                                {user.polls_count}
+                                            </td>
+                                            <td className="py-2 text-right">
+                                                {user.sessions_count}
+                                            </td>
+                                            <td className="py-2 text-right">
+                                                {user.responses_count}
+                                            </td>
                                             <td className="py-2">
                                                 {user.is_banned ? (
-                                                    <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700 dark:bg-red-900 dark:text-red-300" title={user.ban_reason || ''}>
-                                                        Avstängd
+                                                    <span
+                                                        className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700 dark:bg-red-900 dark:text-red-300"
+                                                        title={
+                                                            user.ban_reason ||
+                                                            ''
+                                                        }
+                                                    >
+                                                        {t(
+                                                            'admin.users.banned',
+                                                        )}
                                                     </span>
                                                 ) : (
                                                     <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900 dark:text-green-300">
-                                                        Aktiv
+                                                        {t(
+                                                            'admin.users.active',
+                                                        )}
                                                     </span>
                                                 )}
                                             </td>
@@ -351,46 +527,90 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                                 {!user.is_admin && (
                                                     <>
                                                         {user.is_banned ? (
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => unbanUser(user.id)}
-                                                                    disabled={loading}
-                                                                >
-                                                                Återaktivera
-                                                                </Button>
-                                                        ) : banningUserId === user.id ? (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() =>
+                                                                    unbanUser(
+                                                                        user.id,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    loading
+                                                                }
+                                                            >
+                                                                {t(
+                                                                    'admin.users.enable',
+                                                                )}
+                                                            </Button>
+                                                        ) : banningUserId ===
+                                                          user.id ? (
                                                             <div className="flex items-center gap-2">
                                                                 <input
                                                                     type="text"
-                                                                    placeholder={t('admin.users.ban_reason_placeholder')}
-                                                                    value={banReason}
-                                                                    onChange={(e) => setBanReason(e.target.value)}
+                                                                    placeholder={t(
+                                                                        'admin.users.ban_reason_placeholder',
+                                                                    )}
+                                                                    value={
+                                                                        banReason
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setBanReason(
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
                                                                     className="h-8 w-32 rounded border px-2 text-xs"
                                                                 />
                                                                 <Button
                                                                     variant="destructive"
                                                                     size="sm"
-                                                                    onClick={() => banUser(user.id)}
-                                                                    disabled={loading}
+                                                                    onClick={() =>
+                                                                        banUser(
+                                                                            user.id,
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        loading
+                                                                    }
                                                                 >
-                                                                    {t('admin.users.confirm')}
+                                                                    {t(
+                                                                        'admin.users.confirm',
+                                                                    )}
                                                                 </Button>
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="sm"
-                                                                    onClick={() => { setBanningUserId(null); setBanReason(''); }}
+                                                                    onClick={() => {
+                                                                        setBanningUserId(
+                                                                            null,
+                                                                        );
+                                                                        setBanReason(
+                                                                            '',
+                                                                        );
+                                                                    }}
                                                                 >
-                                                                    {t('admin.users.cancel')}
+                                                                    {t(
+                                                                        'admin.users.cancel',
+                                                                    )}
                                                                 </Button>
                                                             </div>
                                                         ) : (
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                onClick={() => setBanningUserId(user.id)}
+                                                                onClick={() =>
+                                                                    setBanningUserId(
+                                                                        user.id,
+                                                                    )
+                                                                }
                                                             >
-                                                                {t('admin.users.disable')}
+                                                                {t(
+                                                                    'admin.users.disable',
+                                                                )}
                                                             </Button>
                                                         )}
                                                     </>
@@ -407,8 +627,12 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                 {/* Recent sessions */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>{t('admin.recent_sessions.title')}</CardTitle>
-                        <CardDescription>{t('admin.recent_sessions.description')}</CardDescription>
+                        <CardTitle>
+                            {t('admin.recent_sessions.title')}
+                        </CardTitle>
+                        <CardDescription>
+                            {t('admin.recent_sessions.description')}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -416,17 +640,46 @@ export default function AdminIndex({ stats, users: initialUsers, recentSessions,
                                 <thead>
                                     <tr className="border-b text-left">
                                         <th className="w-8 pb-2"></th>
-                                        <th className="pb-2 font-medium">{t('admin.recent_sessions.columns.code')}</th>
-                                        <th className="pb-2 font-medium">{t('admin.recent_sessions.columns.poll')}</th>
-                                        <th className="pb-2 font-medium">{t('admin.recent_sessions.columns.creator')}</th>
-                                        <th className="pb-2 font-medium text-right">{t('admin.recent_sessions.columns.responses')}</th>
-                                        <th className="pb-2 font-medium">{t('admin.recent_sessions.columns.status')}</th>
-                                        <th className="pb-2 font-medium">{t('admin.recent_sessions.columns.created')}</th>
+                                        <th className="pb-2 font-medium">
+                                            {t(
+                                                'admin.recent_sessions.columns.code',
+                                            )}
+                                        </th>
+                                        <th className="pb-2 font-medium">
+                                            {t(
+                                                'admin.recent_sessions.columns.poll',
+                                            )}
+                                        </th>
+                                        <th className="pb-2 font-medium">
+                                            {t(
+                                                'admin.recent_sessions.columns.creator',
+                                            )}
+                                        </th>
+                                        <th className="pb-2 text-right font-medium">
+                                            {t(
+                                                'admin.recent_sessions.columns.responses',
+                                            )}
+                                        </th>
+                                        <th className="pb-2 font-medium">
+                                            {t(
+                                                'admin.recent_sessions.columns.status',
+                                            )}
+                                        </th>
+                                        <th className="pb-2 font-medium">
+                                            {t(
+                                                'admin.recent_sessions.columns.created',
+                                            )}
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {recentSessions.map((session) => (
-                                        <SessionRow key={session.id} session={session} basePath={basePath} t={t} />
+                                        <SessionRow
+                                            key={session.id}
+                                            session={session}
+                                            basePath={basePath}
+                                            t={t}
+                                        />
                                     ))}
                                 </tbody>
                             </table>

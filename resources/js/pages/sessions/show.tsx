@@ -1,5 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import AppLayout from '@/layouts/app-layout';
 import { apiFetch } from '@/lib/api';
@@ -7,10 +7,24 @@ import { useT } from '@/lib/i18n';
 
 type PageProps = { basePath: string };
 type PollOption = { id: number; option_text: string };
-type PollQuestion = { id: number; question_text: string; options: PollOption[] };
+type PollQuestion = {
+    id: number;
+    question_text: string;
+    options: PollOption[];
+};
 type PollType = 'multiple_choice' | 'word_cloud';
-type Poll = { id: number; title: string; type: PollType; questions: PollQuestion[] };
-type MultipleChoiceResult = { option_id: number; option_text: string; count: number; percent: number };
+type Poll = {
+    id: number;
+    title: string;
+    type: PollType;
+    questions: PollQuestion[];
+};
+type MultipleChoiceResult = {
+    option_id: number;
+    option_text: string;
+    count: number;
+    percent: number;
+};
 type WordCloudResult = { answer_text: string; count: number; percent: number };
 type ResultItem = MultipleChoiceResult | WordCloudResult;
 type Results = Record<number, ResultItem[]>;
@@ -25,12 +39,6 @@ type Session = {
     results?: Results;
 };
 
-declare global {
-    interface Window {
-        Echo?: any;
-    }
-}
-
 export default function SessionShow() {
     const { basePath } = usePage<PageProps>().props;
     const t = useT();
@@ -43,57 +51,55 @@ export default function SessionShow() {
     const [results, setResults] = useState<Results>({});
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
+    const loadSession = useCallback(async () => {
         if (!sessionId) return;
-        apiFetch(`${basePath}/api/sessions/${sessionId}`)
-            .then(async (res) => {
-                if (!res.ok) {
-                    throw new Error(t('session.load_failed'));
-                }
-                const data = await res.json();
-                setSession(data);
-                setResults(data.results || {});
-            })
-            .catch((err) => setError(err instanceof Error ? err.message : t('session.load_failed')));
-    }, [sessionId, basePath]);
+        try {
+            const res = await apiFetch(`${basePath}/api/sessions/${sessionId}`);
+            if (!res.ok) {
+                throw new Error(t('session.load_failed'));
+            }
+            const data = (await res.json()) as Session;
+            setSession(data);
+            setResults(data.results || {});
+            setError(null);
+        } catch (err) {
+            setError(
+                err instanceof Error ? err.message : t('session.load_failed'),
+            );
+        }
+    }, [sessionId, basePath, t]);
 
     useEffect(() => {
-        if (!sessionId || !window.Echo || !session?.code) return;
-        const channel = window.Echo.channel(`session.${session.code}`);
-        channel.listen('.results_updated', (payload: any) => {
-            setResults((prev) => ({ ...prev, [payload.question_id]: payload.results }));
-        });
-        channel.listen('.session_updated', (payload: any) => {
-            setSession((prev) =>
-                prev
-                    ? {
-                          ...prev,
-                          status: payload.status,
-                          current_question_id: payload.current_question_id,
-                          locked: payload.locked,
-                      }
-                    : prev,
-            );
-        });
-        return () => {
-            channel.stopListening('.results_updated');
-            channel.stopListening('.session_updated');
-        };
-    }, [sessionId, session?.code]);
+        const timer = window.setTimeout(() => void loadSession(), 0);
+
+        return () => window.clearTimeout(timer);
+    }, [loadSession]);
+
+    useEffect(() => {
+        if (session?.status !== 'active') return;
+        const interval = window.setInterval(() => void loadSession(), 5000);
+
+        return () => window.clearInterval(interval);
+    }, [session?.status, loadSession]);
 
     const currentQuestion = session?.poll.questions.find(
         (question) => question.id === session.current_question_id,
     );
-    const currentResults = currentQuestion ? results[currentQuestion.id] || [] : [];
+    const currentResults = currentQuestion
+        ? results[currentQuestion.id] || []
+        : [];
 
     const isClosed = session?.status === 'closed';
 
     const setQuestion = async (questionId: number) => {
         if (!sessionId || isClosed) return;
-        const res = await apiFetch(`${basePath}/api/sessions/${sessionId}/current-question`, {
-            method: 'POST',
-            body: JSON.stringify({ question_id: questionId }),
-        });
+        const res = await apiFetch(
+            `${basePath}/api/sessions/${sessionId}/current-question`,
+            {
+                method: 'POST',
+                body: JSON.stringify({ question_id: questionId }),
+            },
+        );
         if (res.ok) {
             const data = await res.json();
             setSession(data);
@@ -105,10 +111,13 @@ export default function SessionShow() {
 
     const toggleLock = async () => {
         if (!sessionId || !session || isClosed) return;
-        const res = await apiFetch(`${basePath}/api/sessions/${sessionId}/lock-question`, {
-            method: 'POST',
-            body: JSON.stringify({ locked: !session.locked }),
-        });
+        const res = await apiFetch(
+            `${basePath}/api/sessions/${sessionId}/lock-question`,
+            {
+                method: 'POST',
+                body: JSON.stringify({ locked: !session.locked }),
+            },
+        );
         if (res.ok) {
             const data = await res.json();
             setSession(data);
@@ -120,7 +129,10 @@ export default function SessionShow() {
 
     const closeSession = async () => {
         if (!sessionId || isClosed) return;
-        const res = await apiFetch(`${basePath}/api/sessions/${sessionId}/close`, { method: 'POST' });
+        const res = await apiFetch(
+            `${basePath}/api/sessions/${sessionId}/close`,
+            { method: 'POST' },
+        );
         if (res.ok) {
             const data = await res.json();
             setSession(data);
@@ -138,14 +150,22 @@ export default function SessionShow() {
                 {session ? (
                     <>
                         <section className="rounded-xl border border-sidebar-border/70 p-6">
-                            <h1 className="text-2xl font-semibold">{session.poll.title}</h1>
+                            <h1 className="text-2xl font-semibold">
+                                {session.poll.title}
+                            </h1>
                             {session.name ? (
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    Session: <span className="font-medium text-neutral-900">{session.name}</span>
+                                    {t('session.name')}:{' '}
+                                    <span className="font-medium text-neutral-900">
+                                        {session.name}
+                                    </span>
                                 </p>
                             ) : null}
                             <p className="mt-2 text-lg">
-                                {t('session.code')}: <span className="font-mono">{session.code}</span>
+                                {t('session.code')}:{' '}
+                                <span className="font-mono">
+                                    {session.code}
+                                </span>
                             </p>
                             <div className="mt-4 flex flex-wrap gap-3">
                                 <button
@@ -154,7 +174,9 @@ export default function SessionShow() {
                                     onClick={toggleLock}
                                     disabled={isClosed}
                                 >
-                                    {session.locked ? t('session.unlock') : t('session.lock')}
+                                    {session.locked
+                                        ? t('session.unlock')
+                                        : t('session.lock')}
                                 </button>
                                 <a
                                     className="rounded-md border px-3 py-2 text-sm"
@@ -183,18 +205,23 @@ export default function SessionShow() {
 
                         <section className="grid gap-6 lg:grid-cols-[320px,1fr]">
                             <div className="rounded-xl border border-sidebar-border/70 p-6">
-                                <h2 className="text-lg font-semibold">{t('session.questions')}</h2>
+                                <h2 className="text-lg font-semibold">
+                                    {t('session.questions')}
+                                </h2>
                                 <div className="mt-4 grid gap-2">
                                     {session.poll.questions.map((question) => (
                                         <button
                                             key={question.id}
                                             type="button"
                                             className={`rounded-md border px-3 py-2 text-left text-sm disabled:opacity-50 ${
-                                                session.current_question_id === question.id
+                                                session.current_question_id ===
+                                                question.id
                                                     ? 'border-black font-semibold'
                                                     : ''
                                             }`}
-                                            onClick={() => setQuestion(question.id)}
+                                            onClick={() =>
+                                                setQuestion(question.id)
+                                            }
                                             disabled={isClosed}
                                         >
                                             {question.question_text}
@@ -203,37 +230,61 @@ export default function SessionShow() {
                                 </div>
                             </div>
                             <div className="rounded-xl border border-sidebar-border/70 p-6">
-                                <h2 className="text-lg font-semibold">{t('session.live_results')}</h2>
+                                <h2 className="text-lg font-semibold">
+                                    {t('session.live_results')}
+                                </h2>
                                 {currentQuestion ? (
                                     <div className="mt-4 space-y-3">
                                         <p className="text-sm text-muted-foreground">
                                             {currentQuestion.question_text}
                                         </p>
                                         {session?.poll.type === 'word_cloud'
-                                            ? (currentResults as WordCloudResult[]).map((result, index) => (
-                                                  <div key={`${result.answer_text}-${index}`}>
+                                            ? (
+                                                  currentResults as WordCloudResult[]
+                                              ).map((result, index) => (
+                                                  <div
+                                                      key={`${result.answer_text}-${index}`}
+                                                  >
                                                       <div className="flex justify-between text-sm">
-                                                          <span>{result.answer_text}</span>
-                                                          <span>{result.count}</span>
+                                                          <span>
+                                                              {
+                                                                  result.answer_text
+                                                              }
+                                                          </span>
+                                                          <span>
+                                                              {result.count}
+                                                          </span>
                                                       </div>
                                                       <div className="mt-1 h-2 rounded-full bg-neutral-200">
                                                           <div
                                                               className="h-2 rounded-full bg-black"
-                                                              style={{ width: `${result.percent}%` }}
+                                                              style={{
+                                                                  width: `${result.percent}%`,
+                                                              }}
                                                           />
                                                       </div>
                                                   </div>
                                               ))
-                                            : (currentResults as MultipleChoiceResult[]).map((result) => (
+                                            : (
+                                                  currentResults as MultipleChoiceResult[]
+                                              ).map((result) => (
                                                   <div key={result.option_id}>
                                                       <div className="flex justify-between text-sm">
-                                                          <span>{result.option_text}</span>
-                                                          <span>{result.count}</span>
+                                                          <span>
+                                                              {
+                                                                  result.option_text
+                                                              }
+                                                          </span>
+                                                          <span>
+                                                              {result.count}
+                                                          </span>
                                                       </div>
                                                       <div className="mt-1 h-2 rounded-full bg-neutral-200">
                                                           <div
                                                               className="h-2 rounded-full bg-black"
-                                                              style={{ width: `${result.percent}%` }}
+                                                              style={{
+                                                                  width: `${result.percent}%`,
+                                                              }}
                                                           />
                                                       </div>
                                                   </div>
@@ -248,7 +299,9 @@ export default function SessionShow() {
                         </section>
                     </>
                 ) : (
-                    <p className="text-sm text-muted-foreground">{t('session.loading')}</p>
+                    <p className="text-sm text-muted-foreground">
+                        {t('session.loading')}
+                    </p>
                 )}
             </div>
         </AppLayout>

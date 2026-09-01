@@ -1,9 +1,9 @@
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
+import AppLayout from '@/layouts/app-layout';
 import { apiFetch } from '@/lib/api';
 import { useT } from '@/lib/i18n';
-import AppLayout from '@/layouts/app-layout';
 
 type PageProps = { basePath: string };
 type PollOption = { option_text: string };
@@ -15,6 +15,7 @@ type Poll = {
     description?: string | null;
     type?: PollType;
     questions: PollQuestion[];
+    sessions_count: number;
 };
 type QuestionErrors = {
     question_text?: string;
@@ -42,7 +43,9 @@ export default function PollEdit() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
-    const [fieldErrors, setFieldErrors] = useState<FieldErrors>({ questions: [] });
+    const [fieldErrors, setFieldErrors] = useState<FieldErrors>({
+        questions: [],
+    });
 
     useEffect(() => {
         if (!pollId) return;
@@ -51,32 +54,47 @@ export default function PollEdit() {
                 if (!res.ok) {
                     throw new Error(t('polls.errors.load_poll'));
                 }
-                const data = await res.json();
+                const data = (await res.json()) as Poll;
                 setPoll(data);
                 setTitle(data.title);
                 setDescription(data.description || '');
                 setPollType((data.type as PollType) || 'multiple_choice');
                 setQuestions(
-                    (data.questions?.length ? [data.questions[0]] : []).map((q: any) => ({
-                        question_text: q.question_text,
-                        options:
-                            ((data.type as PollType) || 'multiple_choice') === 'multiple_choice'
-                                ? (q.options || []).map((o: any) => ({ option_text: o.option_text }))
-                                : [],
-                    })),
+                    (data.questions?.length ? [data.questions[0]] : []).map(
+                        (q) => ({
+                            question_text: q.question_text,
+                            options:
+                                ((data.type as PollType) ||
+                                    'multiple_choice') === 'multiple_choice'
+                                    ? (q.options || []).map((o) => ({
+                                          option_text: o.option_text,
+                                      }))
+                                    : [],
+                        }),
+                    ),
                 );
                 if (!data.questions?.length) {
-                    const type = ((data.type as PollType) || 'multiple_choice') as PollType;
+                    const type = ((data.type as PollType) ||
+                        'multiple_choice') as PollType;
                     setQuestions([
                         {
                             question_text: '',
-                            options: type === 'multiple_choice' ? [{ option_text: '' }, { option_text: '' }] : [],
+                            options:
+                                type === 'multiple_choice'
+                                    ? [{ option_text: '' }, { option_text: '' }]
+                                    : [],
                         },
                     ]);
                 }
             })
-            .catch((err) => setError(err instanceof Error ? err.message : t('polls.errors.load_poll')));
-    }, [pollId, basePath]);
+            .catch((err) =>
+                setError(
+                    err instanceof Error
+                        ? err.message
+                        : t('polls.errors.load_poll'),
+                ),
+            );
+    }, [pollId, basePath, t]);
 
     const updateQuestion = (index: number, value: string) => {
         if (validationErrors.length || fieldErrors.questions.length) {
@@ -134,11 +152,19 @@ export default function PollEdit() {
         }
 
         questions.forEach((question, qIndex) => {
-            const optionTexts = question.options.map((option) => option.option_text.trim());
+            const optionTexts = question.options.map((option) =>
+                option.option_text.trim(),
+            );
             const nonEmptyOptions = optionTexts.filter(Boolean);
             if (pollType === 'multiple_choice' && nonEmptyOptions.length < 2) {
-                errors.push(t('polls.validation.question_min_options', { n: qIndex + 1 }));
-                nextFieldErrors.questions[qIndex].optionsSummary = t('polls.validation.min_options_summary');
+                errors.push(
+                    t('polls.validation.question_min_options', {
+                        n: qIndex + 1,
+                    }),
+                );
+                nextFieldErrors.questions[qIndex].optionsSummary = t(
+                    'polls.validation.min_options_summary',
+                );
             }
 
             const qText = question.question_text.trim();
@@ -160,15 +186,21 @@ export default function PollEdit() {
                 const firstIndex = seen.get(normalized);
                 if (firstIndex !== undefined) {
                     const message = t('polls.validation.duplicate_option');
-                    nextFieldErrors.questions[qIndex].options[optionIndex] = message;
-                    nextFieldErrors.questions[qIndex].options[firstIndex] = message;
+                    nextFieldErrors.questions[qIndex].options[optionIndex] =
+                        message;
+                    nextFieldErrors.questions[qIndex].options[firstIndex] =
+                        message;
                     hasDuplicate = true;
                 } else {
                     seen.set(normalized, optionIndex);
                 }
             });
             if (hasDuplicate) {
-                errors.push(t('polls.validation.question_duplicate_options', { n: qIndex + 1 }));
+                errors.push(
+                    t('polls.validation.question_duplicate_options', {
+                        n: qIndex + 1,
+                    }),
+                );
             }
         });
 
@@ -193,7 +225,10 @@ export default function PollEdit() {
                 type: pollType,
                 questions: questions.map((q) => ({
                     question_text: q.question_text.trim(),
-                    options: pollType === 'multiple_choice' ? q.options.map((o) => o.option_text.trim()) : [],
+                    options:
+                        pollType === 'multiple_choice'
+                            ? q.options.map((o) => o.option_text.trim())
+                            : [],
                 })),
             };
             const res = await apiFetch(`${basePath}/api/polls/${pollId}`, {
@@ -207,7 +242,11 @@ export default function PollEdit() {
             const updated = await res.json();
             setPoll(updated);
         } catch (err) {
-            setError(err instanceof Error ? err.message : t('polls.errors.save_poll'));
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : t('polls.errors.save_poll'),
+            );
         } finally {
             setLoading(false);
         }
@@ -218,11 +257,15 @@ export default function PollEdit() {
             <Head title={t('polls.edit_title')} />
             <div className="flex flex-col gap-6 p-6">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold">{t('polls.edit_title')}</h1>
+                    <h1 className="text-xl font-semibold">
+                        {t('polls.edit_title')}
+                    </h1>
                     <button
                         type="button"
                         className="rounded-md border px-3 py-2 text-sm"
-                        onClick={() => (window.location.href = `${basePath}/polls`)}
+                        onClick={() =>
+                            (window.location.href = `${basePath}/polls`)
+                        }
                     >
                         {t('polls.back')}
                     </button>
@@ -235,7 +278,11 @@ export default function PollEdit() {
                         ))}
                     </div>
                 ) : null}
-                {poll ? (
+                {poll?.sessions_count ? (
+                    <section className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+                        {t('polls.history_locked_edit')}
+                    </section>
+                ) : poll ? (
                     <section className="rounded-xl border border-sidebar-border/70 p-6">
                         <div className="grid gap-4">
                             <input
@@ -243,7 +290,11 @@ export default function PollEdit() {
                                 placeholder={t('polls.poll_title_placeholder')}
                                 value={title}
                                 onChange={(event) => {
-                                    if (validationErrors.length || fieldErrors.questions.length || fieldErrors.title) {
+                                    if (
+                                        validationErrors.length ||
+                                        fieldErrors.questions.length ||
+                                        fieldErrors.title
+                                    ) {
                                         setValidationErrors([]);
                                         setFieldErrors({ questions: [] });
                                     }
@@ -251,14 +302,20 @@ export default function PollEdit() {
                                 }}
                             />
                             {fieldErrors.title ? (
-                                <p className="text-xs text-red-600">{fieldErrors.title}</p>
+                                <p className="text-xs text-red-600">
+                                    {fieldErrors.title}
+                                </p>
                             ) : null}
                             <textarea
                                 className="w-full rounded-md border px-3 py-2"
                                 placeholder={t('polls.description_placeholder')}
                                 value={description}
                                 onChange={(event) => {
-                                    if (validationErrors.length || fieldErrors.questions.length || fieldErrors.title) {
+                                    if (
+                                        validationErrors.length ||
+                                        fieldErrors.questions.length ||
+                                        fieldErrors.title
+                                    ) {
                                         setValidationErrors([]);
                                         setFieldErrors({ questions: [] });
                                     }
@@ -266,15 +323,22 @@ export default function PollEdit() {
                                 }}
                             />
                             <label className="grid gap-1 text-sm">
-                                <span className="text-muted-foreground">{t('polls.type_label')}</span>
+                                <span className="text-muted-foreground">
+                                    {t('polls.type_label')}
+                                </span>
                                 <select
                                     className="w-full rounded-md border px-3 py-2"
                                     value={pollType}
                                     onChange={(event) => {
-                                        const nextType = event.target.value as PollType;
+                                        const nextType = event.target
+                                            .value as PollType;
                                         setPollType(nextType);
 
-                                        if (validationErrors.length || fieldErrors.questions.length || fieldErrors.title) {
+                                        if (
+                                            validationErrors.length ||
+                                            fieldErrors.questions.length ||
+                                            fieldErrors.title
+                                        ) {
                                             setValidationErrors([]);
                                             setFieldErrors({ questions: [] });
                                         }
@@ -283,64 +347,127 @@ export default function PollEdit() {
                                             prev.map((q) => ({
                                                 ...q,
                                                 options:
-                                                    nextType === 'multiple_choice'
+                                                    nextType ===
+                                                    'multiple_choice'
                                                         ? q.options.length >= 2
                                                             ? q.options
-                                                            : [{ option_text: '' }, { option_text: '' }]
+                                                            : [
+                                                                  {
+                                                                      option_text:
+                                                                          '',
+                                                                  },
+                                                                  {
+                                                                      option_text:
+                                                                          '',
+                                                                  },
+                                                              ]
                                                         : [],
                                             })),
                                         );
                                     }}
                                 >
-                                    <option value="multiple_choice">{t('polls.types.multiple_choice')}</option>
-                                    <option value="word_cloud">{t('polls.types.word_cloud')}</option>
+                                    <option value="multiple_choice">
+                                        {t('polls.types.multiple_choice')}
+                                    </option>
+                                    <option value="word_cloud">
+                                        {t('polls.types.word_cloud')}
+                                    </option>
                                 </select>
                                 {pollType === 'word_cloud' ? (
-                                    <span className="text-xs text-muted-foreground">{t('polls.type_help.word_cloud')}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                        {t('polls.type_help.word_cloud')}
+                                    </span>
                                 ) : null}
                             </label>
                             {questions.map((question, qIndex) => (
-                                <div key={qIndex} className="rounded-lg border p-4">
+                                <div
+                                    key={qIndex}
+                                    className="rounded-lg border p-4"
+                                >
                                     <input
                                         className="w-full rounded-md border px-3 py-2"
-                                        placeholder={t('polls.question_placeholder', { n: qIndex + 1 })}
+                                        placeholder={t(
+                                            'polls.question_placeholder',
+                                            { n: qIndex + 1 },
+                                        )}
                                         value={question.question_text}
                                         onChange={(event) =>
-                                            updateQuestion(qIndex, event.target.value)
+                                            updateQuestion(
+                                                qIndex,
+                                                event.target.value,
+                                            )
                                         }
                                     />
-                                    {fieldErrors.questions[qIndex]?.question_text ? (
+                                    {fieldErrors.questions[qIndex]
+                                        ?.question_text ? (
                                         <p className="mt-1 text-xs text-red-600">
-                                            {fieldErrors.questions[qIndex]?.question_text}
+                                            {
+                                                fieldErrors.questions[qIndex]
+                                                    ?.question_text
+                                            }
                                         </p>
                                     ) : null}
                                     {pollType === 'multiple_choice' ? (
                                         <div className="mt-3 grid gap-2">
-                                            {question.options.map((option, oIndex) => (
-                                                <div key={oIndex}>
-                                                    <input
-                                                        className="w-full rounded-md border px-3 py-2"
-                                                        placeholder={t('polls.option_placeholder', { n: oIndex + 1 })}
-                                                        value={option.option_text}
-                                                        onChange={(event) => updateOption(qIndex, oIndex, event.target.value)}
-                                                    />
-                                                    {fieldErrors.questions[qIndex]?.options[oIndex] ? (
-                                                        <p className="mt-1 text-xs text-red-600">
-                                                            {fieldErrors.questions[qIndex]?.options[oIndex]}
-                                                        </p>
-                                                    ) : null}
-                                                </div>
-                                            ))}
-                                            {fieldErrors.questions[qIndex]?.optionsSummary ? (
+                                            {question.options.map(
+                                                (option, oIndex) => (
+                                                    <div key={oIndex}>
+                                                        <input
+                                                            className="w-full rounded-md border px-3 py-2"
+                                                            placeholder={t(
+                                                                'polls.option_placeholder',
+                                                                {
+                                                                    n:
+                                                                        oIndex +
+                                                                        1,
+                                                                },
+                                                            )}
+                                                            value={
+                                                                option.option_text
+                                                            }
+                                                            onChange={(event) =>
+                                                                updateOption(
+                                                                    qIndex,
+                                                                    oIndex,
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                        {fieldErrors.questions[
+                                                            qIndex
+                                                        ]?.options[oIndex] ? (
+                                                            <p className="mt-1 text-xs text-red-600">
+                                                                {
+                                                                    fieldErrors
+                                                                        .questions[
+                                                                        qIndex
+                                                                    ]?.options[
+                                                                        oIndex
+                                                                    ]
+                                                                }
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
+                                                ),
+                                            )}
+                                            {fieldErrors.questions[qIndex]
+                                                ?.optionsSummary ? (
                                                 <p className="text-xs text-red-600">
-                                                    {fieldErrors.questions[qIndex]?.optionsSummary}
+                                                    {
+                                                        fieldErrors.questions[
+                                                            qIndex
+                                                        ]?.optionsSummary
+                                                    }
                                                 </p>
                                             ) : null}
                                             {question.options.length < 8 ? (
                                                 <button
                                                     type="button"
                                                     className="text-left text-sm text-blue-600"
-                                                    onClick={() => addOption(qIndex)}
+                                                    onClick={() =>
+                                                        addOption(qIndex)
+                                                    }
                                                 >
                                                     + {t('polls.add_option')}
                                                 </button>
@@ -360,7 +487,9 @@ export default function PollEdit() {
                         </div>
                     </section>
                 ) : (
-                    <p className="text-sm text-muted-foreground">{t('session.loading')}</p>
+                    <p className="text-sm text-muted-foreground">
+                        {t('session.loading')}
+                    </p>
                 )}
             </div>
         </AppLayout>

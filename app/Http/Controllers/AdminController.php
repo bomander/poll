@@ -17,7 +17,7 @@ class AdminController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->is_admin) {
+        if (! $user->is_admin) {
             abort(403);
         }
 
@@ -37,11 +37,11 @@ class AdminController extends Controller
             ->get()
             ->map(function ($user) {
                 $sessionsCount = PollSession::query()
-                    ->whereHas('poll', fn($q) => $q->where('user_id', $user->id))
+                    ->whereHas('poll', fn ($q) => $q->where('user_id', $user->id))
                     ->count();
 
                 $responsesCount = PollResponse::query()
-                    ->whereHas('session.poll', fn($q) => $q->where('user_id', $user->id))
+                    ->whereHas('session.poll', fn ($q) => $q->where('user_id', $user->id))
                     ->count();
 
                 return [
@@ -54,26 +54,23 @@ class AdminController extends Controller
                     'polls_count' => $user->polls_count,
                     'sessions_count' => $sessionsCount,
                     'responses_count' => $responsesCount,
-                    'created_at' => $user->created_at->format('Y-m-d H:i'),
-                    'last_login' => $user->updated_at->diffForHumans(),
                 ];
             });
 
         // Recent sessions
         $recentSessions = PollSession::query()
-            ->with(['poll.user:id,name,email'])
+            ->with(['poll.user:id,name'])
             ->withCount('responses')
             ->orderByDesc('created_at')
             ->limit(20)
             ->get()
-            ->map(fn($session) => [
+            ->map(fn ($session) => [
                 'id' => $session->id,
                 'code' => $session->code,
                 'name' => $session->name,
                 'status' => $session->status,
                 'poll_title' => $session->poll->title,
                 'user_name' => $session->poll->user->name,
-                'user_email' => $session->poll->user->email,
                 'responses_count' => $session->responses_count,
                 'created_at' => $session->created_at->format('Y-m-d H:i'),
             ]);

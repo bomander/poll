@@ -2,17 +2,20 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\ResultsUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\PollOption;
 use App\Models\PollQuestion;
 use App\Models\PollResponse;
 use App\Models\PollSession;
+use App\Services\PollResultBuilder;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class VoteController extends Controller
 {
+    public function __construct(private readonly PollResultBuilder $results) {}
+
     public function store(Request $request, PollSession $session)
     {
         $session->loadMissing('poll');
@@ -46,11 +49,11 @@ class VoteController extends Controller
             return response()->json(['message' => 'Not the active question.'], 409);
         }
 
-        // Get respondent token from cookie
+        // Read the anonymous token set by the join endpoint.
         $cookieName = "enkat_r_{$session->id}";
         $token = $request->cookie($cookieName);
-        
-        if (!$token) {
+
+        if (! is_string($token) || strlen($token) !== 40 || ! ctype_alnum($token)) {
             return response()->json(['message' => 'No respondent token.'], 400);
         }
 
@@ -96,7 +99,7 @@ class VoteController extends Controller
                     'respondent_key' => $respondentKey,
                 ]);
             });
-        } catch (\Illuminate\Database\QueryException $exception) {
+        } catch (QueryException $exception) {
             if (str_contains($exception->getMessage(), 'responses_unique_vote')) {
                 return response()->json(['message' => 'Already voted.'], 409);
             }
@@ -104,64 +107,15 @@ class VoteController extends Controller
             throw $exception;
         }
 
-        $results = $this->resultsForQuestion($session, $question, $pollType);
-
-        broadcast(new ResultsUpdated($session, $question->id, $results))->toOthers();
+        $results = $this->results->forQuestion($pollType, $session, $question);
+        $totalResponses = PollResponse::where('session_id', $session->id)
+            ->where('question_id', $question->id)
+            ->count();
 
         return response()->json([
             'results' => $results,
+            'total_responses' => $totalResponses,
         ]);
-    }
-
-    private function resultsForQuestion(PollSession $session, PollQuestion $question, string $pollType): array
-    {
-        if ($pollType === 'word_cloud') {
-            $counts = PollResponse::query()
-                ->where('session_id', $session->id)
-                ->where('question_id', $question->id)
-                ->whereNotNull('answer_text')
-                ->select('answer_text', DB::raw('count(*) as total'))
-                ->groupBy('answer_text')
-                ->orderByDesc('total')
-                ->limit(50)
-                ->get();
-
-            $total = (int) $counts->sum('total');
-
-            return $counts->map(function ($row) use ($total) {
-                $count = (int) $row->total;
-                $percent = $total > 0 ? round(($count / $total) * 100, 2) : 0;
-
-                return [
-                    'answer_text' => $row->answer_text,
-                    'count' => $count,
-                    'percent' => $percent,
-                ];
-            })->all();
-        }
-
-        $counts = PollResponse::query()
-            ->where('session_id', $session->id)
-            ->where('question_id', $question->id)
-            ->select('option_id', DB::raw('count(*) as total'))
-            ->groupBy('option_id')
-            ->pluck('total', 'option_id');
-
-        $total = $counts->sum();
-
-        $question->loadMissing('options');
-
-        return $question->options->map(function ($option) use ($counts, $total) {
-            $count = (int) ($counts[$option->id] ?? 0);
-            $percent = $total > 0 ? round(($count / $total) * 100, 2) : 0;
-
-            return [
-                'option_id' => $option->id,
-                'option_text' => $option->option_text,
-                'count' => $count,
-                'percent' => $percent,
-            ];
-        })->all();
     }
 
     private function normalizeAnswerText(string $text): string

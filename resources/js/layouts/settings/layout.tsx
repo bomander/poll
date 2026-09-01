@@ -10,7 +10,9 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         <div className="px-4 py-6">
             <div className="flex flex-col">
                 <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-12">{children}</section>
+                    <section className="max-w-xl space-y-12">
+                        {children}
+                    </section>
                 </div>
             </div>
         </div>
