@@ -1,0 +1,105 @@
+name: Reusable boma.nu service quality
+
+on:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+      runtime:
+        required: true
+        type: string
+      composer-path:
+        required: false
+        type: string
+        default: ''
+      node-path:
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+      SESSION_DRIVER: array
+      CACHE_STORE: array
+      MAIL_MAILER: array
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate operations contract
+        shell: bash
+        run: |
+          php -r '
+            $data = json_decode(file_get_contents("ops/service.json"), true, flags: JSON_THROW_ON_ERROR);
+            if (($data["schema_version"] ?? null) !== 1) exit(1);
+            if (($data["service"] ?? null) !== $argv[1]) exit(2);
+            if (($data["runtime"] ?? null) !== $argv[2]) exit(3);
+            foreach (["quality", "build"] as $phase) {
+              if (!is_array($data["commands"][$phase] ?? null)) exit(4);
+            }
+          ' '${{ inputs.service }}' '${{ inputs.runtime }}'
+
+      - uses: shivammathur/setup-php@v2
+        if: inputs.composer-path != '' || inputs.runtime != 'static'
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+
+      - uses: actions/setup-node@v5
+        if: inputs.node-path != '' && hashFiles(inputs.node-path == '.' && 'package-lock.json' || format('{0}/package-lock.json', inputs.node-path)) != ''
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ inputs.node-path == '.' && 'package-lock.json' || format('{0}/package-lock.json', inputs.node-path) }}
+
+      - name: Install and audit Composer dependencies
+        if: inputs.composer-path != ''
+        shell: bash
+        env:
+          TOOL_PATH: ${{ inputs.composer-path }}
+        run: |
+          cd "$TOOL_PATH"
+          composer install --prefer-dist --no-interaction --no-progress
+          composer audit --locked --no-interaction
+          if [[ -f artisan ]]; then
+            if [[ ! -f .env && -f .env.example ]]; then cp .env.example .env; fi
+            mkdir -p bootstrap/cache database storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs
+            touch database/database.sqlite
+          fi
+
+      - name: Install and audit Node dependencies
+        if: inputs.node-path != '' && hashFiles(inputs.node-path == '.' && 'package-lock.json' || format('{0}/package-lock.json', inputs.node-path)) != ''
+        shell: bash
+        env:
+          TOOL_PATH: ${{ inputs.node-path }}
+        run: |
+          cd "$TOOL_PATH"
+          npm ci
+          npm audit --audit-level=high
+
+      - name: Run declared quality and build commands
+        shell: bash
+        run: |
+          php -r '
+            $data = json_decode(file_get_contents("ops/service.json"), true, flags: JSON_THROW_ON_ERROR);
+            foreach (["build", "quality"] as $phase) {
+              foreach ($data["commands"][$phase] as $command) {
+                printf("%s\t%s\n", $command["working_directory"], base64_encode($command["run"]));
+              }
+            }
+          ' | while IFS=$'\t' read -r working_directory encoded; do
+            command=$(printf '%s' "$encoded" | base64 --decode)
+            printf '\n[%s] %s\n' "$working_directory" "$command"
+            (cd "$working_directory" && bash -lc "$command")
+          done

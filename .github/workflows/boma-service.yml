@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   quality:
-    uses: bomander/boma-nu-registry/.github/workflows/service-quality.yml@main
+    uses: ./.github/workflows/service-quality.yml
     with:
       service: enkat
       runtime: laravel
