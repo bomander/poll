@@ -1,0 +1,74 @@
+{
+    "schema_version": 1,
+    "service": "enkat",
+    "runtime": "laravel",
+    "publish_strategy": "copied_webroot",
+    "base_path": "/enkat",
+    "commands": {
+        "quality": [
+            {
+                "run": "composer test:lint",
+                "working_directory": "."
+            },
+            {
+                "run": "composer test",
+                "working_directory": "."
+            },
+            {
+                "run": "npm run format:check",
+                "working_directory": "."
+            },
+            {
+                "run": "npm run lint",
+                "working_directory": "."
+            }
+        ],
+        "build": [
+            {
+                "run": "npm run build",
+                "working_directory": "."
+            }
+        ]
+    },
+    "toolchain": {
+        "composer_path": ".",
+        "node_path": "."
+    },
+    "production": {
+        "url": "https://boma.nu/enkat",
+        "health_kind": "auto",
+        "probe": {
+            "type": "http",
+            "method": "GET",
+            "path": "/enkat",
+            "expected_status": [
+                200
+            ],
+            "contains": null,
+            "required_headers": [
+                "x-content-type-options"
+            ]
+        }
+    },
+    "release": {
+        "source_path": ".",
+        "deploy_flow": "scripts/deploy_release.sh",
+        "mutable_paths": [
+            ".env",
+            "storage/**",
+            "bootstrap/cache/**",
+            "database/*.sqlite*",
+            "vendor/**",
+            "node_modules/**",
+            "public/build/**",
+            "release-manifest.json"
+        ],
+        "private_paths": [
+            ".env",
+            "config.php",
+            "database/*.sqlite*"
+        ],
+        "backup_required": true,
+        "rollback_required": true
+    }
+}
