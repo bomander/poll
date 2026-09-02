@@ -1,6 +1,7 @@
 name: Boma service contract
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
