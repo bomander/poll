@@ -70,13 +70,16 @@ jobs:
           TOOL_PATH: ${{ inputs.composer-path }}
         run: |
           cd "$TOOL_PATH"
-          composer install --prefer-dist --no-interaction --no-progress
-          composer audit --locked --no-interaction
+          # Laravels katalogstruktur måste finnas innan composer install, eftersom
+          # package:discover körs direkt efter installationen.
           if [[ -f artisan ]]; then
-            if [[ ! -f .env && -f .env.example ]]; then cp .env.example .env; fi
+            if [[ ! -f .env ]]; then : > .env; fi
             mkdir -p bootstrap/cache database storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs
+            mkdir -p tests/Feature tests/Unit
             touch database/database.sqlite
           fi
+          composer install --prefer-dist --no-interaction --no-progress
+          composer audit --locked --no-interaction
 
       - name: Install and audit Node dependencies
         if: inputs.node-path != '' && hashFiles(inputs.node-path == '.' && 'package-lock.json' || format('{0}/package-lock.json', inputs.node-path)) != ''
