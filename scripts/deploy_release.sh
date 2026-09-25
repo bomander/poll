@@ -226,6 +226,7 @@ SWITCHED=1
 
 echo "[remote] ensure Laravel scheduler"
 ssh "$SSH_HOST" "set -euo pipefail;
+mkdir -p \$HOME/crontab-backups; exec 9>\$HOME/crontab-backups/.lock; flock -w 60 9 || { echo 'Kunde inte låsa crontab' >&2; exit 1; };
 CRON_TMP=\$(mktemp);
 trap 'rm -f \"\$CRON_TMP\"' EXIT;
 ((crontab -l 2>/dev/null || true) | grep -v '/apps/enkat/current/artisan schedule:run' || true) > \"\$CRON_TMP\";
