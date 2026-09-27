@@ -70,6 +70,7 @@ it('adds baseline browser security headers', function () {
         ->assertHeader('X-Permitted-Cross-Domain-Policies', 'none')
         ->assertHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
         ->assertHeader('Cross-Origin-Resource-Policy', 'same-site')
+        ->assertHeader('Content-Security-Policy')
         ->assertHeaderMissing('Strict-Transport-Security');
 });
 

@@ -24,6 +24,26 @@ class AddSecurityHeaders
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
+        // Innehållspolicy: egna resurser plus uppräknade värdar. 'unsafe-inline' behövs för inline-skript och skript som Cloudflare lägger in.
+        if (! $response->headers->has('Content-Security-Policy')) {
+            $response->headers->set('Content-Security-Policy', implode('; ', [
+                "default-src 'self'",
+                "base-uri 'self'",
+                "object-src 'none'",
+                "frame-ancestors 'self'",
+                "form-action 'self' https://auth.boma.nu",
+                "script-src 'self' 'unsafe-inline'",
+                "style-src 'self' 'unsafe-inline'",
+                "font-src 'self' data:",
+                "img-src 'self' data: blob: https:",
+                "connect-src 'self'",
+                "media-src 'self' blob: https:",
+                "worker-src 'self' blob:",
+                "frame-src 'self'",
+                "manifest-src 'self'",
+            ]));
+        }
+
         return $response;
     }
 }
