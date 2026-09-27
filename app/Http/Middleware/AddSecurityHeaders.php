@@ -16,6 +16,13 @@ class AddSecurityHeaders
         $response->headers->set('Referrer-Policy', 'same-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
+        // Samma värden som root, Plugga och Inkorg.
+        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+        $response->headers->set('Cross-Origin-Resource-Policy', 'same-site');
+
+        if ($request->isSecure()) {
+            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        }
 
         return $response;
     }

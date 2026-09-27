@@ -67,5 +67,13 @@ it('adds baseline browser security headers', function () {
         ->assertHeader('X-Frame-Options', 'SAMEORIGIN')
         ->assertHeader('Referrer-Policy', 'same-origin')
         ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
-        ->assertHeader('X-Permitted-Cross-Domain-Policies', 'none');
+        ->assertHeader('X-Permitted-Cross-Domain-Policies', 'none')
+        ->assertHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
+        ->assertHeader('Cross-Origin-Resource-Policy', 'same-site')
+        ->assertHeaderMissing('Strict-Transport-Security');
+});
+
+it('adds hsts only over https', function () {
+    $this->get(str_replace('http://', 'https://', route('home')))
+        ->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 });
