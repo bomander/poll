@@ -17,7 +17,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('welcome');
+    return Inertia::render('welcome', ['seo' => config('public-seo')]);
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {

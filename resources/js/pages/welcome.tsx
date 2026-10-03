@@ -1,6 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+import PublicSeo from '@/components/PublicSeo';
 import { Button } from '@/components/ui/button';
 import { apiFetch } from '@/lib/api';
 import { useT } from '@/lib/i18n';
@@ -47,7 +48,7 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title={name} />
+            <PublicSeo />
             <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-50 p-6 dark:bg-neutral-950">
                 <div className="w-full max-w-sm space-y-8">
                     <div className="text-center">

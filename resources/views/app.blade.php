@@ -31,7 +31,11 @@
             }
         </style>
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        <title inertia>{{ $page['props']['seo']['title'] ?? config('app.name') }}</title>
+        @if (isset($page['props']['seo']))
+            <meta name="description" content="{{ $page['props']['seo']['description'] }}" inertia="description">
+            <link rel="canonical" href="{{ $page['props']['seo']['canonical'] }}" inertia="canonical">
+        @endif
 
         <link rel="icon" href="{{ url('favicon.ico') }}" sizes="any">
         <link rel="icon" href="{{ url('favicon.svg') }}" type="image/svg+xml">
@@ -42,6 +46,19 @@
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
-        @inertia
+        @if (($page['component'] ?? '') === 'welcome' && isset($page['props']['seo']))
+            <div id="app" data-page="{{ json_encode($page) }}">
+                <main>
+                    <h1>{{ $page['props']['seo']['title'] }}</h1>
+                    <p>{{ $page['props']['seo']['description'] }}</p>
+                    <nav aria-label="Kom igång">
+                        <a href="{{ route('public.join') }}">Delta i en enkät</a>
+                        <a href="{{ route('login') }}">Logga in</a>
+                    </nav>
+                </main>
+            </div>
+        @else
+            @inertia
+        @endif
     </body>
 </html>
