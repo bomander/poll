@@ -116,9 +116,9 @@ export default function Welcome() {
                                 className="w-full"
                                 asChild
                             >
-                                <Link href={`${basePath}/login`}>
+                                <a href={`${basePath}/login`}>
                                     {t('welcome.teacher_login')}
-                                </Link>
+                                </a>
                             </Button>
                         )}
                     </div>
