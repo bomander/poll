@@ -33,6 +33,8 @@ export default [
     {
         ...importPlugin.flatConfigs.recommended,
         settings: {
+            // Generated Wayfinder imports are internal even before files exist in CI.
+            'import/internal-regex': '^@/',
             'import/resolver': {
                 typescript: true,
                 node: true,
