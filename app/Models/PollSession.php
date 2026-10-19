@@ -17,15 +17,45 @@ class PollSession extends Model
         'status',
         'current_question_id',
         'locked',
+        'show_results',
+        'hidden_answers',
         'started_at',
         'ended_at',
     ];
 
     protected $casts = [
         'locked' => 'boolean',
+        'show_results' => 'boolean',
+        'hidden_answers' => 'array',
         'started_at' => 'datetime',
         'ended_at' => 'datetime',
     ];
+
+    /**
+     * Teckenuppsättning för deltagarkoder. Saknar lättförväxlade tecken (0/O, 1/I/L).
+     */
+    public const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+    public const CODE_LENGTH = 6;
+
+    /**
+     * Gör om det en elev skrev till en sökbar kod: versaler utan mellanslag och bindestreck.
+     */
+    public static function normalizeCode(string $input): string
+    {
+        return strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $input) ?? '');
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function hiddenAnswers(): array
+    {
+        return array_values(array_filter(
+            $this->hidden_answers ?? [],
+            static fn ($answer): bool => is_string($answer),
+        ));
+    }
 
     public function poll(): BelongsTo
     {

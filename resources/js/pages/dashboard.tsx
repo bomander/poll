@@ -1,5 +1,8 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { MonitorPlay, Play, Plus } from 'lucide-react';
+import { useState } from 'react';
 
+import { StartSessionDialog } from '@/components/start-session-dialog';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -9,7 +12,6 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { apiFetch } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 import { type BreadcrumbItem } from '@/types';
 
@@ -21,7 +23,6 @@ type Poll = {
     id: number;
     title: string;
     description: string | null;
-    questions_count: number;
     sessions_count: number;
     updated_at: string;
 };
@@ -51,6 +52,7 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
     const { basePath } = usePage<PageProps>().props;
     const t = useT();
     const url = (path: string) => `${basePath}/${path}`;
+    const [startPoll, setStartPoll] = useState<Poll | null>(null);
     const breadcrumbs: BreadcrumbItem[] = [
         { title: t('nav.dashboard'), href: url('dashboard') },
     ];
@@ -160,16 +162,18 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
                                                 size="sm"
                                                 asChild
                                             >
-                                                <Link
+                                                <a
                                                     href={url(
                                                         `projector/${session.code}`,
                                                     )}
                                                     target="_blank"
+                                                    rel="noreferrer"
                                                 >
+                                                    <MonitorPlay />
                                                     {t(
                                                         'dashboard.active_sessions.projector',
                                                     )}
-                                                </Link>
+                                                </a>
                                             </Button>
                                         </div>
                                     </div>
@@ -181,7 +185,7 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
 
                 {/* Recent Polls */}
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                    <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
                         <div>
                             <CardTitle>
                                 {t('dashboard.recent_polls.title')}
@@ -190,88 +194,93 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
                                 {t('dashboard.recent_polls.description')}
                             </CardDescription>
                         </div>
-                        <Button asChild>
-                            <Link href={url('polls')}>
-                                {t('dashboard.recent_polls.cta')}
-                            </Link>
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button variant="outline" asChild>
+                                <Link href={url('polls')}>
+                                    {t('dashboard.recent_polls.cta')}
+                                </Link>
+                            </Button>
+                            <Button asChild>
+                                <a href={url('polls?new=1')}>
+                                    <Plus />
+                                    {t('dashboard.recent_polls.new')}
+                                </a>
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         {polls.length === 0 ? (
                             <p className="py-8 text-center text-muted-foreground">
                                 {t('dashboard.recent_polls.empty')}{' '}
-                                <Link
-                                    href={url('polls')}
+                                <a
+                                    href={url('polls?new=1')}
                                     className="text-primary underline"
                                 >
                                     {t('dashboard.recent_polls.empty_link')}
-                                </Link>
+                                </a>
                             </p>
                         ) : (
                             <div className="divide-y">
-                                {polls.map((poll) => (
-                                    <div
-                                        key={poll.id}
-                                        className="flex items-center justify-between py-3"
-                                    >
-                                        <div>
-                                            <p className="font-medium">
-                                                {poll.title}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {t(
-                                                    'dashboard.recent_polls.questions_sessions',
-                                                    {
-                                                        questions:
-                                                            poll.questions_count,
-                                                        sessions:
-                                                            poll.sessions_count,
-                                                    },
-                                                )}
-                                            </p>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                asChild
-                                            >
-                                                <Link
-                                                    href={
-                                                        poll.sessions_count ===
-                                                        0
-                                                            ? url(
-                                                                  `polls/${poll.id}/edit`,
-                                                              )
-                                                            : url('polls')
-                                                    }
-                                                >
-                                                    {poll.sessions_count === 0
+                                {polls.map((poll) => {
+                                    const active = activeSessions.find(
+                                        (session) =>
+                                            session.poll_id === poll.id,
+                                    );
+                                    return (
+                                        <div
+                                            key={poll.id}
+                                            className="flex flex-wrap items-center justify-between gap-3 py-3"
+                                        >
+                                            <div>
+                                                <p className="font-medium">
+                                                    {poll.title}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {poll.sessions_count === 1
                                                         ? t(
-                                                              'dashboard.recent_polls.edit',
+                                                              'dashboard.recent_polls.questions_sessions_one',
                                                           )
                                                         : t(
-                                                              'dashboard.recent_polls.clone_to_edit',
+                                                              'dashboard.recent_polls.questions_sessions',
+                                                              {
+                                                                  sessions:
+                                                                      poll.sessions_count,
+                                                              },
                                                           )}
-                                                </Link>
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                onClick={() =>
-                                                    startSession(
-                                                        poll.id,
-                                                        basePath,
-                                                        t,
-                                                    )
-                                                }
-                                            >
-                                                {t(
-                                                    'dashboard.recent_polls.start_session',
-                                                )}
-                                            </Button>
+                                                </p>
+                                            </div>
+                                            {active ? (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    asChild
+                                                >
+                                                    <a
+                                                        href={url(
+                                                            `sessions/${active.id}`,
+                                                        )}
+                                                    >
+                                                        {t(
+                                                            'polls.actions.open_active',
+                                                        )}
+                                                    </a>
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        setStartPoll(poll)
+                                                    }
+                                                >
+                                                    <Play />
+                                                    {t(
+                                                        'polls.actions.start_session',
+                                                    )}
+                                                </Button>
+                                            )}
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </CardContent>
@@ -332,31 +341,18 @@ export default function Dashboard({ polls, activeSessions, stats }: Props) {
                                 </div>
                             </div>
                             <Button className="mt-4" asChild>
-                                <Link href={url('polls')}>
+                                <a href={url('polls?new=1')}>
                                     {t('dashboard.quick_start.cta')}
-                                </Link>
+                                </a>
                             </Button>
                         </CardContent>
                     </Card>
                 )}
             </div>
+            <StartSessionDialog
+                poll={startPoll}
+                onOpenChange={(open) => !open && setStartPoll(null)}
+            />
         </AppLayout>
     );
-}
-
-async function startSession(
-    pollId: number,
-    basePath: string,
-    t: (key: string, replacements?: Record<string, string | number>) => string,
-) {
-    const nameInput = window.prompt(t('dashboard.prompt_session_name'));
-    const name = nameInput?.trim() || null;
-    const res = await apiFetch(`${basePath}/api/polls/${pollId}/sessions`, {
-        method: 'POST',
-        body: JSON.stringify({ name }),
-    });
-    if (res.ok) {
-        const session = await res.json();
-        window.location.href = `${basePath}/sessions/${session.id}`;
-    }
 }

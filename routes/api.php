@@ -12,6 +12,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/polls', [PollController::class, 'store']);
     Route::get('/polls/{poll}', [PollController::class, 'show']);
     Route::put('/polls/{poll}', [PollController::class, 'update']);
+    Route::delete('/polls/{poll}', [PollController::class, 'destroy']);
     Route::post('/polls/{poll}/clone', [PollController::class, 'clone']);
 
     Route::post('/polls/{poll}/sessions', [SessionController::class, 'store']);
@@ -20,6 +21,8 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/sessions/{session}/close', [SessionController::class, 'close']);
     Route::post('/sessions/{session}/current-question', [SessionController::class, 'setCurrentQuestion']);
     Route::post('/sessions/{session}/lock-question', [SessionController::class, 'lockQuestion']);
+    Route::post('/sessions/{session}/results-visibility', [SessionController::class, 'setResultsVisibility']);
+    Route::post('/sessions/{session}/hidden-answers', [SessionController::class, 'setAnswerHidden']);
     Route::get('/sessions/{session}/export', [SessionController::class, 'export']);
     Route::delete('/sessions/{session}', [SessionController::class, 'destroy']);
 

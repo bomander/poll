@@ -613,14 +613,16 @@ it('uses all word cloud responses for percentages and exports every answer', fun
 
     $show = $this->actingAs($user)->getJson("/api/sessions/{$session->id}");
 
+    // Läraren ser alla svar för att kunna dölja olämpliga ord.
     $show->assertOk();
     expect($show->json("results.{$question->id}"))
-        ->toHaveCount(50)
+        ->toHaveCount(51)
         ->each(fn ($result) => $result->percent->toBe(1.96));
 
-    $this->postJson('/api/join', ['code' => $session->code])
+    $join = $this->postJson('/api/join', ['code' => $session->code])
         ->assertOk()
         ->assertJsonPath('total_responses', 51);
+    expect($join->json('results'))->toHaveCount(50);
 
     $export = $this->actingAs($user)->get("/api/sessions/{$session->id}/export");
 

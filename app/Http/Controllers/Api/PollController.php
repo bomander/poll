@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Poll;
 use App\Models\PollOption;
 use App\Models\PollQuestion;
+use App\Models\PollResponse;
 use App\Models\PollSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,10 @@ class PollController extends Controller
             ->where('user_id', $request->user()->id)
             ->with('questions.options')
             ->withCount('sessions')
+            ->addSelect(['active_session_id' => PollSession::select('id')
+                ->whereColumn('poll_id', 'polls.id')
+                ->where('status', 'active')
+                ->limit(1)])
             ->orderByDesc('updated_at')
             ->get();
 
@@ -111,6 +116,29 @@ class PollController extends Controller
         });
 
         return response()->json($clone, 201);
+    }
+
+    /**
+     * Raderar enkäten med alla avslutade sessioner och deras svar.
+     */
+    public function destroy(Request $request, Poll $poll)
+    {
+        $this->authorizePoll($request, $poll);
+
+        if ($poll->sessions()->where('status', 'active')->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete a poll with an active session.',
+            ], 409);
+        }
+
+        DB::transaction(function () use ($poll) {
+            $sessionIds = $poll->sessions()->pluck('id');
+            PollResponse::whereIn('session_id', $sessionIds)->delete();
+            PollSession::whereIn('id', $sessionIds)->delete();
+            $poll->delete();
+        });
+
+        return response()->json(['message' => 'Poll deleted.']);
     }
 
     private function authorizePoll(Request $request, Poll $poll): void

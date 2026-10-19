@@ -10,7 +10,6 @@ use App\Services\PollResultBuilder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class SessionController extends Controller
 {
@@ -20,9 +19,11 @@ class SessionController extends Controller
     {
         abort_unless($poll->user_id === $request->user()->id, 403);
 
-        if ($poll->sessions()->where('status', 'active')->exists()) {
+        $active = $poll->sessions()->where('status', 'active')->first();
+        if ($active) {
             return response()->json([
                 'message' => 'This poll already has an active session.',
+                'session_id' => $active->id,
             ], 409);
         }
 
@@ -44,6 +45,7 @@ class SessionController extends Controller
                     'status' => 'active',
                     'current_question_id' => $firstQuestion?->id,
                     'locked' => false,
+                    'show_results' => true,
                     'started_at' => now(),
                 ]);
             });
@@ -52,6 +54,7 @@ class SessionController extends Controller
                 || str_contains($exception->getMessage(), 'poll_sessions.poll_id')) {
                 return response()->json([
                     'message' => 'This poll already has an active session.',
+                    'session_id' => $poll->sessions()->where('status', 'active')->value('id'),
                 ], 409);
             }
 
@@ -72,7 +75,7 @@ class SessionController extends Controller
     {
         $sessions = PollSession::query()
             ->whereHas('poll', fn ($query) => $query->where('user_id', $request->user()->id))
-            ->with('poll:id,title')
+            ->with('poll:id,title,type')
             ->withCount('responses')
             ->orderByDesc('created_at')
             ->get()
@@ -82,7 +85,9 @@ class SessionController extends Controller
                     'name' => $session->name,
                     'code' => $session->code,
                     'status' => $session->status,
+                    'poll_id' => $session->poll_id,
                     'poll_title' => $session->poll?->title,
+                    'poll_type' => $session->poll?->type ?? 'multiple_choice',
                     'responses_count' => $session->responses_count,
                     'created_at' => $session->created_at?->format('Y-m-d H:i'),
                     'started_at' => $session->started_at?->format('Y-m-d H:i'),
@@ -110,10 +115,44 @@ class SessionController extends Controller
     {
         $this->authorizeSession($request, $session);
 
-        $session->update([
-            'status' => 'closed',
-            'ended_at' => now(),
+        if ($session->status !== 'closed') {
+            $session->update([
+                'status' => 'closed',
+                'ended_at' => now(),
+            ]);
+        }
+
+        return response()->json($this->sessionPayload($session, true));
+    }
+
+    public function setResultsVisibility(Request $request, PollSession $session)
+    {
+        $this->authorizeSession($request, $session);
+
+        $data = $request->validate([
+            'show_results' => ['required', 'boolean'],
         ]);
+
+        $session->update(['show_results' => $data['show_results']]);
+
+        return response()->json($this->sessionPayload($session, true));
+    }
+
+    public function setAnswerHidden(Request $request, PollSession $session)
+    {
+        $this->authorizeSession($request, $session);
+
+        $data = $request->validate([
+            'answer_text' => ['required', 'string', 'max:200'],
+            'hidden' => ['required', 'boolean'],
+        ]);
+
+        $hidden = array_values(array_diff($session->hiddenAnswers(), [$data['answer_text']]));
+        if ($data['hidden']) {
+            $hidden[] = $data['answer_text'];
+        }
+
+        $session->update(['hidden_answers' => $hidden === [] ? null : $hidden]);
 
         return response()->json($this->sessionPayload($session, true));
     }
@@ -175,7 +214,7 @@ class SessionController extends Controller
             fputcsv($handle, ['question', 'option', 'count', 'percent']);
 
             foreach ($session->poll->questions as $question) {
-                $results = $this->results->forQuestion($pollType, $session, $question, null);
+                $results = $this->results->forQuestion($pollType, $session, $question, null, true);
                 foreach ($results as $result) {
                     fputcsv($handle, [
                         $this->safeCsvCell($question->question_text),
@@ -198,8 +237,14 @@ class SessionController extends Controller
 
     private function generateCode(): string
     {
+        $alphabet = PollSession::CODE_ALPHABET;
+        $max = strlen($alphabet) - 1;
+
         do {
-            $code = strtoupper(Str::random(8));
+            $code = '';
+            for ($i = 0; $i < PollSession::CODE_LENGTH; $i++) {
+                $code .= $alphabet[random_int(0, $max)];
+            }
         } while (PollSession::where('code', $code)->exists());
 
         return $code;
@@ -220,17 +265,24 @@ class SessionController extends Controller
             'name' => $session->name,
             'status' => $session->status,
             'locked' => $session->locked,
+            'show_results' => (bool) $session->show_results,
+            'hidden_answers' => $session->hiddenAnswers(),
             'current_question_id' => $session->current_question_id,
+            'started_at' => $session->started_at?->format('Y-m-d H:i'),
+            'ended_at' => $session->ended_at?->format('Y-m-d H:i'),
             'poll' => $session->poll,
         ];
 
         if ($includeResults) {
             $pollType = $session->poll?->type ?? 'multiple_choice';
             $results = [];
+            $totals = [];
             foreach ($session->poll->questions as $question) {
-                $results[$question->id] = $this->results->forQuestion($pollType, $session, $question);
+                $results[$question->id] = $this->results->forQuestion($pollType, $session, $question, 200, true);
+                $totals[$question->id] = $session->responses()->where('question_id', $question->id)->count();
             }
             $payload['results'] = $results;
+            $payload['response_totals'] = $totals;
         }
 
         return $payload;

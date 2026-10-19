@@ -7,14 +7,14 @@ use App\Models\PollOption;
 use App\Models\PollQuestion;
 use App\Models\PollResponse;
 use App\Models\PollSession;
-use App\Services\PollResultBuilder;
+use App\Services\ParticipantState;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class VoteController extends Controller
 {
-    public function __construct(private readonly PollResultBuilder $results) {}
+    public function __construct(private readonly ParticipantState $state) {}
 
     public function store(Request $request, PollSession $session)
     {
@@ -29,7 +29,8 @@ class VoteController extends Controller
             $rules['option_id'] = ['required', 'integer'];
             $rules['answer_text'] = ['prohibited'];
         } elseif ($pollType === 'word_cloud') {
-            $rules['answer_text'] = ['required', 'string', 'max:200'];
+            // Korta svar ger ett läsbart ordmoln på projektorn.
+            $rules['answer_text'] = ['required', 'string', 'max:60'];
             $rules['option_id'] = ['prohibited'];
         } else {
             return response()->json(['message' => 'Unknown poll type.'], 409);
@@ -107,15 +108,7 @@ class VoteController extends Controller
             throw $exception;
         }
 
-        $results = $this->results->forQuestion($pollType, $session, $question);
-        $totalResponses = PollResponse::where('session_id', $session->id)
-            ->where('question_id', $question->id)
-            ->count();
-
-        return response()->json([
-            'results' => $results,
-            'total_responses' => $totalResponses,
-        ]);
+        return response()->json($this->state->for($session->fresh(), $respondentKey));
     }
 
     private function normalizeAnswerText(string $text): string

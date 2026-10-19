@@ -14,20 +14,35 @@ class PollResultBuilder
         PollSession $session,
         PollQuestion $question,
         ?int $limit = 50,
+        bool $includeHidden = false,
     ): array {
         if ($pollType === 'word_cloud') {
-            return $this->wordCloudResults($session, $question, $limit);
+            return $this->wordCloudResults($session, $question, $limit, $includeHidden);
         }
 
         return $this->multipleChoiceResults($session, $question);
     }
 
-    private function wordCloudResults(PollSession $session, PollQuestion $question, ?int $limit): array
-    {
+    /**
+     * Dolda svar räknas inte med i det som visas för elever och på projektorn.
+     * Läraren får alla svar med en markering av vilka som är dolda.
+     */
+    private function wordCloudResults(
+        PollSession $session,
+        PollQuestion $question,
+        ?int $limit,
+        bool $includeHidden,
+    ): array {
+        $hidden = $session->hiddenAnswers();
+
         $responses = PollResponse::query()
             ->where('session_id', $session->id)
             ->where('question_id', $question->id)
             ->whereNotNull('answer_text');
+
+        if (! $includeHidden && $hidden !== []) {
+            $responses->whereNotIn('answer_text', $hidden);
+        }
 
         $total = (int) (clone $responses)->count();
 
@@ -41,14 +56,19 @@ class PollResultBuilder
             $counts->limit($limit);
         }
 
-        return $counts->get()->map(function ($row) use ($total) {
+        return $counts->get()->map(function ($row) use ($total, $hidden, $includeHidden) {
             $count = (int) $row->total;
-
-            return [
+            $result = [
                 'answer_text' => $row->answer_text,
                 'count' => $count,
                 'percent' => $total > 0 ? round(($count / $total) * 100, 2) : 0,
             ];
+
+            if ($includeHidden) {
+                $result['hidden'] = in_array($row->answer_text, $hidden, true);
+            }
+
+            return $result;
         })->all();
     }
 

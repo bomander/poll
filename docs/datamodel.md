@@ -30,11 +30,14 @@
 ## poll_sessions
 - id
 - poll_id (FK polls)
-- code (8 chars, unique)
+- code (unique; new codes are 6 chars without 0/O/1/I/L, older ones 8 chars)
 - name (nullable)
 - status (active|closed)
 - högst en aktiv session per poll (databasspärr i SQLite/PostgreSQL)
 - current_question_id (FK poll_questions, nullable)
+- locked (bool)
+- show_results (bool, default true)
+- hidden_answers (json, nullable; word-cloud answers hidden from the class)
 - started_at
 - ended_at (nullable)
 

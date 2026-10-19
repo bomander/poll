@@ -5,6 +5,7 @@ import PublicSeo from '@/components/PublicSeo';
 import { Button } from '@/components/ui/button';
 import { apiFetch } from '@/lib/api';
 import { useT } from '@/lib/i18n';
+import { normalizeCode } from '@/lib/poll';
 import { type SharedData } from '@/types';
 
 type PageProps = {
@@ -21,7 +22,8 @@ export default function Welcome() {
 
     const handleJoin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!code.trim()) return;
+        const clean = normalizeCode(code);
+        if (!clean) return;
 
         setError(null);
         setLoading(true);
@@ -29,7 +31,7 @@ export default function Welcome() {
         try {
             const res = await apiFetch(`${basePath}/api/join`, {
                 method: 'POST',
-                body: JSON.stringify({ code: code.trim().toUpperCase() }),
+                body: JSON.stringify({ code: clean }),
             });
 
             if (!res.ok) {
@@ -37,8 +39,7 @@ export default function Welcome() {
                 return;
             }
 
-            // Koden är giltig, redirecta till join-sidan
-            window.location.href = `${basePath}/join?code=${code.trim().toUpperCase()}`;
+            window.location.assign(`${basePath}/join?code=${clean}`);
         } catch {
             setError(t('welcome.errors.network'));
         } finally {
@@ -62,16 +63,28 @@ export default function Welcome() {
 
                     <form onSubmit={handleJoin} className="space-y-4">
                         <div>
+                            <label
+                                htmlFor="code"
+                                className="mb-2 block text-center text-sm font-medium text-neutral-700 dark:text-neutral-300"
+                            >
+                                {t('welcome.code_label')}
+                            </label>
                             <input
+                                id="code"
                                 type="text"
+                                inputMode="text"
+                                autoCapitalize="characters"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                spellCheck={false}
                                 placeholder={t('welcome.code_placeholder')}
                                 value={code}
                                 onChange={(e) => {
                                     setCode(e.target.value.toUpperCase());
                                     setError(null);
                                 }}
-                                maxLength={8}
-                                className="h-14 w-full rounded-md border border-neutral-300 bg-white text-center font-mono text-xl tracking-wider text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-800 dark:text-white dark:placeholder:text-neutral-500"
+                                maxLength={12}
+                                className="h-16 w-full rounded-md border border-neutral-300 bg-white text-center font-mono text-3xl tracking-[0.2em] text-neutral-900 placeholder:text-neutral-300 focus:border-neutral-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-800 dark:text-white dark:placeholder:text-neutral-500"
                             />
                             {error && (
                                 <p className="mt-2 text-center text-sm text-red-600">
