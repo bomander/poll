@@ -145,6 +145,25 @@ return [
         ],
     ],
 
+    'themes' => [
+        'label' => 'Tema',
+        'help' => 'Gäller elevernas skärmar och projektorn. Du kan byta tema när som helst, även under en omgång.',
+        'changed' => 'Temat är bytt.',
+        'names' => [
+            'lekfullt' => 'Lekfullt',
+            'rymd' => 'Rymd',
+            'skog' => 'Skog',
+            'hav' => 'Hav',
+            'pixel' => 'Pixel',
+            'tavla' => 'Svarta tavlan',
+            'arena' => 'Arena',
+            'pastell' => 'Pastell',
+            'tidning' => 'Tidning',
+            'bauhaus' => 'Bauhaus',
+            'klar' => 'Klar',
+        ],
+    ],
+
     'sessions_index' => [
         'title' => 'Omgångar',
         'subtitle' => 'Varje gång du kör en enkät blir det en omgång med egna svar.',
@@ -234,8 +253,7 @@ return [
     ],
 
     'welcome' => [
-        'tagline' => 'Svara på lärarens fråga',
-        'code_label' => 'Kod från tavlan',
+        'code_label' => 'Kod',
         'code_placeholder' => 'ABC123',
         'join' => 'Gå med',
         'joining' => 'Ansluter...',
@@ -249,7 +267,7 @@ return [
 
     'join' => [
         'title' => 'Svara',
-        'code_label' => 'Kod från tavlan',
+        'code_label' => 'Kod',
         'code_placeholder' => 'ABC123',
         'join' => 'Gå med',
         'joining' => 'Ansluter...',
@@ -330,6 +348,7 @@ return [
     'session' => [
         'title' => 'Omgång',
         'load_failed' => 'Kunde inte hämta omgången.',
+        'theme_failed' => 'Temat kunde inte bytas.',
         'update_failed' => 'Ändringen sparades inte. Försök igen.',
         'close_failed' => 'Kunde inte avsluta omgången.',
         'back' => 'Alla omgångar',

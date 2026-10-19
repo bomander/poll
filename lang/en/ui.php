@@ -145,6 +145,25 @@ return [
         ],
     ],
 
+    'themes' => [
+        'label' => 'Theme',
+        'help' => 'Applies to students\' screens and the projector. You can change it any time, even during a run.',
+        'changed' => 'Theme changed.',
+        'names' => [
+            'lekfullt' => 'Playful',
+            'rymd' => 'Space',
+            'skog' => 'Forest',
+            'hav' => 'Sea',
+            'pixel' => 'Pixel',
+            'tavla' => 'Chalkboard',
+            'arena' => 'Arena',
+            'pastell' => 'Pastel',
+            'tidning' => 'Newspaper',
+            'bauhaus' => 'Bauhaus',
+            'klar' => 'Clear',
+        ],
+    ],
+
     'sessions_index' => [
         'title' => 'Runs',
         'subtitle' => 'Every time you run a poll it becomes a run with its own responses.',
@@ -234,8 +253,7 @@ return [
     ],
 
     'welcome' => [
-        'tagline' => "Answer your teacher's question",
-        'code_label' => 'Code from the board',
+        'code_label' => 'Code',
         'code_placeholder' => 'ABC123',
         'join' => 'Join',
         'joining' => 'Joining...',
@@ -249,7 +267,7 @@ return [
 
     'join' => [
         'title' => 'Answer',
-        'code_label' => 'Code from the board',
+        'code_label' => 'Code',
         'code_placeholder' => 'ABC123',
         'join' => 'Join',
         'joining' => 'Joining...',
@@ -330,6 +348,7 @@ return [
     'session' => [
         'title' => 'Run',
         'load_failed' => 'Could not load the run.',
+        'theme_failed' => 'The theme could not be changed.',
         'update_failed' => 'The change was not saved. Try again.',
         'close_failed' => 'Could not end the run.',
         'back' => 'All runs',

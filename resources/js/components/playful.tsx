@@ -2,10 +2,19 @@ import '../../css/playful.css';
 
 import { type ReactNode } from 'react';
 
-/** Ram för elevernas sidor: krämvit bakgrund med stora färgade former. */
-export function PlayfulPage({ children }: { children: ReactNode }) {
+/** Ram för elevernas sidor i det tema läraren har valt för enkäten. */
+export function PlayfulPage({
+    theme,
+    children,
+}: {
+    theme?: string | null;
+    children: ReactNode;
+}) {
     return (
-        <div className="playful relative min-h-dvh px-4 py-8 sm:py-12">
+        <div
+            className="playful relative min-h-dvh px-4 py-8 sm:py-12"
+            data-theme={theme ?? undefined}
+        >
             <div className="playful-shapes" aria-hidden>
                 <span />
                 <span />

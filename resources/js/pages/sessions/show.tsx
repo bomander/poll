@@ -17,6 +17,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 
 import { StartSessionDialog } from '@/components/start-session-dialog';
+import { ThemeSwitcher } from '@/components/theme-picker';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { apiFetch } from '@/lib/api';
@@ -30,6 +31,7 @@ import {
     type PollType,
     type WordCloudResult,
 } from '@/lib/poll';
+import { getTheme } from '@/lib/themes';
 
 type PageProps = {
     basePath: string;
@@ -52,6 +54,7 @@ type Session = {
         id: number;
         title: string;
         type: PollType;
+        settings?: { theme?: string } | null;
         questions: PollQuestion[];
     };
     results?: Record<number, (MultipleChoiceResult | WordCloudResult)[]>;
@@ -390,6 +393,25 @@ export default function SessionShow() {
                             <h2 className="text-lg font-semibold">
                                 {t('session.controls_title')}
                             </h2>
+                            <ThemeSwitcher
+                                compact
+                                pollId={session.poll.id}
+                                value={
+                                    getTheme(session.poll.settings?.theme).key
+                                }
+                                onChanged={(theme) =>
+                                    setSession({
+                                        ...session,
+                                        poll: {
+                                            ...session.poll,
+                                            settings: {
+                                                ...session.poll.settings,
+                                                theme,
+                                            },
+                                        },
+                                    })
+                                }
+                            />
                             {!isClosed ? (
                                 <>
                                     <Control

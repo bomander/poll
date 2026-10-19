@@ -56,23 +56,15 @@ export default function Welcome() {
                         <h1 className="font-toy text-6xl font-bold tracking-tight">
                             {name}
                         </h1>
-                        <p className="font-toy mt-2 text-xl font-medium">
-                            {t('welcome.tagline')}
-                        </p>
                     </div>
 
                     <form
                         onSubmit={handleJoin}
                         className="playful-card p-6 sm:p-8"
                     >
-                        <label
-                            htmlFor="code"
-                            className="font-toy mb-3 block text-center text-lg font-medium"
-                        >
-                            {t('welcome.code_label')}
-                        </label>
                         <input
                             id="code"
+                            aria-label={t('welcome.code_label')}
                             type="text"
                             inputMode="text"
                             autoCapitalize="characters"
@@ -91,7 +83,7 @@ export default function Welcome() {
                         {error && (
                             <p
                                 role="alert"
-                                className="mt-4 rounded-2xl border-[3px] border-[var(--berry)] bg-[#fff0f3] px-4 py-3 text-center font-semibold text-[#a3123a]"
+                                className="mt-4 rounded-2xl border-[3px] border-[var(--danger-line)] bg-[var(--danger-bg)] px-4 py-3 text-center font-semibold text-[var(--danger)]"
                             >
                                 {error}
                             </p>

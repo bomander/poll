@@ -8,6 +8,7 @@ use App\Models\PollOption;
 use App\Models\PollQuestion;
 use App\Models\PollResponse;
 use App\Models\PollSession;
+use App\Support\Themes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -44,7 +45,7 @@ class PollController extends Controller
                 'title' => $data['title'],
                 'description' => $data['description'] ?? null,
                 'type' => $data['type'] ?? 'multiple_choice',
-                'settings' => $data['settings'] ?? null,
+                'settings' => $this->settingsFrom($data),
             ]);
 
             $this->syncQuestions($poll, $data['questions']);
@@ -81,7 +82,7 @@ class PollController extends Controller
                 'title' => $data['title'],
                 'description' => $data['description'] ?? null,
                 'type' => $nextType,
-                'settings' => array_key_exists('settings', $data) ? $data['settings'] : $poll->settings,
+                'settings' => array_key_exists('settings', $data) ? $this->settingsFrom($data) : $poll->settings,
             ]);
 
             $poll->questions()->delete();
@@ -143,6 +144,32 @@ class PollController extends Controller
         return response()->json(['message' => 'Poll deleted.']);
     }
 
+    /**
+     * Temat är bara utseende och får därför bytas även efter att enkäten har körts.
+     */
+    public function updateTheme(Request $request, Poll $poll)
+    {
+        $this->authorizePoll($request, $poll);
+
+        $data = $request->validate([
+            'theme' => ['required', 'string', 'in:'.implode(',', Themes::KEYS)],
+        ]);
+
+        $poll->update(['settings' => [...($poll->settings ?? []), 'theme' => $data['theme']]]);
+
+        return response()->json($poll->load('questions.options')->loadCount('sessions'));
+    }
+
+    /**
+     * Sparar bara kända inställningar.
+     */
+    private function settingsFrom(array $data): ?array
+    {
+        $theme = $data['settings']['theme'] ?? null;
+
+        return $theme ? ['theme' => $theme] : null;
+    }
+
     private function authorizePoll(Request $request, Poll $poll): void
     {
         abort_unless($poll->user_id === $request->user()->id, 403);
@@ -155,6 +182,7 @@ class PollController extends Controller
             'description' => ['nullable', 'string', 'max:5000'],
             'type' => ['sometimes', 'string', 'max:32', 'in:'.implode(',', self::POLL_TYPES)],
             'settings' => ['nullable', 'array'],
+            'settings.theme' => ['nullable', 'string', 'in:'.implode(',', Themes::KEYS)],
             'questions' => ['required', 'array', 'min:1', 'max:'.self::MAX_QUESTIONS],
             'questions.*.question_text' => ['required', 'string', 'max:500'],
             'questions.*.options' => ['nullable', 'array', 'max:8'],

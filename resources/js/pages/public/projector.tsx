@@ -7,13 +7,13 @@ import { apiFetch } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 import {
     formatCode,
-    optionColor,
     optionLetter,
     type MultipleChoiceResult,
     type ParticipantState,
     type PollQuestion,
     type WordCloudResult,
 } from '@/lib/poll';
+import { getTheme, readableInk, themeColor } from '@/lib/themes';
 
 type PageProps = {
     basePath: string;
@@ -23,12 +23,12 @@ type PageProps = {
     qrSvg: string | null;
 };
 
+type Theme = ReturnType<typeof getTheme>;
+
 type WordCloudEngine = ((
     canvas: HTMLCanvasElement,
     options: Record<string, unknown>,
 ) => void) & { stop?: () => void };
-
-const TOY_FONT = "'Fredoka Variable'";
 
 // Projektorn är en enda klient per klassrum, så den kan fråga lite oftare.
 const REFRESH_MS = 3000;
@@ -108,9 +108,13 @@ export default function ProjectorPage() {
 
     const question = state?.current_question ?? null;
     const total = state?.total_responses ?? 0;
+    const theme = getTheme(state?.theme);
 
     return (
-        <div className="playful relative flex h-dvh flex-col gap-[2.2vh] overflow-hidden px-[2.5vw] pt-[2.5vh] pb-[4vh]">
+        <div
+            className="playful relative flex h-dvh flex-col gap-[2.2vh] overflow-hidden px-[2.5vw] pt-[2.5vh] pb-[4vh]"
+            data-theme={state?.theme}
+        >
             <Head title={t('projector.title')} />
             <div className="playful-shapes" aria-hidden>
                 <span />
@@ -123,7 +127,7 @@ export default function ProjectorPage() {
                 <JoinBand host={joinHost} code={code} qrSvg={qrSvg} />
             ) : null}
 
-            <div className="playful-card font-toy flex min-h-0 flex-1 flex-col rounded-[2.5rem] px-[3.5vw] pt-[3vh] pb-[3.5vh]">
+            <div className="playful-card font-toy flex min-h-0 flex-1 flex-col px-[3.5vw] pt-[3vh] pb-[3.5vh]">
                 {error ? (
                     <Centered title={error} />
                 ) : !state ? null : !question ? (
@@ -148,7 +152,7 @@ export default function ProjectorPage() {
                     >
                         <div className="flex items-center justify-between gap-6 text-[clamp(1rem,1.5vw,1.75rem)] font-semibold">
                             <span className="flex min-w-0 items-center gap-[0.6em]">
-                                <span className="truncate rounded-full bg-[var(--sun)] px-[0.8em] py-[0.15em]">
+                                <span className="truncate rounded-[var(--btn-radius)] bg-[var(--pill)] px-[0.8em] py-[0.15em] text-[var(--pill-ink)]">
                                     {state.poll_title}
                                 </span>
                                 {state.question_count > 1 &&
@@ -163,7 +167,7 @@ export default function ProjectorPage() {
                             </span>
                             <span className="flex shrink-0 items-center gap-[0.6em]">
                                 <StateChip state={state} />
-                                <span className="rounded-full border-[0.15em] border-[var(--ink)] bg-white px-[0.8em] py-[0.1em] tabular-nums">
+                                <span className="rounded-[var(--btn-radius)] border-[0.15em] border-[var(--line)] bg-[var(--card)] px-[0.8em] py-[0.1em] tabular-nums">
                                     {total
                                         ? t('projector.responses', {
                                               count: total,
@@ -172,12 +176,13 @@ export default function ProjectorPage() {
                                 </span>
                             </span>
                         </div>
-                        <h1 className="mt-[2vh] text-[clamp(1.75rem,4.2vw,5rem)] leading-[1.1] font-semibold text-balance">
+                        <h1 className="font-question mt-[2vh] text-[clamp(1.75rem,4.2vw,5rem)] leading-[1.1] font-semibold text-balance">
                             {question.question_text}
                         </h1>
                         <div className="mt-[3vh] flex min-h-0 flex-1 flex-col">
                             {state.poll_type === 'multiple_choice' ? (
                                 <ChoiceResults
+                                    theme={theme}
                                     question={question}
                                     results={
                                         state.results as MultipleChoiceResult[]
@@ -186,6 +191,7 @@ export default function ProjectorPage() {
                                 />
                             ) : state.show_results ? (
                                 <WordCloudCanvas
+                                    theme={theme}
                                     results={state.results as WordCloudResult[]}
                                 />
                             ) : (
@@ -212,7 +218,7 @@ export default function ProjectorPage() {
             <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="font-toy fixed right-4 bottom-4 z-20 flex items-center gap-2 rounded-full border-[3px] border-[var(--ink)] bg-white px-4 py-2 text-sm font-semibold opacity-40 transition-opacity hover:opacity-100 focus:opacity-100"
+                className="font-toy fixed right-4 bottom-4 z-20 flex items-center gap-2 rounded-[var(--btn-radius)] border-[3px] border-[var(--line)] bg-[var(--card)] px-4 py-2 text-sm font-semibold text-[var(--ink)] opacity-40 transition-opacity hover:opacity-100 focus:opacity-100"
                 aria-label={
                     fullscreen
                         ? t('projector.exit_fullscreen')
@@ -242,10 +248,9 @@ function JoinBand({
     qrSvg: string | null;
 }) {
     const t = useT();
-    const step =
-        'text-[clamp(0.9rem,1.3vw,1.5rem)] font-semibold text-white/75';
+    const step = 'text-[clamp(0.9rem,1.3vw,1.5rem)] font-semibold opacity-75';
     return (
-        <header className="font-toy relative z-10 flex shrink-0 items-center gap-[3vw] rounded-[2.5rem] bg-[var(--ink)] px-[3vw] py-[1.8vh] text-white shadow-[0_8px_0_rgb(43_33_64/0.25)]">
+        <header className="font-toy relative z-10 flex shrink-0 items-center gap-[3vw] rounded-[var(--card-radius)] bg-[var(--band)] px-[3vw] py-[1.8vh] text-[var(--band-ink)] shadow-[0_8px_0_rgb(0_0_0/0.25)]">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-[3.5vw] gap-y-2">
                 <div className="min-w-0">
                     <div className={step}>1. {t('projector.join_step')}</div>
@@ -255,7 +260,7 @@ function JoinBand({
                 </div>
                 <div>
                     <div className={step}>2. {t('projector.code_step')}</div>
-                    <div className="mt-[0.3vh] inline-block rounded-[0.4em] border-[0.08em] border-white bg-[var(--sun)] px-[0.35em] py-[0.05em] text-[clamp(2rem,4.8vw,5.5rem)] leading-none font-bold tracking-[0.12em] text-[var(--ink)]">
+                    <div className="mt-[0.3vh] inline-block rounded-[min(var(--btn-radius),0.4em)] border-[0.08em] border-[var(--band-ink)] bg-[var(--code)] px-[0.35em] py-[0.05em] text-[clamp(2rem,4.8vw,5.5rem)] leading-none font-bold tracking-[0.12em] text-[var(--code-ink)]">
                         {formatCode(code)}
                     </div>
                 </div>
@@ -266,7 +271,7 @@ function JoinBand({
                         {t('projector.scan')}
                     </span>
                     <div
-                        className="aspect-square w-[clamp(5.5rem,9vw,11rem)] rounded-[1.25rem] border-[0.35rem] border-[var(--sun)] bg-white p-1 [&>svg]:h-full [&>svg]:w-full"
+                        className="aspect-square w-[clamp(5.5rem,9vw,11rem)] rounded-[min(var(--btn-radius),1.25rem)] border-[0.35rem] border-[var(--code)] bg-white p-1 [&>svg]:h-full [&>svg]:w-full"
                         // SVG:n skapas på servern från lärarens kod, inte från elevdata.
                         dangerouslySetInnerHTML={{ __html: qrSvg }}
                     />
@@ -280,13 +285,13 @@ function StateChip({ state }: { state: ParticipantState }) {
     const t = useT();
     const [label, background, color] =
         state.status === 'closed'
-            ? [t('projector.state.closed'), '#e4dccd', 'var(--ink)']
+            ? [t('projector.state.closed'), 'var(--track)', 'var(--ink)']
             : state.locked
-              ? [t('projector.state.locked'), 'var(--sun)', 'var(--ink)']
-              : [t('projector.state.open'), 'var(--grass)', '#fff'];
+              ? [t('projector.state.locked'), 'var(--note)', 'var(--note-ink)']
+              : [t('projector.state.open'), 'var(--ok)', 'var(--ok-ink)'];
     return (
         <span
-            className="rounded-full border-[0.15em] border-[var(--ink)] px-[0.8em] py-[0.1em]"
+            className="rounded-[var(--btn-radius)] border-[0.15em] border-[var(--line)] px-[0.8em] py-[0.1em]"
             style={{ backgroundColor: background, color }}
         >
             {label}
@@ -327,10 +332,12 @@ function Centered({
  * medan antal och staplar bara visas när läraren låter resultatet synas.
  */
 function ChoiceResults({
+    theme,
     question,
     results,
     showResults,
 }: {
+    theme: Theme;
     question: PollQuestion;
     results: MultipleChoiceResult[];
     showResults: boolean;
@@ -344,7 +351,7 @@ function ChoiceResults({
         <ol className="flex min-h-0 flex-1 flex-col justify-center gap-[1.8vh]">
             {question.options.map((option, index) => {
                 const result = byOption.get(option.id);
-                const color = optionColor(index);
+                const color = themeColor(theme, index);
                 const width = result ? (result.percent / maxPercent) * 100 : 0;
                 return (
                     <li
@@ -352,19 +359,28 @@ function ChoiceResults({
                         className="flex min-h-0 items-center gap-[1.2vw] text-[clamp(1.1rem,2.4vw,2.9rem)]"
                     >
                         <span
-                            className="flex aspect-square w-[1.9em] shrink-0 items-center justify-center rounded-full border-[0.12em] border-[var(--ink)] font-bold text-white shadow-[0_0.12em_0_var(--ink)]"
-                            style={{ backgroundColor: color }}
+                            className="flex aspect-square w-[1.9em] shrink-0 items-center justify-center rounded-[min(var(--btn-radius),9999px)] border-[0.12em] border-[var(--line)] font-bold"
+                            style={{
+                                backgroundColor: color,
+                                color: readableInk(theme, color),
+                            }}
                         >
                             {optionLetter(index)}
                         </span>
-                        <div className="relative min-w-0 flex-1 overflow-hidden rounded-[0.9em] border-[0.12em] border-[var(--ink)] bg-[#fbf7ef]">
+                        <div className="relative min-w-0 flex-1 overflow-hidden rounded-[min(var(--btn-radius),0.9em)] border-[0.12em] border-[var(--line)] bg-[var(--track)]">
                             {showResults ? (
                                 <div
                                     className="absolute inset-y-0 left-0 transition-[width] duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
                                     style={{
                                         width: `${width}%`,
-                                        // Ljus ton av färgen så att den mörka texten syns på avstånd.
-                                        backgroundColor: `${color}4d`,
+                                        // Mörka färger tonas ned så att texten syns på avstånd.
+                                        // Ljusa färger fyller stapeln helt på ljusa kort, annars försvinner de.
+                                        backgroundColor:
+                                            !theme.darkCard &&
+                                            readableInk(theme, color) ===
+                                                theme.darkInk
+                                                ? color
+                                                : `${color}4d`,
                                         borderRight:
                                             width > 0
                                                 ? `0.25em solid ${color}`
@@ -373,7 +389,7 @@ function ChoiceResults({
                                 />
                             ) : null}
                             <div className="relative flex items-center justify-between gap-4 px-[0.7em] py-[0.4em]">
-                                <span className="min-w-0 leading-snug font-medium">
+                                <span className="font-question min-w-0 leading-snug font-medium">
                                     {option.option_text}
                                 </span>
                                 {showResults && result ? (
@@ -393,22 +409,25 @@ function ChoiceResults({
     );
 }
 
-function WordCloudCanvas({ results }: { results: WordCloudResult[] }) {
+function WordCloudCanvas({
+    theme,
+    results,
+}: {
+    theme: Theme;
+    results: WordCloudResult[];
+}) {
     const t = useT();
     const containerRef = useRef<HTMLDivElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const engineRef = useRef<WordCloudEngine | null>(null);
     const [engineLoaded, setEngineLoaded] = useState(false);
+    const [fontReady, setFontReady] = useState<string | null>(null);
     const [size, setSize] = useState({ width: 0, height: 0 });
     const lastSignatureRef = useRef<string | null>(null);
 
     useEffect(() => {
         let cancelled = false;
-        // Ordmolnet ritas på en canvas, så typsnittet måste vara laddat först.
-        void Promise.all([
-            import('wordcloud'),
-            document.fonts?.load(`600 48px ${TOY_FONT}`).catch(() => undefined),
-        ]).then(([mod]) => {
+        void import('wordcloud').then((mod) => {
             if (cancelled) return;
             engineRef.current = mod.default as WordCloudEngine;
             setEngineLoaded(true);
@@ -417,6 +436,20 @@ function WordCloudCanvas({ results }: { results: WordCloudResult[] }) {
             cancelled = true;
         };
     }, []);
+
+    // Ordmolnet ritas på en canvas, så temats typsnitt måste vara laddat först.
+    useEffect(() => {
+        let cancelled = false;
+        const font = theme.cloudFont;
+        void Promise.resolve(document.fonts?.load(`600 48px ${font}`))
+            .catch(() => undefined)
+            .then(() => {
+                if (!cancelled) setFontReady(font);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [theme.cloudFont]);
 
     // Rita om när projektorfönstret ändrar storlek, till exempel vid helskärm.
     useEffect(() => {
@@ -434,6 +467,7 @@ function WordCloudCanvas({ results }: { results: WordCloudResult[] }) {
         const canvas = canvasRef.current;
         const WordCloud = engineRef.current;
         if (!engineLoaded || !canvas || !WordCloud) return;
+        if (fontReady !== theme.cloudFont) return;
         if (size.width === 0 || size.height === 0) return;
 
         const entries = results
@@ -442,7 +476,7 @@ function WordCloudCanvas({ results }: { results: WordCloudResult[] }) {
             .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'sv'))
             .slice(0, 50);
 
-        const signature = `${size.width}x${size.height}|${entries
+        const signature = `${theme.key}|${size.width}x${size.height}|${entries
             .map(([text, count]) => `${text}:${count}`)
             .join('|')}`;
         if (signature === lastSignatureRef.current) return;
@@ -476,12 +510,12 @@ function WordCloudCanvas({ results }: { results: WordCloudResult[] }) {
             shrinkToFit: true,
             clearCanvas: true,
             backgroundColor: 'transparent',
-            fontFamily: `${TOY_FONT}, ui-rounded, system-ui, sans-serif`,
+            fontFamily: `${theme.cloudFont}, ui-rounded, system-ui, sans-serif`,
             fontWeight: '600',
-            color: (word: string) => optionColor(stableHash(word)),
+            color: (word: string) => themeColor(theme, stableHash(word)),
             random,
         });
-    }, [engineLoaded, results, size]);
+    }, [engineLoaded, fontReady, results, size, theme]);
 
     useEffect(() => () => engineRef.current?.stop?.(), []);
 

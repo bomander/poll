@@ -13,6 +13,7 @@ export type Poll = {
     title: string;
     description?: string | null;
     type?: PollType;
+    settings?: { theme?: string } | null;
     questions: PollQuestion[];
     sessions_count: number;
 };
@@ -42,6 +43,8 @@ export type ParticipantState = {
     show_results: boolean;
     poll_title: string | null;
     poll_type: PollType;
+    /** Temat som läraren valt för enkäten, till exempel "rymd". */
+    theme: string;
     current_question: PollQuestion | null;
     /** Den aktuella frågans plats i enkäten, räknat från 1. */
     question_number: number | null;

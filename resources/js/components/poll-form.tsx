@@ -9,9 +9,11 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { ThemePicker } from '@/components/theme-picker';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/lib/i18n';
 import { optionColor, optionLetter, type PollType } from '@/lib/poll';
+import { DEFAULT_THEME, type ThemeKey } from '@/lib/themes';
 
 export type PollFormQuestion = {
     question: string;
@@ -22,6 +24,7 @@ export type PollFormValues = {
     title: string;
     description: string;
     type: PollType;
+    theme: ThemeKey;
     questions: PollFormQuestion[];
 };
 
@@ -29,6 +32,7 @@ export type PollPayload = {
     title: string;
     description: string | null;
     type: PollType;
+    settings: { theme: ThemeKey };
     questions: { question_text: string; options: string[] }[];
 };
 
@@ -68,6 +72,7 @@ export const EMPTY_POLL: PollFormValues = {
     title: '',
     description: '',
     type: 'multiple_choice',
+    theme: DEFAULT_THEME,
     questions: [emptyQuestion()],
 };
 
@@ -221,6 +226,7 @@ export function PollForm({
             title,
             description: values.description.trim() || null,
             type: values.type,
+            settings: { theme: values.theme },
             questions: values.questions.map((question, index) => ({
                 question_text: question.question.trim(),
                 options:
@@ -474,6 +480,19 @@ export function PollForm({
                     ) : null}
                 </div>
             ) : null}
+
+            <fieldset className="grid gap-2">
+                <legend className="mb-1.5 text-sm font-medium">
+                    {t('themes.label')}
+                </legend>
+                <ThemePicker
+                    value={values.theme}
+                    onChange={(theme) => update({ theme })}
+                />
+                <span className="text-xs text-muted-foreground">
+                    {t('themes.help')}
+                </span>
+            </fieldset>
 
             <label className="grid gap-1.5">
                 <span className="text-sm font-medium">

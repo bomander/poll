@@ -14,6 +14,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::put('/polls/{poll}', [PollController::class, 'update']);
     Route::delete('/polls/{poll}', [PollController::class, 'destroy']);
     Route::post('/polls/{poll}/clone', [PollController::class, 'clone']);
+    Route::patch('/polls/{poll}/theme', [PollController::class, 'updateTheme']);
 
     Route::post('/polls/{poll}/sessions', [SessionController::class, 'store']);
     Route::get('/sessions', [SessionController::class, 'index']);

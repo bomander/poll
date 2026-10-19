@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PollResponse;
 use App\Models\PollSession;
+use App\Support\Themes;
 
 /**
  * Det elever och projektorn får se av en session. Resultat skickas bara när
@@ -51,6 +52,7 @@ class ParticipantState
             'show_results' => $showResults,
             'poll_title' => $session->poll?->title,
             'poll_type' => $pollType,
+            'theme' => Themes::resolve($session->poll?->settings),
             'current_question' => $question ? [
                 'id' => $question->id,
                 'question_text' => $question->question_text,

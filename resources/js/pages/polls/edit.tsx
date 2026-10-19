@@ -7,11 +7,13 @@ import {
     type PollFormValues,
     type PollPayload,
 } from '@/components/poll-form';
+import { ThemeSwitcher } from '@/components/theme-picker';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { apiFetch } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 import { type Poll } from '@/lib/poll';
+import { getTheme } from '@/lib/themes';
 
 type PageProps = { basePath: string; pollId: number };
 
@@ -54,6 +56,7 @@ export default function PollEdit() {
               title: poll.title,
               description: poll.description ?? '',
               type: pollType,
+              theme: getTheme(poll.settings?.theme).key,
               questions: poll.questions.map((question) => ({
                   question: question.question_text,
                   options:
@@ -88,9 +91,29 @@ export default function PollEdit() {
                     </p>
                 ) : null}
                 {poll?.sessions_count ? (
-                    <section className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-                        {t('polls.history_locked_edit')}
-                    </section>
+                    <>
+                        <section className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+                            {t('polls.history_locked_edit')}
+                        </section>
+                        <section className="grid gap-3 rounded-xl border p-6">
+                            <h2 className="text-sm font-medium">
+                                {t('themes.label')}
+                            </h2>
+                            <ThemeSwitcher
+                                pollId={poll.id}
+                                value={getTheme(poll.settings?.theme).key}
+                                onChanged={(theme) =>
+                                    setPoll({
+                                        ...poll,
+                                        settings: { ...poll.settings, theme },
+                                    })
+                                }
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                {t('themes.help')}
+                            </p>
+                        </section>
+                    </>
                 ) : poll ? (
                     <section className="rounded-xl border p-6">
                         <PollForm

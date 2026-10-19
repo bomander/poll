@@ -1,32 +1,522 @@
 /*
- * Lekfull stil för elevernas sidor: rundade typsnitt, klara färger och
- * tjocka knappar som trycks ned. Gäller bara inom .playful.
+ * Teman för elevernas sidor och projektorn. Varje tema sätter variabler på
+ * .playful[data-theme], och komponenterna läser bara variablerna.
+ * Lekfullt är standard och gäller när inget tema är satt.
  */
 @import '@fontsource-variable/fredoka';
 @import '@fontsource-variable/nunito';
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/fraunces';
+@import '@fontsource-variable/lexend';
+@import '@fontsource/silkscreen/400.css';
+@import '@fontsource/silkscreen/700.css';
+@import '@fontsource/patrick-hand/400.css';
+@import '@fontsource/anton/400.css';
+@import '@fontsource-variable/quicksand';
+@import '@fontsource-variable/playfair-display';
+@import '@fontsource-variable/jost';
+@import '@fontsource/atkinson-hyperlegible/400.css';
+@import '@fontsource/atkinson-hyperlegible/700.css';
 
 @layer components {
     .playful {
+        --font-body: 'Nunito Variable', ui-rounded, system-ui, sans-serif;
+        --font-display: 'Fredoka Variable', ui-rounded, system-ui, sans-serif;
+        --font-question: var(--font-display);
+        --display-transform: none;
+        --display-tracking: normal;
+
+        --bg: #fff6e5;
+        --bg-image: none;
+        --page-ink: #2b2140;
+        --card: #fff;
         --ink: #2b2140;
         --ink-soft: #5b5170;
-        --cream: #fff6e5;
-        --sun: #ffc93c;
-        --sun-shade: #e0a100;
-        --grass: #17803c;
-        --sky: #2f80ed;
-        --berry: #ef476f;
+        --line: #2b2140;
 
-        font-family: 'Nunito Variable', ui-rounded, system-ui, sans-serif;
-        color: var(--ink);
-        background-color: var(--cream);
+        --card-radius: 2rem;
+        --card-ring: 0 0 0 4px var(--line), 0 10px 0 4px var(--line);
+        --btn-radius: 1.25rem;
+        --btn-border: 3px;
+        --btn-shadow: 0 6px 0 var(--line);
+        --btn-shadow-pressed: 0 2px 0 var(--line);
+        --btn-press: translateY(4px);
+
+        --accent: #ffc93c;
+        --accent-ink: #2b2140;
+        --go: #17803c;
+        --go-ink: #fff;
+        --pill: #ffc93c;
+        --pill-ink: #2b2140;
+        --input-bg: #fff;
+        --placeholder: #c9c1d6;
+        --focus: #2f80ed;
+        --track: #f1ebe0;
+        --band: #2b2140;
+        --band-ink: #fff;
+        --code: #ffc93c;
+        --code-ink: #2b2140;
+        --ok: #17803c;
+        --ok-ink: #fff;
+        --note: #ffc93c;
+        --note-ink: #2b2140;
+        --danger-bg: #fff0f3;
+        --danger: #a3123a;
+        --danger-line: #ef476f;
+        --dot-1: #ef476f;
+        --dot-2: #ffc93c;
+        --dot-3: #2f80ed;
+        --shape-1: #ffc93c;
+        --shape-2: #2f80ed;
+        --shape-3: #ef476f;
+        --shape-4: #17803c;
+
+        font-family: var(--font-body);
+        color: var(--page-ink);
+        background-color: var(--bg);
+        background-image: var(--bg-image);
         color-scheme: light;
     }
 
-    .playful .font-toy {
-        font-family: 'Fredoka Variable', ui-rounded, system-ui, sans-serif;
+    /* 1. Rymd: natthimmel med stjärnor och en planet. */
+    .playful[data-theme='rymd'] {
+        --font-body:
+            'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
+        --font-display: var(--font-body);
+        --bg: #0f1535;
+        --bg-image:
+            radial-gradient(circle at 20% 30%, #fff 0 1.5px, transparent 2px),
+            radial-gradient(circle at 70% 15%, #fff 0 1px, transparent 1.5px),
+            radial-gradient(circle at 45% 80%, #fff 0 1.5px, transparent 2px),
+            radial-gradient(circle at 85% 60%, #fff 0 1px, transparent 1.5px);
+        --page-ink: #f4f6ff;
+        --card: #18214a;
+        --ink: #f4f6ff;
+        --ink-soft: #b9c2e8;
+        --line: #3a4a8f;
+        --card-radius: 1.75rem;
+        --card-ring: 0 0 0 2px var(--line);
+        --btn-radius: 999px;
+        --btn-border: 2px;
+        --btn-shadow: none;
+        --btn-shadow-pressed: none;
+        --btn-press: scale(0.98);
+        --accent: #4dd4ff;
+        --accent-ink: #06283a;
+        --go: #4dd4ff;
+        --go-ink: #06283a;
+        --pill: #ff8a5c;
+        --pill-ink: #2a0f04;
+        --input-bg: #0f1535;
+        --placeholder: #5b679c;
+        --focus: #ffd166;
+        --track: #0f1535;
+        --band: #18214a;
+        --code: #4dd4ff;
+        --code-ink: #06283a;
+        --ok: #1c7f63;
+        --note: #ffd166;
+        --note-ink: #2a1f00;
+        --danger-bg: #3a1022;
+        --danger: #ffb3c8;
+        --danger-line: #ff5fa2;
+        --dot-1: #4dd4ff;
+        --dot-2: #ff5fa2;
+        --dot-3: #ffd166;
+        --shape-1: #ff8a5c;
+        --shape-2: #b18cff;
+        --shape-3: #ff8a5c;
+        --shape-4: #4dd4ff;
+        background-size:
+            220px 220px,
+            160px 160px,
+            260px 260px,
+            190px 190px;
     }
 
-    /* Stora, mjuka former i bakgrunden. De ligger bakom innehållet och tar inga klick. */
+    /* 2. Skog: mossa, bark och löv. */
+    .playful[data-theme='skog'] {
+        --font-body: 'Fraunces Variable', Georgia, serif;
+        --font-display: var(--font-body);
+        --bg: #e9f0df;
+        --page-ink: #23361f;
+        --card: #fbfaf3;
+        --ink: #23361f;
+        --ink-soft: #55684f;
+        --line: #23361f;
+        --card-radius: 1.75rem;
+        --card-ring: 0 0 0 3px var(--line), 0 8px 0 3px var(--line);
+        --btn-radius: 1rem;
+        --btn-shadow: 0 5px 0 var(--line);
+        --accent: #e9c46a;
+        --accent-ink: #23361f;
+        --go: #3f6b3a;
+        --pill: #d8e5c4;
+        --pill-ink: #23361f;
+        --placeholder: #b6c2a8;
+        --focus: #b5651d;
+        --track: #e3e9d6;
+        --band: #23361f;
+        --code: #e9c46a;
+        --code-ink: #23361f;
+        --ok: #3f6b3a;
+        --note: #e9c46a;
+        --note-ink: #23361f;
+        --dot-1: #3f6b3a;
+        --dot-2: #b58a52;
+        --dot-3: #7fa05a;
+        --shape-1: #7fa05a;
+        --shape-2: #b58a52;
+        --shape-3: #3f6b3a;
+        --shape-4: #e9c46a;
+    }
+
+    /* 3. Hav: vågor, sand och korall. */
+    .playful[data-theme='hav'] {
+        --font-body: 'Lexend Variable', ui-sans-serif, system-ui, sans-serif;
+        --font-display: var(--font-body);
+        --bg: #e2f3f6;
+        --page-ink: #08344f;
+        --ink: #08344f;
+        --ink-soft: #3c6680;
+        --line: #08344f;
+        --card-radius: 1.5rem;
+        --card-ring: 0 0 0 3px var(--line), 0 8px 0 3px var(--line);
+        --btn-radius: 0.9rem;
+        --btn-shadow: 0 5px 0 var(--line);
+        --accent: #f9c74f;
+        --accent-ink: #08344f;
+        --go: #0b5d8f;
+        --pill: #f9d77e;
+        --pill-ink: #5a4300;
+        --placeholder: #a9c8d3;
+        --focus: #e4574a;
+        --track: #d6edf2;
+        --band: #08344f;
+        --code: #f9d77e;
+        --code-ink: #08344f;
+        --ok: #0b7a75;
+        --note: #f9d77e;
+        --note-ink: #08344f;
+        --dot-1: #0b5d8f;
+        --dot-2: #e4574a;
+        --dot-3: #f9c74f;
+        --shape-1: #bfe6ee;
+        --shape-2: #f9d77e;
+        --shape-3: #bfe6ee;
+        --shape-4: #e4574a;
+    }
+
+    /* 4. Pixel: gammalt tv-spel med fyrkantiga former. */
+    .playful[data-theme='pixel'] {
+        --font-body:
+            'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
+        --font-display: 'Silkscreen', ui-monospace, monospace;
+        --font-question: var(--font-body);
+        --bg: #1d2b53;
+        --page-ink: #fff1e8;
+        --card: #000;
+        --ink: #fff1e8;
+        --ink-soft: #c2c3c7;
+        --line: #fff1e8;
+        --card-radius: 0;
+        --card-ring: 0 0 0 4px var(--line), 10px 10px 0 4px #000;
+        --btn-radius: 0;
+        --btn-shadow: 5px 5px 0 #000;
+        --btn-shadow-pressed: 0 0 0 #000;
+        --btn-press: translate(5px, 5px);
+        --accent: #ffec27;
+        --accent-ink: #1d2b53;
+        --go: #00e436;
+        --go-ink: #003b0e;
+        --pill: #00e436;
+        --pill-ink: #003b0e;
+        --input-bg: #1d2b53;
+        --placeholder: #5f574f;
+        --focus: #ff77a8;
+        --track: #1d2b53;
+        --band: #000;
+        --code: #ffec27;
+        --code-ink: #1d2b53;
+        --ok: #008751;
+        --note: #ffa300;
+        --note-ink: #1d2b53;
+        --danger-bg: #3d0a19;
+        --danger: #ffccd9;
+        --danger-line: #ff004d;
+        --dot-1: #ff004d;
+        --dot-2: #ffec27;
+        --dot-3: #29adff;
+        --shape-1: #ffec27;
+        --shape-2: #ff004d;
+        --shape-3: #29adff;
+        --shape-4: #00e436;
+    }
+
+    /* 5. Svarta tavlan: griffeltavla med träram och krita. */
+    .playful[data-theme='tavla'] {
+        --font-body: 'Patrick Hand', 'Comic Sans MS', system-ui, sans-serif;
+        --font-display: var(--font-body);
+        --bg: #e8dcc8;
+        --page-ink: #3a2a1c;
+        --card: #25372d;
+        --ink: #f4f1e6;
+        --ink-soft: #c9d1c5;
+        --line: #f4f1e6;
+        --card-radius: 0.75rem;
+        --card-ring: 0 0 0 12px #8b5a2b, 0 14px 0 12px #5c3a1a;
+        --btn-radius: 0.6rem;
+        --btn-border: 2px;
+        --btn-shadow: none;
+        --btn-shadow-pressed: none;
+        --btn-press: scale(0.98);
+        --accent: #f6e27a;
+        --accent-ink: #25372d;
+        --go: #f6e27a;
+        --go-ink: #25372d;
+        --pill: #f6e27a;
+        --pill-ink: #25372d;
+        --input-bg: #1e2d25;
+        --placeholder: #6f8478;
+        --focus: #f4a6b8;
+        --track: #1e2d25;
+        --band: #25372d;
+        --code: #f6e27a;
+        --code-ink: #25372d;
+        --ok: #2f5a41;
+        --note: #f6e27a;
+        --note-ink: #25372d;
+        --danger-bg: #3b2025;
+        --danger: #ffd3dc;
+        --danger-line: #f4a6b8;
+        --dot-1: #a7d3f5;
+        --dot-2: #f6e27a;
+        --dot-3: #f4a6b8;
+        --shape-1: #8b5a2b;
+        --shape-2: #f4f1e6;
+        --shape-3: #8b5a2b;
+        --shape-4: #f6e27a;
+    }
+
+    /* 6. Arena: fotbollsplan och resultattavla. */
+    .playful[data-theme='arena'] {
+        --font-body: 'Jost Variable', ui-sans-serif, system-ui, sans-serif;
+        --font-display: 'Anton', Impact, ui-sans-serif, sans-serif;
+        --display-transform: uppercase;
+        --display-tracking: 0.02em;
+        --bg: #2d7a3a;
+        --bg-image: repeating-linear-gradient(
+            90deg,
+            #2d7a3a 0 80px,
+            #33873f 80px 160px
+        );
+        --page-ink: #fff;
+        --ink: #123d1a;
+        --ink-soft: #4a6b50;
+        --line: #0f2e15;
+        --card-radius: 0.75rem;
+        --card-ring: 0 0 0 4px var(--line), 0 8px 0 4px var(--line);
+        --btn-radius: 0.5rem;
+        --btn-shadow: 0 5px 0 var(--line);
+        --accent: #ffd23f;
+        --accent-ink: #3d2f00;
+        --go: #d62828;
+        --pill: #ffd23f;
+        --pill-ink: #3d2f00;
+        --placeholder: #b5c7b8;
+        --focus: #1f5fbf;
+        --track: #e5efe6;
+        --band: #0f2e15;
+        --code: #ffd23f;
+        --code-ink: #3d2f00;
+        --ok: #1f7a3a;
+        --note: #ffd23f;
+        --note-ink: #3d2f00;
+        --dot-1: #d62828;
+        --dot-2: #fff;
+        --dot-3: #1f5fbf;
+        --shape-1: transparent;
+        --shape-2: transparent;
+        --shape-3: transparent;
+        --shape-4: transparent;
+    }
+
+    /* 7. Pastell: mjuka, ljusa färger för yngre elever. */
+    .playful[data-theme='pastell'] {
+        --font-body: 'Quicksand Variable', ui-rounded, system-ui, sans-serif;
+        --font-display: var(--font-body);
+        --bg: #fdf1f5;
+        --page-ink: #4a2747;
+        --ink: #4a2747;
+        --ink-soft: #7d5a79;
+        --line: #f1d9e6;
+        --card-radius: 2rem;
+        --card-ring: 0 0 0 3px var(--line), 0 8px 0 3px var(--line);
+        --btn-radius: 1.5rem;
+        --btn-border: 0px;
+        --btn-shadow: 0 4px 0 rgb(74 39 71 / 0.15);
+        --btn-shadow-pressed: 0 1px 0 rgb(74 39 71 / 0.15);
+        --btn-press: translateY(3px);
+        --accent: #ffd9c7;
+        --accent-ink: #6b2d12;
+        --go: #b9a6ee;
+        --go-ink: #2c1d63;
+        --pill: #ffd9c7;
+        --pill-ink: #6b2d12;
+        --placeholder: #d9c3d4;
+        --focus: #8f74e0;
+        --track: #f6e8ef;
+        --band: #4a2747;
+        --code: #ffd9c7;
+        --code-ink: #4a2747;
+        --ok: #bfe8d4;
+        --ok-ink: #164a33;
+        --note: #fff1b8;
+        --note-ink: #5a4300;
+        --dot-1: #f7c6d9;
+        --dot-2: #bfe8d4;
+        --dot-3: #d9cdf6;
+        --shape-1: #d9cdf6;
+        --shape-2: #bfe8d4;
+        --shape-3: #ffd9c7;
+        --shape-4: #bfe0f6;
+    }
+
+    /* 8. Tidning: svart på papper med en röd accent. */
+    .playful[data-theme='tidning'] {
+        --font-body: 'Fraunces Variable', Georgia, serif;
+        --font-display: 'Playfair Display Variable', Georgia, serif;
+        --bg: #efe9dc;
+        --page-ink: #161616;
+        --card: #f9f6ee;
+        --ink: #161616;
+        --ink-soft: #555;
+        --line: #161616;
+        --card-radius: 0;
+        --card-ring: 0 0 0 2px var(--line), 8px 8px 0 2px var(--line);
+        --btn-radius: 0;
+        --btn-border: 2px;
+        --btn-shadow: none;
+        --btn-shadow-pressed: none;
+        --btn-press: none;
+        --accent: #c8102e;
+        --accent-ink: #fff;
+        --go: #161616;
+        --go-ink: #f9f6ee;
+        --pill: #161616;
+        --pill-ink: #f9f6ee;
+        --input-bg: #fff;
+        --placeholder: #b8b0a0;
+        --focus: #c8102e;
+        --track: #e6dfcf;
+        --band: #161616;
+        --code: #f9f6ee;
+        --code-ink: #161616;
+        --ok: #161616;
+        --note: #f2e3b3;
+        --note-ink: #161616;
+        --dot-1: #161616;
+        --dot-2: #c8102e;
+        --dot-3: #161616;
+        --shape-1: transparent;
+        --shape-2: transparent;
+        --shape-3: transparent;
+        --shape-4: transparent;
+    }
+
+    /* 9. Bauhaus: cirkel, kvadrat och triangel i grundfärger. */
+    .playful[data-theme='bauhaus'] {
+        --font-body: 'Jost Variable', ui-sans-serif, system-ui, sans-serif;
+        --font-display: var(--font-body);
+        --bg: #f2ece0;
+        --page-ink: #141414;
+        --ink: #141414;
+        --ink-soft: #4b4b4b;
+        --line: #141414;
+        --card-radius: 0;
+        --card-ring: 0 0 0 3px var(--line), 10px 10px 0 3px var(--line);
+        --btn-radius: 0;
+        --btn-shadow: 5px 5px 0 var(--line);
+        --btn-shadow-pressed: 0 0 0 var(--line);
+        --btn-press: translate(5px, 5px);
+        --accent: #f2b705;
+        --accent-ink: #141414;
+        --go: #1f4fa8;
+        --pill: #141414;
+        --pill-ink: #f2ece0;
+        --placeholder: #b9b2a4;
+        --focus: #e63a2e;
+        --track: #ebe4d6;
+        --band: #141414;
+        --code: #f2b705;
+        --code-ink: #141414;
+        --ok: #1f4fa8;
+        --note: #f2b705;
+        --note-ink: #141414;
+        --dot-1: #e63a2e;
+        --dot-2: #f2b705;
+        --dot-3: #1f4fa8;
+        --shape-1: #e63a2e;
+        --shape-2: #1f4fa8;
+        --shape-3: #f2b705;
+        --shape-4: #141414;
+    }
+
+    /* 10. Klar: högsta kontrast och ett typsnitt gjort för läsbarhet. */
+    .playful[data-theme='klar'] {
+        --font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+        --font-display: var(--font-body);
+        --bg: #fff;
+        --page-ink: #000;
+        --card: #fff;
+        --ink: #000;
+        --ink-soft: #333;
+        --line: #000;
+        --card-radius: 0.75rem;
+        --card-ring: 0 0 0 3px var(--line);
+        --btn-radius: 0.6rem;
+        --btn-shadow: none;
+        --btn-shadow-pressed: none;
+        --btn-press: none;
+        --accent: #000;
+        --accent-ink: #fff;
+        --go: #000;
+        --pill: #000;
+        --pill-ink: #fff;
+        --placeholder: #767676;
+        --focus: #0050c8;
+        --track: #fff;
+        --band: #000;
+        --code: #ffd400;
+        --code-ink: #000;
+        --ok: #000;
+        --note: #ffd400;
+        --note-ink: #000;
+        --danger-bg: #fff;
+        --danger: #b00020;
+        --danger-line: #b00020;
+        --dot-1: #000;
+        --dot-2: #000;
+        --dot-3: #000;
+        --shape-1: transparent;
+        --shape-2: transparent;
+        --shape-3: transparent;
+        --shape-4: transparent;
+    }
+
+    .playful .font-toy {
+        font-family: var(--font-display);
+        text-transform: var(--display-transform);
+        letter-spacing: var(--display-tracking);
+    }
+
+    .playful .font-question {
+        font-family: var(--font-question);
+        text-transform: var(--display-transform);
+        letter-spacing: var(--display-tracking);
+    }
+
+    /* Stora former i bakgrunden. De ligger bakom innehållet och tar inga klick. */
     .playful-shapes {
         position: fixed;
         inset: 0;
@@ -47,7 +537,7 @@
         width: 16rem;
         height: 16rem;
         border-radius: 9999px;
-        background: var(--sun);
+        background: var(--shape-1);
     }
 
     .playful-shapes > span:nth-child(2) {
@@ -56,7 +546,7 @@
         width: 10rem;
         height: 10rem;
         border-radius: 2.5rem;
-        background: var(--sky);
+        background: var(--shape-2);
         transform: rotate(18deg);
     }
 
@@ -66,7 +556,7 @@
         width: 13rem;
         height: 13rem;
         border-radius: 9999px;
-        background: var(--berry);
+        background: var(--shape-3);
     }
 
     .playful-shapes > span:nth-child(4) {
@@ -75,24 +565,106 @@
         width: 5rem;
         height: 5rem;
         border-radius: 9999px;
-        background: var(--grass);
+        background: var(--shape-4);
+    }
+
+    /* Rymd: en planet med ring i stället för klossar. */
+    .playful[data-theme='rymd'] .playful-shapes > span:nth-child(2) {
+        border-radius: 9999px;
+        width: 7rem;
+        height: 7rem;
+        transform: none;
+        box-shadow:
+            0 0 0 0.6rem #0f1535,
+            0 0 0 0.9rem #b18cff;
+    }
+
+    .playful[data-theme='rymd'] .playful-shapes > span:nth-child(4) {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+
+    /* Skog: löv. */
+    .playful[data-theme='skog'] .playful-shapes > span:nth-child(1),
+    .playful[data-theme='skog'] .playful-shapes > span:nth-child(3) {
+        border-radius: 0 100% 0 100%;
+    }
+
+    .playful[data-theme='skog'] .playful-shapes > span:nth-child(2) {
+        border-radius: 100% 0 100% 0;
+        transform: rotate(-12deg);
+    }
+
+    /* Hav: vågkammar längs nederkanten. */
+    .playful[data-theme='hav'] .playful-shapes > span:nth-child(1) {
+        top: auto;
+        bottom: -7rem;
+        left: -4rem;
+    }
+
+    .playful[data-theme='hav'] .playful-shapes > span:nth-child(3) {
+        left: 40%;
+        bottom: -8rem;
+        width: 16rem;
+        height: 16rem;
+    }
+
+    /* Pixel och Bauhaus: raka hörn. */
+    .playful[data-theme='pixel'] .playful-shapes > span {
+        border-radius: 0;
+        transform: none;
+        width: 4rem;
+        height: 4rem;
+    }
+
+    .playful[data-theme='bauhaus'] .playful-shapes > span:nth-child(2) {
+        border-radius: 0;
+        transform: none;
+    }
+
+    .playful[data-theme='bauhaus'] .playful-shapes > span:nth-child(3) {
+        border-radius: 0;
+        clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    }
+
+    /* Svarta tavlan: en tavelsudd och en krita på hyllan. */
+    .playful[data-theme='tavla'] .playful-shapes > span:nth-child(1),
+    .playful[data-theme='tavla'] .playful-shapes > span:nth-child(3) {
+        display: none;
+    }
+
+    .playful[data-theme='tavla'] .playful-shapes > span:nth-child(2) {
+        top: auto;
+        bottom: 1.5rem;
+        right: 2rem;
+        width: 5rem;
+        height: 1.6rem;
+        border-radius: 0.3rem;
+        transform: none;
+        box-shadow: inset 0 -0.6rem 0 #3a2a1c;
+    }
+
+    .playful[data-theme='tavla'] .playful-shapes > span:nth-child(4) {
+        right: 8.5rem;
+        bottom: 1.6rem;
+        width: 2.5rem;
+        height: 0.5rem;
     }
 
     .playful-card {
         position: relative;
         z-index: 1;
-        border-radius: 2rem;
-        background: #fff;
-        box-shadow:
-            0 0 0 4px var(--ink),
-            0 10px 0 4px var(--ink);
+        border-radius: var(--card-radius);
+        background: var(--card);
+        color: var(--ink);
+        box-shadow: var(--card-ring);
     }
 
     /* Knapp som ser ut att stå upp och trycks ned vid klick. */
     .toy-button {
-        --toy: var(--sun);
-        --toy-shade: var(--sun-shade);
-        --toy-text: var(--ink);
+        --toy: var(--accent);
+        --toy-text: var(--accent-ink);
+        --toy-line: var(--line);
 
         position: relative;
         display: flex;
@@ -100,14 +672,16 @@
         justify-content: center;
         gap: 0.75rem;
         width: 100%;
-        border: 3px solid var(--ink);
-        border-radius: 1.25rem;
+        border: var(--btn-border) solid var(--toy-line);
+        border-radius: var(--btn-radius);
         background: var(--toy);
         color: var(--toy-text);
-        font-family: 'Fredoka Variable', ui-rounded, system-ui, sans-serif;
+        font-family: var(--font-display);
         font-weight: 600;
-        box-shadow: 0 6px 0 var(--ink);
-        transform: translateY(0);
+        text-transform: var(--display-transform);
+        letter-spacing: var(--display-tracking);
+        box-shadow: var(--btn-shadow);
+        transform: none;
         transition:
             transform 80ms ease-out,
             box-shadow 80ms ease-out,
@@ -121,12 +695,12 @@
 
     .toy-button:active:not(:disabled),
     .toy-button[aria-pressed='true'] {
-        transform: translateY(4px);
-        box-shadow: 0 2px 0 var(--ink);
+        transform: var(--btn-press);
+        box-shadow: var(--btn-shadow-pressed);
     }
 
     .toy-button:focus-visible {
-        outline: 4px solid var(--sky);
+        outline: 4px solid var(--focus);
         outline-offset: 4px;
     }
 
@@ -136,40 +710,38 @@
     }
 
     .toy-button--go {
-        --toy: var(--grass);
-        --toy-text: #fff;
+        --toy: var(--go);
+        --toy-text: var(--go-ink);
     }
 
     .toy-input {
         width: 100%;
-        border: 3px solid var(--ink);
-        border-radius: 1.25rem;
-        background: #fff;
+        border: 3px solid var(--line);
+        border-radius: var(--btn-radius);
+        background: var(--input-bg);
         color: var(--ink);
-        box-shadow: inset 0 4px 0 rgb(43 33 64 / 0.08);
     }
 
     .toy-input::placeholder {
-        color: #c9c1d6;
+        color: var(--placeholder);
     }
 
     .toy-input:focus {
-        outline: 4px solid var(--sky);
+        outline: 4px solid var(--focus);
         outline-offset: 2px;
     }
 
     .toy-bar {
         height: 1.25rem;
         overflow: hidden;
-        border: 3px solid var(--ink);
-        border-radius: 9999px;
-        background: #f1ebe0;
+        border: 3px solid var(--line);
+        border-radius: var(--btn-radius);
+        background: var(--track);
     }
 
     .toy-bar > span {
         display: block;
         height: 100%;
-        border-radius: 9999px;
         transition: width 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
@@ -211,22 +783,22 @@
     .toy-dots > span {
         width: 1.1rem;
         height: 1.1rem;
-        border: 3px solid var(--ink);
-        border-radius: 9999px;
+        border: 3px solid var(--line);
+        border-radius: var(--btn-radius);
         animation: toy-bounce 1.2s ease-in-out infinite;
     }
 
     .toy-dots > span:nth-child(1) {
-        background: var(--berry);
+        background: var(--dot-1);
     }
 
     .toy-dots > span:nth-child(2) {
-        background: var(--sun);
+        background: var(--dot-2);
         animation-delay: 0.15s;
     }
 
     .toy-dots > span:nth-child(3) {
-        background: var(--sky);
+        background: var(--dot-3);
         animation-delay: 0.3s;
     }
 

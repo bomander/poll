@@ -8,12 +8,17 @@ import { useT } from '@/lib/i18n';
 import {
     WORD_CLOUD_MAX_LENGTH,
     normalizeCode,
-    optionColor,
     optionLetter,
     type MultipleChoiceResult,
     type ParticipantState,
     type WordCloudResult,
 } from '@/lib/poll';
+import {
+    getTheme,
+    optionButtonStyle,
+    readableInk,
+    themeColor,
+} from '@/lib/themes';
 
 type PageProps = { basePath: string };
 
@@ -172,7 +177,7 @@ export default function JoinPage() {
     };
 
     return (
-        <PlayfulPage>
+        <PlayfulPage theme={state?.theme}>
             <Head title={state?.poll_title ?? t('join.title')} />
             {!state ? (
                 <form
@@ -185,10 +190,8 @@ export default function JoinPage() {
                     <h1 className="font-toy text-center text-4xl font-semibold">
                         {t('join.title')}
                     </h1>
-                    <label className="mt-6 grid gap-2">
-                        <span className="font-toy text-center text-lg font-medium">
-                            {t('join.code_label')}
-                        </span>
+                    <label className="mt-6 grid">
+                        <span className="sr-only">{t('join.code_label')}</span>
                         <input
                             className="toy-input font-toy h-20 text-center text-4xl font-semibold tracking-[0.2em] uppercase"
                             placeholder={t('join.code_placeholder')}
@@ -233,6 +236,10 @@ export default function JoinPage() {
     );
 }
 
+type Theme = ReturnType<typeof getTheme>;
+
+const boxRadius = 'rounded-[var(--btn-radius)]';
+
 function ParticipantView({
     state,
     error,
@@ -247,6 +254,7 @@ function ParticipantView({
     onLeave: () => void;
 }) {
     const t = useT();
+    const theme = getTheme(state.theme);
     const [selected, setSelected] = useState<number | null>(null);
     const [answerText, setAnswerText] = useState('');
     const question = state.current_question;
@@ -259,7 +267,9 @@ function ParticipantView({
     return (
         <div className="playful-card p-5 sm:p-7">
             <div className="flex items-center justify-between gap-3">
-                <span className="font-toy min-w-0 truncate rounded-full bg-[var(--sun)] px-3 py-1 text-sm font-semibold">
+                <span
+                    className={`font-toy min-w-0 truncate ${boxRadius} bg-[var(--pill)] px-3 py-1 text-sm font-semibold text-[var(--pill-ink)]`}
+                >
                     {state.poll_title}
                 </span>
                 <button
@@ -272,6 +282,7 @@ function ParticipantView({
             </div>
             {state.question_count > 1 && state.question_number ? (
                 <QuestionSteps
+                    theme={theme}
                     current={state.question_number}
                     count={state.question_count}
                     label={t('join.question_position', {
@@ -290,7 +301,7 @@ function ParticipantView({
                 </div>
             ) : (
                 <>
-                    <h1 className="font-toy mt-4 text-[1.85rem] leading-tight font-semibold">
+                    <h1 className="font-question mt-4 text-[1.85rem] leading-tight font-semibold">
                         {question.question_text}
                     </h1>
 
@@ -311,6 +322,7 @@ function ParticipantView({
                                 {question.options.map((option, index) => (
                                     <OptionButton
                                         key={option.id}
+                                        theme={theme}
                                         index={index}
                                         text={option.option_text}
                                         selected={selected === option.id}
@@ -372,16 +384,18 @@ function ParticipantView({
                     ) : null}
 
                     {state.has_voted ? (
-                        <div className="toy-pop mt-6 rounded-[1.5rem] border-[3px] border-[var(--ink)] bg-[var(--grass)] p-5 text-white">
+                        <div
+                            className={`toy-pop mt-6 ${boxRadius} border-[3px] border-[var(--line)] bg-[var(--ok)] p-5 text-[var(--ok-ink)]`}
+                        >
                             <div className="flex items-center gap-3">
-                                <span className="flex size-12 shrink-0 items-center justify-center rounded-full border-[3px] border-[var(--ink)] bg-white text-[var(--grass)]">
+                                <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--ok-ink)] text-[var(--ok)]">
                                     <Check className="size-7" strokeWidth={4} />
                                 </span>
                                 <p className="font-toy text-xl leading-tight font-semibold">
                                     {t('join.submitted_title')}
                                 </p>
                             </div>
-                            <MyAnswer state={state} />
+                            <MyAnswer theme={theme} state={state} />
                             {!closed ? (
                                 <p className="mt-3 font-semibold">
                                     {(state.question_number ?? 0) <
@@ -402,7 +416,7 @@ function ParticipantView({
                     {error ? <ErrorNote text={error} /> : null}
 
                     {showResults ? (
-                        <ParticipantResults state={state} />
+                        <ParticipantResults theme={theme} state={state} />
                     ) : state.has_voted && !state.show_results && !closed ? (
                         <p className="font-toy mt-6 text-center text-lg font-medium text-[var(--ink-soft)]">
                             {t('join.results_hidden')}
@@ -420,10 +434,12 @@ function ParticipantView({
 
 /** Rad med prickar som visar var i enkäten klassen är. */
 function QuestionSteps({
+    theme,
     current,
     count,
     label,
 }: {
+    theme: Theme;
     current: number;
     count: number;
     label: string;
@@ -434,10 +450,12 @@ function QuestionSteps({
                 {Array.from({ length: count }, (_, index) => (
                     <span
                         key={index}
-                        className="size-3.5 rounded-full border-2 border-[var(--ink)]"
+                        className="size-3.5 rounded-[min(var(--btn-radius),9999px)] border-2 border-[var(--line)]"
                         style={{
                             backgroundColor:
-                                index < current ? optionColor(index) : '#fff',
+                                index < current
+                                    ? themeColor(theme, index)
+                                    : 'var(--card)',
                         }}
                     />
                 ))}
@@ -448,49 +466,47 @@ function QuestionSteps({
 }
 
 function OptionButton({
+    theme,
     index,
     text,
     selected,
     dimmed,
     onSelect,
 }: {
+    theme: Theme;
     index: number;
     text: string;
     selected: boolean;
     dimmed: boolean;
     onSelect: () => void;
 }) {
-    const color = optionColor(index);
+    const styles = optionButtonStyle(theme, index, selected);
     return (
         <button
             type="button"
             aria-pressed={selected}
             onClick={onSelect}
             className="toy-button min-h-16 justify-start px-3 py-2 text-left text-xl"
-            style={
-                {
-                    '--toy': color,
-                    '--toy-text': '#fff',
-                    opacity: dimmed ? 0.55 : 1,
-                } as React.CSSProperties
-            }
+            style={{ ...styles.button, opacity: dimmed ? 0.55 : 1 }}
         >
             <span
-                className="flex size-11 shrink-0 items-center justify-center rounded-full border-[3px] border-[var(--ink)] bg-white text-2xl"
-                style={{ color }}
+                className={`flex size-11 shrink-0 items-center justify-center ${boxRadius} border-[3px] text-2xl`}
+                style={styles.letter}
             >
                 {optionLetter(index)}
             </span>
-            <span className="min-w-0 flex-1 leading-snug break-words">
+            <span className="font-question min-w-0 flex-1 leading-snug break-words">
                 {text}
             </span>
             {selected ? (
-                <span className="toy-pop flex size-9 shrink-0 items-center justify-center rounded-full bg-white">
-                    <Check
-                        className="size-6"
-                        strokeWidth={4}
-                        style={{ color }}
-                    />
+                <span
+                    className="toy-pop flex size-9 shrink-0 items-center justify-center rounded-full"
+                    style={{
+                        backgroundColor: styles.letter.backgroundColor,
+                        color: styles.letter.color,
+                    }}
+                >
+                    <Check className="size-6" strokeWidth={4} />
                 </span>
             ) : null}
         </button>
@@ -522,7 +538,9 @@ function SubmitButton({
 
 function StatusNote({ text }: { text: string }) {
     return (
-        <p className="font-toy mt-6 rounded-[1.5rem] border-[3px] border-[var(--ink)] bg-[var(--sun)] p-5 text-center text-xl font-semibold">
+        <p
+            className={`font-toy mt-6 ${boxRadius} border-[3px] border-[var(--line)] bg-[var(--note)] p-5 text-center text-xl font-semibold text-[var(--note-ink)]`}
+        >
             {text}
         </p>
     );
@@ -532,21 +550,23 @@ function ErrorNote({ text }: { text: string }) {
     return (
         <p
             role="alert"
-            className="mt-4 rounded-2xl border-[3px] border-[var(--berry)] bg-[#fff0f3] px-4 py-3 text-center font-semibold text-[#a3123a]"
+            className={`mt-4 ${boxRadius} border-[3px] border-[var(--danger-line)] bg-[var(--danger-bg)] px-4 py-3 text-center font-semibold text-[var(--danger)]`}
         >
             {text}
         </p>
     );
 }
 
-function MyAnswer({ state }: { state: ParticipantState }) {
+function MyAnswer({ theme, state }: { theme: Theme; state: ParticipantState }) {
     const t = useT();
     const answer = state.my_answer;
     if (!answer) return null;
 
+    const box = `mt-4 ${boxRadius} border-2 border-current/30 px-4 py-3 text-lg`;
+
     if (answer.answer_text) {
         return (
-            <p className="mt-4 rounded-2xl bg-white/20 px-4 py-3 text-lg">
+            <p className={box}>
                 {t('join.your_answer')}:{' '}
                 <span className="font-toy font-semibold">
                     {answer.answer_text}
@@ -558,13 +578,17 @@ function MyAnswer({ state }: { state: ParticipantState }) {
     const options = state.current_question?.options ?? [];
     const index = options.findIndex((option) => option.id === answer.option_id);
     if (index < 0) return null;
+    const color = themeColor(theme, index);
 
     return (
-        <p className="mt-4 flex items-center gap-3 rounded-2xl bg-white/20 px-4 py-3 text-lg">
+        <p className={`${box} flex items-center gap-3`}>
             <span className="shrink-0">{t('join.your_answer')}:</span>
             <span
-                className="font-toy flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-[var(--ink)] bg-white"
-                style={{ color: optionColor(index) }}
+                className={`font-toy flex size-8 shrink-0 items-center justify-center ${boxRadius} border-2 border-[var(--line)]`}
+                style={{
+                    backgroundColor: color,
+                    color: readableInk(theme, color),
+                }}
             >
                 {optionLetter(index)}
             </span>
@@ -575,12 +599,18 @@ function MyAnswer({ state }: { state: ParticipantState }) {
     );
 }
 
-function ParticipantResults({ state }: { state: ParticipantState }) {
+function ParticipantResults({
+    theme,
+    state,
+}: {
+    theme: Theme;
+    state: ParticipantState;
+}) {
     const t = useT();
     const options = state.current_question?.options ?? [];
 
     return (
-        <section className="mt-7 border-t-[3px] border-dashed border-[#e4dccd] pt-6">
+        <section className="mt-7 border-t-[3px] border-dashed border-[var(--track)] pt-6">
             <div className="flex items-baseline justify-between gap-3">
                 <h2 className="font-toy text-xl font-semibold">
                     {t('join.results_title')}
@@ -600,15 +630,19 @@ function ParticipantResults({ state }: { state: ParticipantState }) {
                                   ),
                                   0,
                               );
-                              const color = optionColor(index);
+                              const color = themeColor(theme, index);
                               return (
                                   <div key={result.option_id}>
                                       <div className="mb-1.5 flex items-center justify-between gap-3">
                                           <span className="flex min-w-0 items-center gap-2 font-semibold">
                                               <span
-                                                  className="font-toy flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-[var(--ink)] text-sm text-white"
+                                                  className={`font-toy flex size-7 shrink-0 items-center justify-center ${boxRadius} border-2 border-[var(--line)] text-sm`}
                                                   style={{
                                                       backgroundColor: color,
+                                                      color: readableInk(
+                                                          theme,
+                                                          color,
+                                                      ),
                                                   }}
                                               >
                                                   {optionLetter(index)}
@@ -635,22 +669,26 @@ function ParticipantResults({ state }: { state: ParticipantState }) {
                       )
                     : (state.results as WordCloudResult[])
                           .slice(0, 15)
-                          .map((result, index) => (
-                              <div
-                                  key={result.answer_text}
-                                  className="flex items-center justify-between gap-3 rounded-2xl border-[3px] border-[var(--ink)] px-4 py-2 text-white"
-                                  style={{
-                                      backgroundColor: optionColor(index),
-                                  }}
-                              >
-                                  <span className="font-toy min-w-0 text-lg font-semibold break-words">
-                                      {result.answer_text}
-                                  </span>
-                                  <span className="font-toy flex size-8 shrink-0 items-center justify-center rounded-full bg-white font-semibold text-[var(--ink)] tabular-nums">
-                                      {result.count}
-                                  </span>
-                              </div>
-                          ))}
+                          .map((result, index) => {
+                              const color = themeColor(theme, index);
+                              return (
+                                  <div
+                                      key={result.answer_text}
+                                      className={`flex items-center justify-between gap-3 ${boxRadius} border-[3px] border-[var(--line)] px-4 py-2`}
+                                      style={{
+                                          backgroundColor: color,
+                                          color: readableInk(theme, color),
+                                      }}
+                                  >
+                                      <span className="font-toy min-w-0 text-lg font-semibold break-words">
+                                          {result.answer_text}
+                                      </span>
+                                      <span className="font-toy shrink-0 font-semibold tabular-nums">
+                                          {result.count}
+                                      </span>
+                                  </div>
+                              );
+                          })}
             </div>
         </section>
     );
