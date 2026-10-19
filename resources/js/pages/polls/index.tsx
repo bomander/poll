@@ -3,6 +3,8 @@ import {
     BarChart3,
     Cloud,
     Copy,
+    ListChecks,
+    Palette,
     Pencil,
     Play,
     Plus,
@@ -16,10 +18,13 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { apiFetch } from '@/lib/api';
 import { useT } from '@/lib/i18n';
-import { type Poll } from '@/lib/poll';
+import { formatSince, type Poll } from '@/lib/poll';
 
 type PageProps = { basePath: string };
-type ListedPoll = Poll & { active_session_id?: number | null };
+type ListedPoll = Poll & {
+    active_session_id?: number | null;
+    active_session_started_at?: string | null;
+};
 
 export default function PollIndex() {
     const { basePath } = usePage<PageProps>().props;
@@ -164,6 +169,11 @@ export default function PollIndex() {
                                         `${basePath}/polls/${poll.id}/edit`,
                                     )
                                 }
+                                onResults={() =>
+                                    window.location.assign(
+                                        `${basePath}/sessions?poll=${poll.id}`,
+                                    )
+                                }
                                 onClone={() => void clonePoll(poll)}
                                 onDelete={() => void deletePoll(poll)}
                             />
@@ -184,6 +194,7 @@ function PollCard({
     onStart,
     onOpenActive,
     onEdit,
+    onResults,
     onClone,
     onDelete,
 }: {
@@ -191,6 +202,7 @@ function PollCard({
     onStart: () => void;
     onOpenActive: () => void;
     onEdit: () => void;
+    onResults: () => void;
     onClone: () => void;
     onDelete: () => void;
 }) {
@@ -208,7 +220,13 @@ function PollCard({
                         <h2 className="text-lg font-semibold">{poll.title}</h2>
                         {poll.active_session_id ? (
                             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
-                                {t('polls.active_badge')}
+                                {poll.active_session_started_at
+                                    ? t('polls.active_since', {
+                                          when: formatSince(
+                                              poll.active_session_started_at,
+                                          ),
+                                      })
+                                    : t('polls.active_badge')}
                             </span>
                         ) : null}
                     </div>
@@ -257,26 +275,27 @@ function PollCard({
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t pt-3">
                 {locked ? (
-                    <Button variant="outline" size="sm" onClick={onClone}>
-                        <Copy />
-                        {t('polls.actions.clone')}
-                    </Button>
+                    <>
+                        <Button variant="outline" size="sm" onClick={onResults}>
+                            <ListChecks />
+                            {t('polls.actions.results')}
+                        </Button>
+                        {/* Frågorna är låsta efter en omgång, men temat går att byta. */}
+                        <Button variant="outline" size="sm" onClick={onEdit}>
+                            <Palette />
+                            {t('polls.actions.theme')}
+                        </Button>
+                    </>
                 ) : (
                     <Button variant="outline" size="sm" onClick={onEdit}>
                         <Pencil />
                         {t('polls.actions.edit')}
                     </Button>
                 )}
-                {locked ? (
-                    <span className="text-xs text-muted-foreground">
-                        {t('polls.history_locked')}
-                    </span>
-                ) : (
-                    <Button variant="outline" size="sm" onClick={onClone}>
-                        <Copy />
-                        {t('polls.actions.clone')}
-                    </Button>
-                )}
+                <Button variant="outline" size="sm" onClick={onClone}>
+                    <Copy />
+                    {t('polls.actions.clone')}
+                </Button>
                 <Button
                     variant="ghost"
                     size="sm"

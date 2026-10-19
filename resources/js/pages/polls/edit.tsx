@@ -67,9 +67,13 @@ export default function PollEdit() {
           }
         : undefined;
 
+    // En körd enkät är låst, så sidan används bara för att byta tema.
+    const locked = !!poll?.sessions_count;
+    const heading = locked ? t('polls.actions.theme') : t('polls.edit_title');
+
     return (
         <AppLayout>
-            <Head title={t('polls.edit_title')} />
+            <Head title={heading} />
             <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-6">
                 <div>
                     <Button
@@ -81,9 +85,10 @@ export default function PollEdit() {
                         <ArrowLeft />
                         {t('polls.back')}
                     </Button>
-                    <h1 className="mt-2 text-2xl font-semibold">
-                        {t('polls.edit_title')}
-                    </h1>
+                    <h1 className="mt-2 text-2xl font-semibold">{heading}</h1>
+                    {locked && poll ? (
+                        <p className="text-muted-foreground">{poll.title}</p>
+                    ) : null}
                 </div>
                 {error ? (
                     <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

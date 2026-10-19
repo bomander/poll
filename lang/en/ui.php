@@ -115,7 +115,7 @@ return [
         'sessions_count_one' => '1 run',
         'no_sessions' => 'Not run yet',
         'active_badge' => 'Live',
-        'history_locked' => 'Locked because it has been run. Make a copy to change it.',
+        'active_since' => 'Live since :when',
         'history_locked_edit' => 'This poll has been run and is locked so earlier results stay intact. Make a copy if you want to change it.',
         'confirm_delete' => 'Delete the poll ":title"? All its runs and responses are deleted too.',
         'actions' => [
@@ -124,7 +124,8 @@ return [
             'delete' => 'Delete',
             'start_session' => 'Start run',
             'open_active' => 'Open live run',
-            'results' => 'Earlier runs',
+            'results' => 'Results',
+            'theme' => 'Change theme',
         ],
         'errors' => [
             'load_polls' => 'Could not load the polls.',
@@ -166,6 +167,8 @@ return [
 
     'sessions_index' => [
         'title' => 'Runs',
+        'filtered' => 'Runs for ":title".',
+        'show_all' => 'Show all',
         'subtitle' => 'Every time you run a poll it becomes a run with its own responses.',
         'poll_label' => 'Poll',
         'filter' => [

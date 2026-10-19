@@ -24,3 +24,9 @@
 - Konsekvens: Komponenterna läser CSS-variabler och temats färglista. Textfärgen på färgade ytor väljs efter kontrast. Frågor och alternativ visas i ett läsbart typsnitt även i Pixel.
 - Uppföljning: Inga fler teman utan konkret behov. Lärarvyn har kvar sitt neutrala utseende.
 
+## 2026-10-19 - Glömda omgångar avslutas efter 12 timmar
+- Kontext: En omgång som läraren glömde avsluta levde kvar, och nästa lektion hamnade i samma omgång med gamla svar.
+- Beslut: Omgångar som har pågått mer än 12 timmar avslutas varje timme av schemaläggaren och innan en ny omgång startas. Enkätkortet visar när en pågående omgång startade.
+- Konsekvens: En omgång kan inte sträcka sig över flera dagar. Enkätkortet länkar till enkätens omgångar och till temabyte även när frågorna är låsta.
+- Uppföljning: Justera gränsen bara om en lärare behöver längre omgångar.
+

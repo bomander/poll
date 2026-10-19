@@ -19,6 +19,9 @@ class SessionController extends Controller
     {
         abort_unless($poll->user_id === $request->user()->id, 403);
 
+        // En glömd omgång från en tidigare lektion ska inte återanvändas.
+        PollSession::closeStale($poll->id);
+
         $active = $poll->sessions()->where('status', 'active')->first();
         if ($active) {
             return response()->json([

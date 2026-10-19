@@ -85,3 +85,16 @@ export function normalizeCode(input: string): string {
 }
 
 export const WORD_CLOUD_MAX_LENGTH = 60;
+
+/** "14:05" för i dag, annars "12 okt", så att en gammal omgång syns direkt. */
+export function formatSince(iso: string, locale = 'sv-SE'): string {
+    const date = new Date(iso);
+    const today = new Date();
+    const sameDay = date.toDateString() === today.toDateString();
+    return new Intl.DateTimeFormat(
+        locale,
+        sameDay
+            ? { hour: '2-digit', minute: '2-digit' }
+            : { day: 'numeric', month: 'short' },
+    ).format(date);
+}

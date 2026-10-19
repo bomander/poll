@@ -9,7 +9,8 @@ must include the CSRF token rendered in the page.
 - `POST /logout` -> end session
 
 ## Polls (teacher)
-- `GET /polls` -> list polls for teacher
+- `GET /polls` -> list polls for teacher, with `active_session_id` and
+  `active_session_started_at` for a running session
 - `POST /polls` -> create poll
 - `GET /polls/{poll}` -> poll detail
 - `PUT /polls/{poll}` -> update poll before its first session
@@ -38,7 +39,9 @@ A poll has 1â€“10 questions of the same type. Multiple choice questions have 2â€
 options. Only `settings.theme` is stored; other settings keys are dropped.
 
 ## Sessions (teacher)
-- `POST /polls/{poll}/sessions` -> start session; 409 with `session_id` if one is already active
+- `POST /polls/{poll}/sessions` -> start session; 409 with `session_id` if one is already active.
+  A session that has run for more than 12 hours is closed first, and
+  `php artisan sessions:close-stale` closes such sessions every hour.
 - `POST /sessions/{session}/close` -> close session
 - `POST /sessions/{session}/current-question` -> set active question
 - `POST /sessions/{session}/lock-question` -> lock current question

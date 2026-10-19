@@ -29,15 +29,24 @@ export default function SessionsIndex() {
     const t = useT();
     const [sessions, setSessions] = useState<Session[] | null>(null);
     const [statusFilter, setStatusFilter] = useState<Filter>('all');
+    // Från enkätens knapp Resultat visas bara den enkätens omgångar.
+    const [pollFilter, setPollFilter] = useState<number | null>(() => {
+        const value = Number(
+            new URLSearchParams(window.location.search).get('poll'),
+        );
+        return Number.isInteger(value) && value > 0 ? value : null;
+    });
     const [error, setError] = useState<string | null>(null);
 
     const filteredSessions = useMemo(
         () =>
             (sessions ?? []).filter(
                 (session) =>
-                    statusFilter === 'all' || session.status === statusFilter,
+                    (statusFilter === 'all' ||
+                        session.status === statusFilter) &&
+                    (pollFilter === null || session.poll_id === pollFilter),
             ),
-        [sessions, statusFilter],
+        [sessions, statusFilter, pollFilter],
     );
 
     useEffect(() => {
@@ -104,6 +113,34 @@ export default function SessionsIndex() {
                         <p className="text-sm text-muted-foreground">
                             {t('sessions_index.subtitle')}
                         </p>
+                        {pollFilter !== null ? (
+                            <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                                <span>
+                                    {t('sessions_index.filtered', {
+                                        title:
+                                            sessions?.find(
+                                                (session) =>
+                                                    session.poll_id ===
+                                                    pollFilter,
+                                            )?.poll_title ?? '',
+                                    })}
+                                </span>
+                                <button
+                                    type="button"
+                                    className="font-medium underline underline-offset-4"
+                                    onClick={() => {
+                                        setPollFilter(null);
+                                        window.history.replaceState(
+                                            null,
+                                            '',
+                                            `${basePath}/sessions`,
+                                        );
+                                    }}
+                                >
+                                    {t('sessions_index.show_all')}
+                                </button>
+                            </p>
+                        ) : null}
                     </div>
                     <div
                         className="flex gap-1 rounded-md border p-1 text-sm"

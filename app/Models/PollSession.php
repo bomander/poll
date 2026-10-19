@@ -39,6 +39,24 @@ class PollSession extends Model
     public const CODE_LENGTH = 6;
 
     /**
+     * En omgång som har pågått så här länge räknas som glömd och avslutas.
+     * Annars hamnar nästa lektions svar i samma omgång som förra veckans.
+     */
+    public const STALE_AFTER_HOURS = 12;
+
+    /**
+     * Avslutar glömda omgångar, för alla enkäter eller för en enkät.
+     */
+    public static function closeStale(?int $pollId = null): int
+    {
+        return static::query()
+            ->where('status', 'active')
+            ->where('started_at', '<', now()->subHours(self::STALE_AFTER_HOURS))
+            ->when($pollId !== null, fn ($query) => $query->where('poll_id', $pollId))
+            ->update(['status' => 'closed', 'ended_at' => now()]);
+    }
+
+    /**
      * Gör om det en elev skrev till en sökbar kod: versaler utan mellanslag och bindestreck.
      */
     public static function normalizeCode(string $input): string

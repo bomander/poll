@@ -115,7 +115,7 @@ return [
         'sessions_count_one' => '1 omgång',
         'no_sessions' => 'Inte körd än',
         'active_badge' => 'Pågår',
-        'history_locked' => 'Låst eftersom den har körts. Gör en kopia för att ändra.',
+        'active_since' => 'Pågår sedan :when',
         'history_locked_edit' => 'Enkäten har körts och är låst så att tidigare resultat inte ändras. Gör en kopia om du vill ändra den.',
         'confirm_delete' => 'Radera enkäten ":title"? Alla omgångar och svar till den raderas också.',
         'actions' => [
@@ -124,7 +124,8 @@ return [
             'delete' => 'Radera',
             'start_session' => 'Starta omgång',
             'open_active' => 'Öppna pågående omgång',
-            'results' => 'Tidigare omgångar',
+            'results' => 'Resultat',
+            'theme' => 'Byt tema',
         ],
         'errors' => [
             'load_polls' => 'Kunde inte hämta enkäterna.',
@@ -166,6 +167,8 @@ return [
 
     'sessions_index' => [
         'title' => 'Omgångar',
+        'filtered' => 'Omgångar för ":title".',
+        'show_all' => 'Visa alla',
         'subtitle' => 'Varje gång du kör en enkät blir det en omgång med egna svar.',
         'poll_label' => 'Enkät',
         'filter' => [

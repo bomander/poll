@@ -10,6 +10,7 @@ use App\Models\PollResponse;
 use App\Models\PollSession;
 use App\Support\Themes;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -25,12 +26,25 @@ class PollController extends Controller
             ->where('user_id', $request->user()->id)
             ->with('questions.options')
             ->withCount('sessions')
-            ->addSelect(['active_session_id' => PollSession::select('id')
-                ->whereColumn('poll_id', 'polls.id')
-                ->where('status', 'active')
-                ->limit(1)])
+            ->addSelect([
+                'active_session_id' => PollSession::select('id')
+                    ->whereColumn('poll_id', 'polls.id')
+                    ->where('status', 'active')
+                    ->limit(1),
+                'active_session_started_at' => PollSession::select('started_at')
+                    ->whereColumn('poll_id', 'polls.id')
+                    ->where('status', 'active')
+                    ->limit(1),
+            ])
             ->orderByDesc('updated_at')
-            ->get();
+            ->get()
+            ->each(function (Poll $poll) {
+                // Läraren ser när omgången startade, så att en gammal omgång syns.
+                $startedAt = $poll->getAttribute('active_session_started_at');
+                $poll->setAttribute('active_session_started_at', $startedAt
+                    ? Carbon::parse($startedAt)->toIso8601String()
+                    : null);
+            });
 
         return response()->json($polls);
     }
