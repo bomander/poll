@@ -43,6 +43,9 @@ export type ParticipantState = {
     poll_title: string | null;
     poll_type: PollType;
     current_question: PollQuestion | null;
+    /** Den aktuella frågans plats i enkäten, räknat från 1. */
+    question_number: number | null;
+    question_count: number;
     results: Results;
     total_responses: number;
     has_voted: boolean;

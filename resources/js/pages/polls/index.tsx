@@ -219,9 +219,11 @@ function PollCard({
                         <span className="inline-flex items-center gap-1">
                             <TypeIcon className="size-3.5" />
                             {t(`polls.type_badge.${type}`)}
-                            {type === 'multiple_choice' && question
-                                ? ` · ${t('polls.options_count', { count: question.options.length })}`
-                                : ''}
+                            {poll.questions.length > 1
+                                ? ` · ${t('polls.questions_count', { count: poll.questions.length })}`
+                                : type === 'multiple_choice' && question
+                                  ? ` · ${t('polls.options_count', { count: question.options.length })}`
+                                  : ''}
                         </span>
                         <span>
                             {poll.sessions_count === 0

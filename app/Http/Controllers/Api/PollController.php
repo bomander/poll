@@ -16,6 +16,8 @@ class PollController extends Controller
 {
     private const POLL_TYPES = ['multiple_choice', 'word_cloud'];
 
+    private const MAX_QUESTIONS = 10;
+
     public function index(Request $request)
     {
         $polls = Poll::query()
@@ -153,7 +155,7 @@ class PollController extends Controller
             'description' => ['nullable', 'string', 'max:5000'],
             'type' => ['sometimes', 'string', 'max:32', 'in:'.implode(',', self::POLL_TYPES)],
             'settings' => ['nullable', 'array'],
-            'questions' => ['required', 'array', 'size:1'],
+            'questions' => ['required', 'array', 'min:1', 'max:'.self::MAX_QUESTIONS],
             'questions.*.question_text' => ['required', 'string', 'max:500'],
             'questions.*.options' => ['nullable', 'array', 'max:8'],
             'questions.*.options.*' => ['required', 'string', 'max:255'],
@@ -163,56 +165,52 @@ class PollController extends Controller
         $data['title'] = trim($data['title']);
         $description = isset($data['description']) ? trim($data['description']) : '';
         $data['description'] = $description !== '' ? $description : null;
-        $data['questions'][0]['question_text'] = trim($data['questions'][0]['question_text']);
+        $data['questions'] = array_values($data['questions']);
 
-        if ($data['title'] === '' || $data['questions'][0]['question_text'] === '') {
-            $messages = [];
-            if ($data['title'] === '') {
-                $messages['title'] = ['The title field is required.'];
-            }
-            if ($data['questions'][0]['question_text'] === '') {
-                $messages['questions.0.question_text'] = ['The question text field is required.'];
-            }
-
-            throw ValidationException::withMessages($messages);
+        $messages = [];
+        if ($data['title'] === '') {
+            $messages['title'] = ['The title field is required.'];
         }
 
-        if ($type === 'multiple_choice') {
-            $request->validate([
-                'questions.0.options' => ['required', 'array', 'min:2', 'max:8'],
-            ]);
+        // Alla frågor i en enkät har samma typ, så samma regler gäller för var och en.
+        foreach ($data['questions'] as $index => $question) {
+            $field = "questions.{$index}";
+            $data['questions'][$index]['question_text'] = trim($question['question_text']);
 
-            $options = array_map(
-                static fn (string $option): string => trim($option),
-                $data['questions'][0]['options'],
-            );
+            if ($data['questions'][$index]['question_text'] === '') {
+                $messages["{$field}.question_text"] = ['The question text field is required.'];
+            }
+
+            $options = $question['options'] ?? [];
+
+            if ($type === 'word_cloud') {
+                if (count($options) > 0) {
+                    $messages["{$field}.options"] = ['Word cloud polls cannot have options.'];
+                }
+                $data['questions'][$index]['options'] = [];
+
+                continue;
+            }
+
+            $options = array_map(static fn (string $option): string => trim($option), $options);
             $normalized = array_map(
                 static fn (string $option): string => mb_strtolower($option, 'UTF-8'),
                 $options,
             );
 
-            if (in_array('', $options, true)) {
-                throw ValidationException::withMessages([
-                    'questions.0.options' => ['Options cannot be blank.'],
-                ]);
+            if (count($options) < 2) {
+                $messages["{$field}.options"] = ['The options field must have at least 2 items.'];
+            } elseif (in_array('', $options, true)) {
+                $messages["{$field}.options"] = ['Options cannot be blank.'];
+            } elseif (count(array_unique($normalized)) !== count($normalized)) {
+                $messages["{$field}.options"] = ['Options must be unique.'];
             }
 
-            if (count(array_unique($normalized)) !== count($normalized)) {
-                throw ValidationException::withMessages([
-                    'questions.0.options' => ['Options must be unique.'],
-                ]);
-            }
-
-            $data['questions'][0]['options'] = $options;
+            $data['questions'][$index]['options'] = $options;
         }
 
-        if ($type === 'word_cloud') {
-            $options = $data['questions'][0]['options'] ?? [];
-            if (count($options) > 0) {
-                throw ValidationException::withMessages([
-                    'questions.0.options' => ['Word cloud polls cannot have options.'],
-                ]);
-            }
+        if ($messages !== []) {
+            throw ValidationException::withMessages($messages);
         }
 
         return $data;

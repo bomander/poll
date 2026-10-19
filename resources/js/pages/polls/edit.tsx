@@ -48,20 +48,19 @@ export default function PollEdit() {
         backToList();
     };
 
-    const question = poll?.questions[0];
+    const pollType = poll?.type ?? 'multiple_choice';
     const initial: Partial<PollFormValues> | undefined = poll
         ? {
               title: poll.title,
               description: poll.description ?? '',
-              type: poll.type ?? 'multiple_choice',
-              question: question?.question_text ?? '',
-              options:
-                  (poll.type ?? 'multiple_choice') === 'multiple_choice'
-                      ? (question?.options.map((o) => o.option_text) ?? [
-                            '',
-                            '',
-                        ])
-                      : ['', ''],
+              type: pollType,
+              questions: poll.questions.map((question) => ({
+                  question: question.question_text,
+                  options:
+                      pollType === 'multiple_choice'
+                          ? question.options.map((o) => o.option_text)
+                          : ['', ''],
+              })),
           }
         : undefined;
 

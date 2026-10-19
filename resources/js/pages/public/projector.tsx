@@ -130,10 +130,20 @@ export default function ProjectorPage() {
                     }
                 />
             ) : (
-                <main className="flex min-h-0 flex-1 flex-col px-[4vw] pt-[2.5vh] pb-[3vh]">
+                <main
+                    // Ny fråga ger ett nytt ordmoln i stället för att rita om det gamla.
+                    key={question.id}
+                    className="flex min-h-0 flex-1 flex-col px-[4vw] pt-[2.5vh] pb-[3vh]"
+                >
                     <div className="flex items-center justify-between gap-6 text-[clamp(1rem,1.5vw,1.75rem)]">
                         <span className="truncate text-neutral-500 dark:text-neutral-400">
                             {state.poll_title}
+                            {state.question_count > 1 && state.question_number
+                                ? ` · ${t('projector.question_position', {
+                                      n: state.question_number,
+                                      count: state.question_count,
+                                  })}`
+                                : null}
                         </span>
                         <span className="flex shrink-0 items-center gap-4">
                             <StateChip state={state} />

@@ -21,6 +21,11 @@ class ParticipantState
 
         $totalResponses = 0;
         $myAnswer = null;
+        // Frågorna i enkätordning, så att elever och projektor kan visa "Fråga 2 av 5".
+        $questionIds = $session->poll
+            ? $session->poll->questions()->pluck('id')->map(fn ($id) => (int) $id)->all()
+            : [];
+        $position = $question ? array_search((int) $question->id, $questionIds, true) : false;
 
         if ($question) {
             $responses = PollResponse::where('session_id', $session->id)
@@ -54,6 +59,8 @@ class ParticipantState
                     'option_text' => $option->option_text,
                 ])->values()->all(),
             ] : null,
+            'question_number' => $position === false ? null : $position + 1,
+            'question_count' => count($questionIds),
             'results' => $question && $showResults
                 ? $this->results->forQuestion($pollType, $session, $question)
                 : [],

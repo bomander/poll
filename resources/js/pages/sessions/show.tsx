@@ -2,6 +2,8 @@ import { Head, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Check,
+    ChevronLeft,
+    ChevronRight,
     Download,
     Eye,
     EyeOff,
@@ -64,6 +66,8 @@ export default function SessionShow() {
     const [error, setError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
     const [restartOpen, setRestartOpen] = useState(false);
+    // Läraren kan titta på en tidigare frågas resultat utan att byta fråga för klassen.
+    const [viewedId, setViewedId] = useState<number | null>(null);
 
     const loadSession = useCallback(async () => {
         try {
@@ -109,13 +113,27 @@ export default function SessionShow() {
 
     const isClosed = session?.status === 'closed';
     const joinUrl = session ? `${joinBaseUrl}${session.code}` : '';
+    const questions = session?.poll.questions ?? [];
+    const multiple = questions.length > 1;
+    const currentIndex = Math.max(
+        0,
+        questions.findIndex((q) => q.id === session?.current_question_id),
+    );
+    const currentQuestion = questions[currentIndex];
     const question =
-        session?.poll.questions.find(
-            (q) => q.id === session.current_question_id,
-        ) ?? session?.poll.questions[0];
+        questions.find((q) => q.id === viewedId) ?? currentQuestion;
+    const viewingOther =
+        !isClosed && !!question && question.id !== currentQuestion?.id;
     const results = (question && session?.results?.[question.id]) || [];
     const total = (question && session?.response_totals?.[question.id]) || 0;
     const pollType = session?.poll.type ?? 'multiple_choice';
+
+    const goToQuestion = async (index: number) => {
+        const target = questions[index];
+        if (!target) return;
+        await post('current-question', { question_id: target.id });
+        setViewedId(null);
+    };
 
     const copyLink = async () => {
         try {
@@ -224,10 +242,67 @@ export default function SessionShow() {
                                 </section>
                             ) : null}
 
+                            {multiple && !isClosed && currentQuestion ? (
+                                <section className="rounded-xl border p-6">
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <p className="text-sm font-medium text-muted-foreground">
+                                            {t('session.question_position', {
+                                                n: currentIndex + 1,
+                                                count: questions.length,
+                                            })}
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                disabled={currentIndex === 0}
+                                                onClick={() =>
+                                                    void goToQuestion(
+                                                        currentIndex - 1,
+                                                    )
+                                                }
+                                            >
+                                                <ChevronLeft />
+                                                {t('session.previous_question')}
+                                            </Button>
+                                            <Button
+                                                disabled={
+                                                    currentIndex ===
+                                                    questions.length - 1
+                                                }
+                                                onClick={() =>
+                                                    void goToQuestion(
+                                                        currentIndex + 1,
+                                                    )
+                                                }
+                                            >
+                                                {t('session.next_question')}
+                                                <ChevronRight />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <p className="mt-2 text-2xl font-semibold text-balance">
+                                        {currentQuestion.question_text}
+                                    </p>
+                                    <p className="mt-3 text-xs text-muted-foreground">
+                                        {t('session.question_nav_help')}
+                                    </p>
+                                </section>
+                            ) : null}
+
                             <section className="rounded-xl border p-6">
                                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                                     <h2 className="text-lg font-semibold">
-                                        {t('session.results_title')}
+                                        {multiple && question
+                                            ? t(
+                                                  'session.results_for_question',
+                                                  {
+                                                      n:
+                                                          questions.indexOf(
+                                                              question,
+                                                          ) + 1,
+                                                  },
+                                              )
+                                            : t('session.results_title')}
                                     </h2>
                                     <span className="text-sm font-medium">
                                         {total
@@ -237,8 +312,48 @@ export default function SessionShow() {
                                             : t('session.no_responses')}
                                     </span>
                                 </div>
-                                {question ? (
-                                    <p className="mt-1 text-muted-foreground">
+                                {multiple ? (
+                                    <QuestionPicker
+                                        questions={questions}
+                                        viewedId={question?.id ?? null}
+                                        currentId={
+                                            isClosed
+                                                ? null
+                                                : (currentQuestion?.id ?? null)
+                                        }
+                                        totals={session.response_totals ?? {}}
+                                        onPick={(id) =>
+                                            setViewedId(
+                                                id === currentQuestion?.id
+                                                    ? null
+                                                    : id,
+                                            )
+                                        }
+                                    />
+                                ) : null}
+                                {viewingOther ? (
+                                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                                        <span>
+                                            {t('session.viewing_other', {
+                                                n:
+                                                    questions.indexOf(
+                                                        question,
+                                                    ) + 1,
+                                                current: currentIndex + 1,
+                                            })}
+                                        </span>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setViewedId(null)}
+                                        >
+                                            {t('session.back_to_current')}
+                                        </Button>
+                                    </div>
+                                ) : null}
+                                {question &&
+                                (!multiple || viewingOther || isClosed) ? (
+                                    <p className="mt-3 text-muted-foreground">
                                         {question.question_text}
                                     </p>
                                 ) : null}
@@ -369,6 +484,57 @@ export default function SessionShow() {
                 onOpenChange={setRestartOpen}
             />
         </AppLayout>
+    );
+}
+
+function QuestionPicker({
+    questions,
+    viewedId,
+    currentId,
+    totals,
+    onPick,
+}: {
+    questions: PollQuestion[];
+    viewedId: number | null;
+    currentId: number | null;
+    totals: Record<number, number>;
+    onPick: (id: number) => void;
+}) {
+    const t = useT();
+    return (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+                {t('session.results_for')}
+            </span>
+            {questions.map((q, index) => {
+                const viewed = q.id === viewedId;
+                const current = q.id === currentId;
+                return (
+                    <button
+                        key={q.id}
+                        type="button"
+                        aria-pressed={viewed}
+                        title={`${q.question_text} (${t('session.responses', {
+                            count: totals[q.id] ?? 0,
+                        })})`}
+                        onClick={() => onPick(q.id)}
+                        className={`relative flex size-9 items-center justify-center rounded-md border text-sm font-semibold tabular-nums transition-colors ${
+                            viewed
+                                ? 'border-foreground bg-foreground text-background'
+                                : 'hover:bg-muted'
+                        }`}
+                    >
+                        {index + 1}
+                        {current ? (
+                            <span
+                                className="absolute -top-1 -right-1 size-2.5 rounded-full bg-emerald-500 ring-2 ring-background"
+                                aria-hidden
+                            />
+                        ) : null}
+                    </button>
+                );
+            })}
+        </div>
     );
 }
 

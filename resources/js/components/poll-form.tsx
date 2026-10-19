@@ -1,16 +1,28 @@
-import { BarChart3, Cloud, Plus, X } from 'lucide-react';
+import {
+    ArrowDown,
+    ArrowUp,
+    BarChart3,
+    Cloud,
+    Plus,
+    Trash2,
+    X,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useT } from '@/lib/i18n';
 import { optionColor, optionLetter, type PollType } from '@/lib/poll';
 
+export type PollFormQuestion = {
+    question: string;
+    options: string[];
+};
+
 export type PollFormValues = {
     title: string;
     description: string;
     type: PollType;
-    question: string;
-    options: string[];
+    questions: PollFormQuestion[];
 };
 
 export type PollPayload = {
@@ -20,12 +32,19 @@ export type PollPayload = {
     questions: { question_text: string; options: string[] }[];
 };
 
-type Errors = {
-    title?: string;
+type QuestionErrors = {
     question?: string;
     options?: string;
     duplicates?: number[];
 };
+
+type Errors = {
+    title?: string;
+    questions?: Record<number, QuestionErrors>;
+};
+
+/** Nyckeln håller ihop en fråga med sina fält när frågorna flyttas. */
+type DraftQuestion = PollFormQuestion & { key: number };
 
 type Props = {
     initial?: Partial<PollFormValues>;
@@ -38,14 +57,25 @@ type Props = {
 };
 
 const MAX_OPTIONS = 8;
+export const MAX_QUESTIONS = 10;
+
+const emptyQuestion = (): PollFormQuestion => ({
+    question: '',
+    options: ['', ''],
+});
 
 export const EMPTY_POLL: PollFormValues = {
     title: '',
     description: '',
     type: 'multiple_choice',
-    question: '',
-    options: ['', ''],
+    questions: [emptyQuestion()],
 };
+
+let nextQuestionKey = 0;
+const withKey = (question: PollFormQuestion): DraftQuestion => ({
+    ...question,
+    key: nextQuestionKey++,
+});
 
 export function PollForm({
     initial,
@@ -56,39 +86,93 @@ export function PollForm({
     onCancel,
 }: Props) {
     const t = useT();
-    const [values, setValues] = useState<PollFormValues>({
-        ...EMPTY_POLL,
-        ...initial,
+    const [values, setValues] = useState<
+        Omit<PollFormValues, 'questions'> & { questions: DraftQuestion[] }
+    >(() => {
+        const start = { ...EMPTY_POLL, ...initial };
+        return {
+            ...start,
+            questions: (start.questions.length
+                ? start.questions
+                : [emptyQuestion()]
+            ).map(withKey),
+        };
     });
     const [errors, setErrors] = useState<Errors>({});
     const [submitting, setSubmitting] = useState(false);
+    // Den nyss tillagda frågan får fokus så att läraren kan skriva direkt.
+    const [addedKey, setAddedKey] = useState<number | null>(null);
+    const multiple = values.questions.length > 1;
 
-    const update = (patch: Partial<PollFormValues>) => {
+    const update = (patch: Partial<typeof values>) => {
         setValues((current) => ({ ...current, ...patch }));
         setErrors({});
     };
 
-    const setOption = (index: number, value: string) =>
+    const updateQuestion = (index: number, patch: Partial<PollFormQuestion>) =>
         update({
-            options: values.options.map((option, i) =>
-                i === index ? value : option,
+            questions: values.questions.map((question, i) =>
+                i === index ? { ...question, ...patch } : question,
             ),
         });
 
-    const removeOption = (index: number) =>
-        update({ options: values.options.filter((_, i) => i !== index) });
+    const setOption = (index: number, optionIndex: number, value: string) =>
+        updateQuestion(index, {
+            options: values.questions[index].options.map((option, i) =>
+                i === optionIndex ? value : option,
+            ),
+        });
 
-    const validate = (): PollPayload | null => {
-        const next: Errors = {};
-        const title = values.title.trim();
-        const question = values.question.trim();
+    const removeOption = (index: number, optionIndex: number) =>
+        updateQuestion(index, {
+            options: values.questions[index].options.filter(
+                (_, i) => i !== optionIndex,
+            ),
+        });
+
+    const addQuestion = () => {
+        const question = withKey(emptyQuestion());
+        setAddedKey(question.key);
+        update({ questions: [...values.questions, question] });
+    };
+
+    const removeQuestion = (index: number) => {
+        const question = values.questions[index];
+        const hasContent =
+            question.question.trim() !== '' ||
+            question.options.some((option) => option.trim() !== '');
+        if (
+            hasContent &&
+            !window.confirm(
+                t('polls.confirm_remove_question', { n: index + 1 }),
+            )
+        ) {
+            return;
+        }
+        update({ questions: values.questions.filter((_, i) => i !== index) });
+    };
+
+    const moveQuestion = (index: number, offset: -1 | 1) => {
+        const target = index + offset;
+        if (target < 0 || target >= values.questions.length) return;
+        const questions = [...values.questions];
+        [questions[index], questions[target]] = [
+            questions[target],
+            questions[index],
+        ];
+        update({ questions });
+    };
+
+    const validateQuestion = (
+        question: DraftQuestion,
+    ): { errors: QuestionErrors; options: string[] } => {
+        const next: QuestionErrors = {};
         // Tomma rader hoppas över i stället för att stoppa sparandet.
-        const options = values.options
+        const options = question.options
             .map((option) => option.trim())
             .filter(Boolean);
 
-        if (!title) next.title = t('polls.validation.title_required');
-        if (!question) {
+        if (!question.question.trim()) {
             next.question = t('polls.validation.question_text_required');
         }
 
@@ -98,7 +182,7 @@ export function PollForm({
             }
             const seen = new Map<string, number>();
             const duplicates: number[] = [];
-            values.options.forEach((option, index) => {
+            question.options.forEach((option, index) => {
                 const key = option.trim().toLowerCase();
                 if (!key) return;
                 const first = seen.get(key);
@@ -114,6 +198,22 @@ export function PollForm({
             }
         }
 
+        return { errors: next, options };
+    };
+
+    const validate = (): PollPayload | null => {
+        const next: Errors = {};
+        const title = values.title.trim();
+        if (!title) next.title = t('polls.validation.title_required');
+
+        const checked = values.questions.map(validateQuestion);
+        checked.forEach((result, index) => {
+            if (Object.keys(result.errors).length) {
+                next.questions ??= {};
+                next.questions[index] = result.errors;
+            }
+        });
+
         setErrors(next);
         if (Object.keys(next).length) return null;
 
@@ -121,12 +221,13 @@ export function PollForm({
             title,
             description: values.description.trim() || null,
             type: values.type,
-            questions: [
-                {
-                    question_text: question,
-                    options: values.type === 'multiple_choice' ? options : [],
-                },
-            ],
+            questions: values.questions.map((question, index) => ({
+                question_text: question.question.trim(),
+                options:
+                    values.type === 'multiple_choice'
+                        ? checked[index].options
+                        : [],
+            })),
         };
     };
 
@@ -203,11 +304,17 @@ export function PollForm({
                                     onChange={() =>
                                         update({
                                             type: value,
-                                            options:
-                                                value === 'multiple_choice' &&
-                                                values.options.length < 2
-                                                    ? ['', '']
-                                                    : values.options,
+                                            questions: values.questions.map(
+                                                (question) =>
+                                                    value ===
+                                                        'multiple_choice' &&
+                                                    question.options.length < 2
+                                                        ? {
+                                                              ...question,
+                                                              options: ['', ''],
+                                                          }
+                                                        : question,
+                                            ),
                                         })
                                     }
                                 />
@@ -226,100 +333,146 @@ export function PollForm({
                 </div>
             </fieldset>
 
-            <label className="grid gap-1.5">
-                <span className="text-sm font-medium">
-                    {t('polls.question_label')}
-                </span>
-                <textarea
-                    className="min-h-20 w-full rounded-md border bg-background px-3 py-2 text-lg"
-                    placeholder={t('polls.question_placeholder')}
-                    value={values.question}
-                    maxLength={500}
-                    rows={2}
-                    aria-invalid={!!errors.question}
-                    onChange={(event) =>
-                        update({ question: event.target.value })
-                    }
-                />
-                {errors.question ? (
-                    <span className="text-sm text-red-600">
-                        {errors.question}
-                    </span>
-                ) : null}
-            </label>
-
-            {values.type === 'multiple_choice' ? (
-                <fieldset className="grid gap-2">
-                    <legend className="mb-1.5 text-sm font-medium">
-                        {t('polls.options_label')}
-                    </legend>
-                    {values.options.map((option, index) => {
-                        const duplicate = errors.duplicates?.includes(index);
-                        return (
-                            <div
-                                key={index}
-                                className="flex items-center gap-2"
+            {values.questions.map((question, index) => {
+                const questionErrors = errors.questions?.[index] ?? {};
+                const number = index + 1;
+                return (
+                    <div
+                        key={question.key}
+                        role="group"
+                        aria-labelledby={`question-label-${question.key}`}
+                        className={`grid gap-4 ${
+                            multiple ? 'rounded-xl border p-4' : ''
+                        }`}
+                    >
+                        <div className="flex items-center justify-between gap-2">
+                            <label
+                                id={`question-label-${question.key}`}
+                                htmlFor={`question-${question.key}`}
+                                className="text-sm font-medium"
                             >
-                                <span
-                                    className="flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-bold text-white"
-                                    style={{
-                                        backgroundColor: optionColor(index),
-                                    }}
-                                    aria-hidden
-                                >
-                                    {optionLetter(index)}
+                                {multiple
+                                    ? t('polls.question_number_label', {
+                                          n: number,
+                                      })
+                                    : t('polls.question_label')}
+                            </label>
+                            {multiple ? (
+                                <span className="flex gap-1">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        aria-label={t(
+                                            'polls.move_question_up',
+                                            { n: number },
+                                        )}
+                                        title={t('polls.move_question_up', {
+                                            n: number,
+                                        })}
+                                        disabled={index === 0}
+                                        onClick={() => moveQuestion(index, -1)}
+                                    >
+                                        <ArrowUp />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        aria-label={t(
+                                            'polls.move_question_down',
+                                            { n: number },
+                                        )}
+                                        title={t('polls.move_question_down', {
+                                            n: number,
+                                        })}
+                                        disabled={
+                                            index ===
+                                            values.questions.length - 1
+                                        }
+                                        onClick={() => moveQuestion(index, 1)}
+                                    >
+                                        <ArrowDown />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        aria-label={t('polls.remove_question', {
+                                            n: number,
+                                        })}
+                                        title={t('polls.remove_question', {
+                                            n: number,
+                                        })}
+                                        onClick={() => removeQuestion(index)}
+                                    >
+                                        <Trash2 />
+                                    </Button>
                                 </span>
-                                <input
-                                    className={`w-full rounded-md border bg-background px-3 py-2 ${
-                                        duplicate ? 'border-red-500' : ''
-                                    }`}
-                                    placeholder={t('polls.option_placeholder', {
-                                        n: index + 1,
-                                    })}
-                                    value={option}
-                                    maxLength={255}
-                                    aria-invalid={duplicate}
-                                    onChange={(event) =>
-                                        setOption(index, event.target.value)
-                                    }
-                                />
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    aria-label={t('polls.remove_option', {
-                                        n: index + 1,
-                                    })}
-                                    title={t('polls.remove_option', {
-                                        n: index + 1,
-                                    })}
-                                    disabled={values.options.length <= 2}
-                                    onClick={() => removeOption(index)}
-                                >
-                                    <X />
-                                </Button>
-                            </div>
-                        );
-                    })}
-                    {errors.options ? (
-                        <span className="text-sm text-red-600">
-                            {errors.options}
+                            ) : null}
+                        </div>
+                        <div className="-mt-2 grid gap-1.5">
+                            <textarea
+                                id={`question-${question.key}`}
+                                className="min-h-20 w-full rounded-md border bg-background px-3 py-2 text-lg"
+                                placeholder={t('polls.question_placeholder')}
+                                value={question.question}
+                                maxLength={500}
+                                rows={2}
+                                autoFocus={question.key === addedKey}
+                                aria-invalid={!!questionErrors.question}
+                                onChange={(event) =>
+                                    updateQuestion(index, {
+                                        question: event.target.value,
+                                    })
+                                }
+                            />
+                            {questionErrors.question ? (
+                                <span className="text-sm text-red-600">
+                                    {questionErrors.question}
+                                </span>
+                            ) : null}
+                        </div>
+
+                        {values.type === 'multiple_choice' ? (
+                            <OptionList
+                                questionNumber={number}
+                                options={question.options}
+                                errors={questionErrors}
+                                onChange={(optionIndex, value) =>
+                                    setOption(index, optionIndex, value)
+                                }
+                                onRemove={(optionIndex) =>
+                                    removeOption(index, optionIndex)
+                                }
+                                onAdd={() =>
+                                    updateQuestion(index, {
+                                        options: [...question.options, ''],
+                                    })
+                                }
+                            />
+                        ) : null}
+                    </div>
+                );
+            })}
+
+            {values.questions.length < MAX_QUESTIONS ? (
+                <div className="grid gap-1.5 border-t pt-4">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        className="justify-self-start"
+                        onClick={addQuestion}
+                    >
+                        <Plus />
+                        {t('polls.add_question')}
+                    </Button>
+                    {!multiple ? (
+                        <span className="text-xs text-muted-foreground">
+                            {t('polls.add_question_help')}
                         </span>
                     ) : null}
-                    {values.options.length < MAX_OPTIONS ? (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="justify-self-start"
-                            onClick={() =>
-                                update({ options: [...values.options, ''] })
-                            }
-                        >
-                            <Plus />
-                            {t('polls.add_option')}
-                        </Button>
-                    ) : null}
-                </fieldset>
+                </div>
             ) : null}
 
             <label className="grid gap-1.5">
@@ -337,6 +490,12 @@ export function PollForm({
                     }
                 />
             </label>
+
+            {errors.questions && multiple ? (
+                <p className="text-sm text-red-600">
+                    {t('polls.validation.check_questions')}
+                </p>
+            ) : null}
 
             <div className="flex flex-wrap gap-2">
                 <Button type="submit" disabled={submitting}>
@@ -364,5 +523,96 @@ export function PollForm({
                 ) : null}
             </div>
         </form>
+    );
+}
+
+function OptionList({
+    questionNumber,
+    options,
+    errors,
+    onChange,
+    onRemove,
+    onAdd,
+}: {
+    questionNumber: number;
+    options: string[];
+    errors: QuestionErrors;
+    onChange: (index: number, value: string) => void;
+    onRemove: (index: number) => void;
+    onAdd: () => void;
+}) {
+    const t = useT();
+
+    return (
+        <div
+            className="grid gap-2"
+            role="group"
+            aria-label={t('polls.options_for_question', {
+                n: questionNumber,
+            })}
+        >
+            <span className="text-sm font-medium">
+                {t('polls.options_label')}
+            </span>
+            {options.map((option, index) => {
+                const duplicate = errors.duplicates?.includes(index);
+                return (
+                    <div key={index} className="flex items-center gap-2">
+                        <span
+                            className="flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-bold text-white"
+                            style={{
+                                backgroundColor: optionColor(index),
+                            }}
+                            aria-hidden
+                        >
+                            {optionLetter(index)}
+                        </span>
+                        <input
+                            className={`w-full rounded-md border bg-background px-3 py-2 ${
+                                duplicate ? 'border-red-500' : ''
+                            }`}
+                            placeholder={t('polls.option_placeholder', {
+                                n: index + 1,
+                            })}
+                            value={option}
+                            maxLength={255}
+                            aria-invalid={duplicate}
+                            onChange={(event) =>
+                                onChange(index, event.target.value)
+                            }
+                        />
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={t('polls.remove_option', {
+                                n: index + 1,
+                            })}
+                            title={t('polls.remove_option', {
+                                n: index + 1,
+                            })}
+                            disabled={options.length <= 2}
+                            onClick={() => onRemove(index)}
+                        >
+                            <X />
+                        </Button>
+                    </div>
+                );
+            })}
+            {errors.options ? (
+                <span className="text-sm text-red-600">{errors.options}</span>
+            ) : null}
+            {options.length < MAX_OPTIONS ? (
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="justify-self-start"
+                    onClick={onAdd}
+                >
+                    <Plus />
+                    {t('polls.add_option')}
+                </Button>
+            ) : null}
+        </div>
     );
 }

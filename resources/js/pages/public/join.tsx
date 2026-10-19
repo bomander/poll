@@ -89,13 +89,26 @@ export default function JoinPage() {
     }, [initialCode, join]);
 
     const closed = state?.status === 'closed';
+    const questionId = state?.current_question?.id ?? null;
+    const questionIdRef = useRef(questionId);
+    useEffect(() => {
+        questionIdRef.current = questionId;
+    }, [questionId]);
 
     useEffect(() => {
         if (!joinedCode || closed) return;
         const interval = window.setInterval(async () => {
             try {
                 const result = await fetchState(joinedCode);
-                if (typeof result === 'object') setState(result);
+                if (typeof result !== 'object') return;
+                // Ett fel om förra frågan gäller inte när läraren har gått vidare.
+                if (
+                    (result.current_question?.id ?? null) !==
+                    questionIdRef.current
+                ) {
+                    setError(null);
+                }
+                setState(result);
             } catch {
                 // Nästa uppdatering försöker igen.
             }
@@ -253,6 +266,14 @@ function ParticipantView({
             <div className="flex items-start justify-between gap-3">
                 <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
                     {state.poll_title}
+                    {state.question_count > 1 && state.question_number ? (
+                        <span className="block font-normal">
+                            {t('join.question_position', {
+                                n: state.question_number,
+                                count: state.question_count,
+                            })}
+                        </span>
+                    ) : null}
                 </p>
                 <button
                     type="button"
@@ -385,7 +406,10 @@ function ParticipantView({
                             <MyAnswer state={state} />
                             {!closed ? (
                                 <p className="mt-2 text-sm">
-                                    {t('join.submitted_help')}
+                                    {(state.question_number ?? 0) <
+                                    state.question_count
+                                        ? t('join.submitted_help_next')
+                                        : t('join.submitted_help')}
                                 </p>
                             ) : null}
                         </div>
