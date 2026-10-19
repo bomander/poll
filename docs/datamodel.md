@@ -12,6 +12,7 @@
 - title
 - description (nullable)
 - type (multiple_choice|word_cloud)
+- settings (json, nullable; only `theme` is used)
 - created_at
 - updated_at
 

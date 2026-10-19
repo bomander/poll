@@ -1,7 +1,9 @@
 # MVP Requirements
 
 ## Scope
-- One-question multiple-choice polls and word clouds.
+- Multiple-choice polls and word clouds with 1–10 questions that the teacher
+  steps through.
+- Eleven themes for the student view and the projector, chosen per poll.
 - Anonymous students, no accounts or personal data.
 - No org structure or sharing between teachers in MVP.
 - No multi-session analytics; results are per session run.
@@ -20,7 +22,8 @@ Student (anonymous):
 - View live chart (projector view).
 
 ## Live behavior
-- Participant, projector and teacher views refresh every five seconds.
+- Participant and teacher views refresh every five seconds, the projector
+  every three seconds.
 - Target audience: 30-40 concurrent students.
 - The public rate limit allows one 40-student class to use the polling fallback
   behind a shared IP address.

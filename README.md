@@ -1,8 +1,9 @@
 # Enkät
 
-En enkel tjänst för direkta klassrumsomröstningar. Lärare skapar en flervalsfråga
-eller ett ordmoln, startar en session och visar aggregerade resultat på projektor.
-Elever ansluter anonymt med en kort kod och kan svara en gång per fråga.
+En enkel tjänst för direkta klassrumsomröstningar. Lärare skapar en enkät med
+1–10 flervalsfrågor eller ordmolnsfrågor, startar en omgång och visar frågan och
+resultatet på projektorn. Elever ansluter anonymt med en kort kod eller QR-kod
+och kan svara en gång per fråga. Läraren väljer ett av elva teman per enkät.
 
 ## Stack
 - Backend: Laravel (PHP 8.x)
@@ -34,5 +35,8 @@ Elever ansluter anonymt med en kort kod och kan svara en gång per fråga.
 - En slumpmässig, sessionsspecifik cookie används enbart för att begränsa dubbla svar.
 - Sessions are per live run; no cross-session analytics in MVP.
 - Exports are aggregated CSV per session only.
-- Deltagar-, projektor- och lärarvyer uppdateras automatiskt var femte sekund.
+- Deltagar- och lärarvyer uppdateras automatiskt var femte sekund, projektorn var tredje.
+- Temastilarna finns i `resources/css/playful.css` och färgerna per tema i
+  `resources/js/lib/themes.ts`. Giltiga teman listas i `app/Support/Themes.php`.
+  Alla typsnitt paketeras med appen via fontsource, så CSP:n behöver inte ändras.
 - Teacher sign-in uses Authorization Code with PKCE against auth.boma.nu; configure the `BOMA_AUTH_*` variables in production.
