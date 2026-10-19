@@ -1,0 +1,244 @@
+/*
+ * Lekfull stil för elevernas sidor: rundade typsnitt, klara färger och
+ * tjocka knappar som trycks ned. Gäller bara inom .playful.
+ */
+@import '@fontsource-variable/fredoka';
+@import '@fontsource-variable/nunito';
+
+@layer components {
+    .playful {
+        --ink: #2b2140;
+        --ink-soft: #5b5170;
+        --cream: #fff6e5;
+        --sun: #ffc93c;
+        --sun-shade: #e0a100;
+        --grass: #17803c;
+        --sky: #2f80ed;
+        --berry: #ef476f;
+
+        font-family: 'Nunito Variable', ui-rounded, system-ui, sans-serif;
+        color: var(--ink);
+        background-color: var(--cream);
+        color-scheme: light;
+    }
+
+    .playful .font-toy {
+        font-family: 'Fredoka Variable', ui-rounded, system-ui, sans-serif;
+    }
+
+    /* Stora, mjuka former i bakgrunden. De ligger bakom innehållet och tar inga klick. */
+    .playful-shapes {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
+    .playful-shapes > span {
+        position: absolute;
+        display: block;
+        opacity: 0.9;
+    }
+
+    .playful-shapes > span:nth-child(1) {
+        top: -6rem;
+        left: -5rem;
+        width: 16rem;
+        height: 16rem;
+        border-radius: 9999px;
+        background: var(--sun);
+    }
+
+    .playful-shapes > span:nth-child(2) {
+        top: 18%;
+        right: -4.5rem;
+        width: 10rem;
+        height: 10rem;
+        border-radius: 2.5rem;
+        background: var(--sky);
+        transform: rotate(18deg);
+    }
+
+    .playful-shapes > span:nth-child(3) {
+        bottom: -5rem;
+        left: 12%;
+        width: 13rem;
+        height: 13rem;
+        border-radius: 9999px;
+        background: var(--berry);
+    }
+
+    .playful-shapes > span:nth-child(4) {
+        right: 10%;
+        bottom: 8%;
+        width: 5rem;
+        height: 5rem;
+        border-radius: 9999px;
+        background: var(--grass);
+    }
+
+    .playful-card {
+        position: relative;
+        z-index: 1;
+        border-radius: 2rem;
+        background: #fff;
+        box-shadow:
+            0 0 0 4px var(--ink),
+            0 10px 0 4px var(--ink);
+    }
+
+    /* Knapp som ser ut att stå upp och trycks ned vid klick. */
+    .toy-button {
+        --toy: var(--sun);
+        --toy-shade: var(--sun-shade);
+        --toy-text: var(--ink);
+
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        width: 100%;
+        border: 3px solid var(--ink);
+        border-radius: 1.25rem;
+        background: var(--toy);
+        color: var(--toy-text);
+        font-family: 'Fredoka Variable', ui-rounded, system-ui, sans-serif;
+        font-weight: 600;
+        box-shadow: 0 6px 0 var(--ink);
+        transform: translateY(0);
+        transition:
+            transform 80ms ease-out,
+            box-shadow 80ms ease-out,
+            opacity 150ms;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .toy-button:hover:not(:disabled) {
+        filter: brightness(1.05);
+    }
+
+    .toy-button:active:not(:disabled),
+    .toy-button[aria-pressed='true'] {
+        transform: translateY(4px);
+        box-shadow: 0 2px 0 var(--ink);
+    }
+
+    .toy-button:focus-visible {
+        outline: 4px solid var(--sky);
+        outline-offset: 4px;
+    }
+
+    .toy-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+    }
+
+    .toy-button--go {
+        --toy: var(--grass);
+        --toy-text: #fff;
+    }
+
+    .toy-input {
+        width: 100%;
+        border: 3px solid var(--ink);
+        border-radius: 1.25rem;
+        background: #fff;
+        color: var(--ink);
+        box-shadow: inset 0 4px 0 rgb(43 33 64 / 0.08);
+    }
+
+    .toy-input::placeholder {
+        color: #c9c1d6;
+    }
+
+    .toy-input:focus {
+        outline: 4px solid var(--sky);
+        outline-offset: 2px;
+    }
+
+    .toy-bar {
+        height: 1.25rem;
+        overflow: hidden;
+        border: 3px solid var(--ink);
+        border-radius: 9999px;
+        background: #f1ebe0;
+    }
+
+    .toy-bar > span {
+        display: block;
+        height: 100%;
+        border-radius: 9999px;
+        transition: width 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes toy-pop {
+        0% {
+            transform: scale(0.6);
+            opacity: 0;
+        }
+        70% {
+            transform: scale(1.08);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    @keyframes toy-bounce {
+        0%,
+        80%,
+        100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-0.6rem);
+        }
+    }
+
+    .toy-pop {
+        animation: toy-pop 450ms ease-out both;
+    }
+
+    .toy-dots {
+        display: flex;
+        justify-content: center;
+        gap: 0.6rem;
+    }
+
+    .toy-dots > span {
+        width: 1.1rem;
+        height: 1.1rem;
+        border: 3px solid var(--ink);
+        border-radius: 9999px;
+        animation: toy-bounce 1.2s ease-in-out infinite;
+    }
+
+    .toy-dots > span:nth-child(1) {
+        background: var(--berry);
+    }
+
+    .toy-dots > span:nth-child(2) {
+        background: var(--sun);
+        animation-delay: 0.15s;
+    }
+
+    .toy-dots > span:nth-child(3) {
+        background: var(--sky);
+        animation-delay: 0.3s;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .toy-pop,
+        .toy-dots > span {
+            animation: none;
+        }
+
+        .toy-bar > span,
+        .toy-button {
+            transition: none;
+        }
+    }
+}

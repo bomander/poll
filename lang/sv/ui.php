@@ -239,7 +239,6 @@ return [
         'code_placeholder' => 'ABC123',
         'join' => 'Gå med',
         'joining' => 'Ansluter...',
-        'or' => 'eller',
         'dashboard' => 'Till dina enkäter',
         'teacher_login' => 'Logga in som lärare',
         'errors' => [

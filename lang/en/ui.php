@@ -239,7 +239,6 @@ return [
         'code_placeholder' => 'ABC123',
         'join' => 'Join',
         'joining' => 'Joining...',
-        'or' => 'or',
         'dashboard' => 'To your polls',
         'teacher_login' => 'Teacher sign in',
         'errors' => [

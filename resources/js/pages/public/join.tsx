@@ -1,7 +1,8 @@
 import { Head, usePage } from '@inertiajs/react';
-import { CheckCircle2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { PlayfulPage, WaitingDots } from '@/components/playful';
 import { apiFetch } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 import {
@@ -171,70 +172,64 @@ export default function JoinPage() {
     };
 
     return (
-        <div className="min-h-dvh bg-neutral-100 px-4 py-6 text-neutral-900 sm:py-10 dark:bg-neutral-950 dark:text-white">
+        <PlayfulPage>
             <Head title={state?.poll_title ?? t('join.title')} />
-            <div className="mx-auto max-w-lg">
-                {!state ? (
-                    <form
-                        className="rounded-2xl border bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            void join(code);
-                        }}
+            {!state ? (
+                <form
+                    className="playful-card p-6 sm:p-8"
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        void join(code);
+                    }}
+                >
+                    <h1 className="font-toy text-center text-4xl font-semibold">
+                        {t('join.title')}
+                    </h1>
+                    <label className="mt-6 grid gap-2">
+                        <span className="font-toy text-center text-lg font-medium">
+                            {t('join.code_label')}
+                        </span>
+                        <input
+                            className="toy-input font-toy h-20 text-center text-4xl font-semibold tracking-[0.2em] uppercase"
+                            placeholder={t('join.code_placeholder')}
+                            value={code}
+                            maxLength={12}
+                            inputMode="text"
+                            autoCapitalize="characters"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            autoFocus={!initialCode}
+                            onChange={(event) => {
+                                setCode(event.target.value.toUpperCase());
+                                setError(null);
+                            }}
+                        />
+                    </label>
+                    {error ? <ErrorNote text={error} /> : null}
+                    <button
+                        type="submit"
+                        disabled={joining}
+                        className="toy-button toy-button--go mt-6 h-16 text-2xl"
                     >
-                        <h1 className="text-2xl font-semibold">
-                            {t('join.title')}
-                        </h1>
-                        <label className="mt-5 grid gap-2">
-                            <span className="text-sm font-medium">
-                                {t('join.code_label')}
-                            </span>
-                            <input
-                                className="h-16 w-full rounded-lg border-2 border-neutral-300 bg-white text-center font-mono text-3xl tracking-[0.2em] uppercase placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:placeholder:text-neutral-600 dark:focus:border-white"
-                                placeholder={t('join.code_placeholder')}
-                                value={code}
-                                maxLength={12}
-                                inputMode="text"
-                                autoCapitalize="characters"
-                                autoComplete="off"
-                                autoCorrect="off"
-                                spellCheck={false}
-                                autoFocus={!initialCode}
-                                onChange={(event) => {
-                                    setCode(event.target.value.toUpperCase());
-                                    setError(null);
-                                }}
-                            />
-                        </label>
-                        {error ? (
-                            <p className="mt-3 text-sm text-red-600 dark:text-red-400">
-                                {error}
-                            </p>
-                        ) : null}
-                        <button
-                            type="submit"
-                            disabled={joining}
-                            className="mt-4 h-12 w-full rounded-lg bg-neutral-900 font-semibold text-white hover:bg-neutral-800 disabled:opacity-60 dark:bg-white dark:text-neutral-900"
-                        >
-                            {joining ? t('join.joining') : t('join.join')}
-                        </button>
-                        <p className="mt-4 text-center text-xs text-neutral-500">
-                            {t('join.anonymous')}
-                        </p>
-                    </form>
-                ) : (
-                    // Nyckeln nollställer elevens val om läraren byter fråga.
-                    <ParticipantView
-                        key={state.current_question?.id ?? 'waiting'}
-                        state={state}
-                        error={error}
-                        voting={voting}
-                        onVote={(body) => void vote(body)}
-                        onLeave={leave}
-                    />
-                )}
-            </div>
-        </div>
+                        {joining ? t('join.joining') : t('join.join')}
+                    </button>
+                    <p className="mt-6 text-center text-sm text-[var(--ink-soft)]">
+                        {t('join.anonymous')}
+                    </p>
+                </form>
+            ) : (
+                // Nyckeln nollställer elevens val om läraren byter fråga.
+                <ParticipantView
+                    key={state.current_question?.id ?? 'waiting'}
+                    state={state}
+                    error={error}
+                    voting={voting}
+                    onVote={(body) => void vote(body)}
+                    onLeave={leave}
+                />
+            )}
+        </PlayfulPage>
     );
 }
 
@@ -262,40 +257,47 @@ function ParticipantView({
         state.show_results && (state.has_voted || state.locked || closed);
 
     return (
-        <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6 dark:border-neutral-800 dark:bg-neutral-900">
-            <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+        <div className="playful-card p-5 sm:p-7">
+            <div className="flex items-center justify-between gap-3">
+                <span className="font-toy min-w-0 truncate rounded-full bg-[var(--sun)] px-3 py-1 text-sm font-semibold">
                     {state.poll_title}
-                    {state.question_count > 1 && state.question_number ? (
-                        <span className="block font-normal">
-                            {t('join.question_position', {
-                                n: state.question_number,
-                                count: state.question_count,
-                            })}
-                        </span>
-                    ) : null}
-                </p>
+                </span>
                 <button
                     type="button"
                     onClick={onLeave}
-                    className="shrink-0 text-sm text-neutral-500 underline-offset-2 hover:underline"
+                    className="shrink-0 text-sm font-semibold text-[var(--ink-soft)] underline underline-offset-4"
                 >
                     {t('join.leave')}
                 </button>
             </div>
+            {state.question_count > 1 && state.question_number ? (
+                <QuestionSteps
+                    current={state.question_number}
+                    count={state.question_count}
+                    label={t('join.question_position', {
+                        n: state.question_number,
+                        count: state.question_count,
+                    })}
+                />
+            ) : null}
 
             {!question ? (
-                <p className="mt-6 text-lg">{t('join.waiting')}</p>
+                <div className="py-10 text-center">
+                    <WaitingDots />
+                    <p className="font-toy mt-6 text-2xl font-medium">
+                        {t('join.waiting')}
+                    </p>
+                </div>
             ) : (
                 <>
-                    <h1 className="mt-2 text-2xl leading-snug font-semibold">
+                    <h1 className="font-toy mt-4 text-[1.85rem] leading-tight font-semibold">
                         {question.question_text}
                     </h1>
 
                     {canAnswer ? (
                         state.poll_type === 'multiple_choice' ? (
                             <form
-                                className="mt-5 grid gap-3"
+                                className="mt-6 grid gap-4"
                                 onSubmit={(event) => {
                                     event.preventDefault();
                                     if (selected !== null) {
@@ -303,50 +305,22 @@ function ParticipantView({
                                     }
                                 }}
                             >
-                                <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                                <p className="font-semibold text-[var(--ink-soft)]">
                                     {t('join.pick_one')}
                                 </p>
-                                {question.options.map((option, index) => {
-                                    const color = optionColor(index);
-                                    const isSelected = selected === option.id;
-                                    return (
-                                        <button
-                                            key={option.id}
-                                            type="button"
-                                            aria-pressed={isSelected}
-                                            onClick={() =>
-                                                setSelected(option.id)
-                                            }
-                                            className="flex min-h-14 items-center gap-3 rounded-xl border-2 px-3 py-2 text-left text-lg font-medium transition-colors"
-                                            style={{
-                                                borderColor: isSelected
-                                                    ? color
-                                                    : 'rgb(212 212 212 / 0.8)',
-                                                backgroundColor: isSelected
-                                                    ? `${color}1f`
-                                                    : 'transparent',
-                                            }}
-                                        >
-                                            <span
-                                                className="flex size-9 shrink-0 items-center justify-center rounded-lg font-bold text-white"
-                                                style={{
-                                                    backgroundColor: color,
-                                                }}
-                                            >
-                                                {optionLetter(index)}
-                                            </span>
-                                            <span className="min-w-0 flex-1 break-words">
-                                                {option.option_text}
-                                            </span>
-                                            {isSelected ? (
-                                                <CheckCircle2
-                                                    className="size-6 shrink-0"
-                                                    style={{ color }}
-                                                />
-                                            ) : null}
-                                        </button>
-                                    );
-                                })}
+                                {question.options.map((option, index) => (
+                                    <OptionButton
+                                        key={option.id}
+                                        index={index}
+                                        text={option.option_text}
+                                        selected={selected === option.id}
+                                        dimmed={
+                                            selected !== null &&
+                                            selected !== option.id
+                                        }
+                                        onSelect={() => setSelected(option.id)}
+                                    />
+                                ))}
                                 <SubmitButton
                                     disabled={selected === null || voting}
                                     voting={voting}
@@ -354,7 +328,7 @@ function ParticipantView({
                             </form>
                         ) : (
                             <form
-                                className="mt-5 grid gap-2"
+                                className="mt-6 grid gap-2"
                                 onSubmit={(event) => {
                                     event.preventDefault();
                                     if (answerText.trim()) {
@@ -364,13 +338,13 @@ function ParticipantView({
                             >
                                 <label
                                     htmlFor="answer"
-                                    className="text-sm font-medium"
+                                    className="font-toy text-lg font-medium"
                                 >
                                     {t('join.word_cloud.label')}
                                 </label>
                                 <input
                                     id="answer"
-                                    className="h-14 w-full rounded-xl border-2 border-neutral-300 bg-white px-4 text-lg focus:border-neutral-900 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:focus:border-white"
+                                    className="toy-input h-16 px-5 text-xl font-semibold"
                                     placeholder={t(
                                         'join.word_cloud.placeholder',
                                     )}
@@ -381,7 +355,7 @@ function ParticipantView({
                                         setAnswerText(event.target.value)
                                     }
                                 />
-                                <p className="text-right text-xs text-neutral-500">
+                                <p className="text-right text-sm font-semibold text-[var(--ink-soft)]">
                                     {t('join.word_cloud.remaining', {
                                         count:
                                             WORD_CLOUD_MAX_LENGTH -
@@ -398,14 +372,18 @@ function ParticipantView({
                     ) : null}
 
                     {state.has_voted ? (
-                        <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
-                            <p className="flex items-center gap-2 font-semibold">
-                                <CheckCircle2 className="size-5 shrink-0" />
-                                {t('join.submitted_title')}
-                            </p>
+                        <div className="toy-pop mt-6 rounded-[1.5rem] border-[3px] border-[var(--ink)] bg-[var(--grass)] p-5 text-white">
+                            <div className="flex items-center gap-3">
+                                <span className="flex size-12 shrink-0 items-center justify-center rounded-full border-[3px] border-[var(--ink)] bg-white text-[var(--grass)]">
+                                    <Check className="size-7" strokeWidth={4} />
+                                </span>
+                                <p className="font-toy text-xl leading-tight font-semibold">
+                                    {t('join.submitted_title')}
+                                </p>
+                            </div>
                             <MyAnswer state={state} />
                             {!closed ? (
-                                <p className="mt-2 text-sm">
+                                <p className="mt-3 font-semibold">
                                     {(state.question_number ?? 0) <
                                     state.question_count
                                         ? t('join.submitted_help_next')
@@ -421,26 +399,101 @@ function ParticipantView({
                         <StatusNote text={t('join.status.locked')} />
                     ) : null}
 
-                    {error ? (
-                        <p className="mt-4 text-sm text-red-600 dark:text-red-400">
-                            {error}
-                        </p>
-                    ) : null}
+                    {error ? <ErrorNote text={error} /> : null}
 
                     {showResults ? (
                         <ParticipantResults state={state} />
                     ) : state.has_voted && !state.show_results && !closed ? (
-                        <p className="mt-5 text-sm text-neutral-500 dark:text-neutral-400">
+                        <p className="font-toy mt-6 text-center text-lg font-medium text-[var(--ink-soft)]">
                             {t('join.results_hidden')}
                         </p>
                     ) : null}
                 </>
             )}
 
-            <p className="mt-6 text-center text-xs text-neutral-500">
+            <p className="mt-7 text-center text-sm text-[var(--ink-soft)]">
                 {t('join.anonymous')}
             </p>
         </div>
+    );
+}
+
+/** Rad med prickar som visar var i enkäten klassen är. */
+function QuestionSteps({
+    current,
+    count,
+    label,
+}: {
+    current: number;
+    count: number;
+    label: string;
+}) {
+    return (
+        <div className="mt-4 flex items-center gap-3">
+            <div className="flex gap-1.5" aria-hidden>
+                {Array.from({ length: count }, (_, index) => (
+                    <span
+                        key={index}
+                        className="size-3.5 rounded-full border-2 border-[var(--ink)]"
+                        style={{
+                            backgroundColor:
+                                index < current ? optionColor(index) : '#fff',
+                        }}
+                    />
+                ))}
+            </div>
+            <span className="font-toy text-sm font-semibold">{label}</span>
+        </div>
+    );
+}
+
+function OptionButton({
+    index,
+    text,
+    selected,
+    dimmed,
+    onSelect,
+}: {
+    index: number;
+    text: string;
+    selected: boolean;
+    dimmed: boolean;
+    onSelect: () => void;
+}) {
+    const color = optionColor(index);
+    return (
+        <button
+            type="button"
+            aria-pressed={selected}
+            onClick={onSelect}
+            className="toy-button min-h-16 justify-start px-3 py-2 text-left text-xl"
+            style={
+                {
+                    '--toy': color,
+                    '--toy-text': '#fff',
+                    opacity: dimmed ? 0.55 : 1,
+                } as React.CSSProperties
+            }
+        >
+            <span
+                className="flex size-11 shrink-0 items-center justify-center rounded-full border-[3px] border-[var(--ink)] bg-white text-2xl"
+                style={{ color }}
+            >
+                {optionLetter(index)}
+            </span>
+            <span className="min-w-0 flex-1 leading-snug break-words">
+                {text}
+            </span>
+            {selected ? (
+                <span className="toy-pop flex size-9 shrink-0 items-center justify-center rounded-full bg-white">
+                    <Check
+                        className="size-6"
+                        strokeWidth={4}
+                        style={{ color }}
+                    />
+                </span>
+            ) : null}
+        </button>
     );
 }
 
@@ -458,7 +511,7 @@ function SubmitButton({
         <button
             type="submit"
             disabled={disabled}
-            className="mt-1 h-12 w-full rounded-xl bg-neutral-900 text-lg font-semibold text-white hover:bg-neutral-800 disabled:opacity-40 dark:bg-white dark:text-neutral-900"
+            className="toy-button mt-2 h-16 text-2xl"
         >
             {voting
                 ? t('join.status.sending')
@@ -469,7 +522,18 @@ function SubmitButton({
 
 function StatusNote({ text }: { text: string }) {
     return (
-        <p className="mt-5 rounded-xl bg-neutral-100 p-4 text-center font-medium dark:bg-neutral-800">
+        <p className="font-toy mt-6 rounded-[1.5rem] border-[3px] border-[var(--ink)] bg-[var(--sun)] p-5 text-center text-xl font-semibold">
+            {text}
+        </p>
+    );
+}
+
+function ErrorNote({ text }: { text: string }) {
+    return (
+        <p
+            role="alert"
+            className="mt-4 rounded-2xl border-[3px] border-[var(--berry)] bg-[#fff0f3] px-4 py-3 text-center font-semibold text-[#a3123a]"
+        >
             {text}
         </p>
     );
@@ -482,9 +546,11 @@ function MyAnswer({ state }: { state: ParticipantState }) {
 
     if (answer.answer_text) {
         return (
-            <p className="mt-2 text-sm">
+            <p className="mt-4 rounded-2xl bg-white/20 px-4 py-3 text-lg">
                 {t('join.your_answer')}:{' '}
-                <span className="font-semibold">{answer.answer_text}</span>
+                <span className="font-toy font-semibold">
+                    {answer.answer_text}
+                </span>
             </p>
         );
     }
@@ -494,15 +560,17 @@ function MyAnswer({ state }: { state: ParticipantState }) {
     if (index < 0) return null;
 
     return (
-        <p className="mt-2 flex items-center gap-2 text-sm">
-            {t('join.your_answer')}:
+        <p className="mt-4 flex items-center gap-3 rounded-2xl bg-white/20 px-4 py-3 text-lg">
+            <span className="shrink-0">{t('join.your_answer')}:</span>
             <span
-                className="flex size-6 items-center justify-center rounded font-bold text-white"
-                style={{ backgroundColor: optionColor(index) }}
+                className="font-toy flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-[var(--ink)] bg-white"
+                style={{ color: optionColor(index) }}
             >
                 {optionLetter(index)}
             </span>
-            <span className="font-semibold">{options[index].option_text}</span>
+            <span className="font-toy min-w-0 font-semibold break-words">
+                {options[index].option_text}
+            </span>
         </p>
     );
 }
@@ -512,46 +580,49 @@ function ParticipantResults({ state }: { state: ParticipantState }) {
     const options = state.current_question?.options ?? [];
 
     return (
-        <section className="mt-6 border-t pt-5 dark:border-neutral-800">
-            <div className="flex items-baseline justify-between">
-                <h2 className="font-semibold">{t('join.results_title')}</h2>
-                <span className="text-sm text-neutral-500">
+        <section className="mt-7 border-t-[3px] border-dashed border-[#e4dccd] pt-6">
+            <div className="flex items-baseline justify-between gap-3">
+                <h2 className="font-toy text-xl font-semibold">
+                    {t('join.results_title')}
+                </h2>
+                <span className="font-semibold text-[var(--ink-soft)]">
                     {t('join.total', { count: state.total_responses })}
                 </span>
             </div>
-            <div className="mt-3 grid gap-3">
+            <div className="mt-4 grid gap-4">
                 {state.poll_type === 'multiple_choice'
                     ? (state.results as MultipleChoiceResult[]).map(
                           (result) => {
-                              const index = options.findIndex(
-                                  (option) => option.id === result.option_id,
+                              const index = Math.max(
+                                  options.findIndex(
+                                      (option) =>
+                                          option.id === result.option_id,
+                                  ),
+                                  0,
                               );
-                              const color = optionColor(Math.max(index, 0));
+                              const color = optionColor(index);
                               return (
                                   <div key={result.option_id}>
-                                      <div className="flex justify-between gap-3 text-sm">
-                                          <span className="flex min-w-0 items-center gap-2">
+                                      <div className="mb-1.5 flex items-center justify-between gap-3">
+                                          <span className="flex min-w-0 items-center gap-2 font-semibold">
                                               <span
-                                                  className="flex size-5 shrink-0 items-center justify-center rounded text-xs font-bold text-white"
+                                                  className="font-toy flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-[var(--ink)] text-sm text-white"
                                                   style={{
                                                       backgroundColor: color,
                                                   }}
                                               >
-                                                  {optionLetter(
-                                                      Math.max(index, 0),
-                                                  )}
+                                                  {optionLetter(index)}
                                               </span>
                                               <span className="truncate">
                                                   {result.option_text}
                                               </span>
                                           </span>
-                                          <span className="shrink-0 tabular-nums">
+                                          <span className="font-toy shrink-0 text-lg font-semibold tabular-nums">
                                               {Math.round(result.percent)} %
                                           </span>
                                       </div>
-                                      <div className="mt-1 h-2.5 rounded-full bg-neutral-200 dark:bg-neutral-700">
-                                          <div
-                                              className="h-2.5 rounded-full transition-all duration-500"
+                                      <div className="toy-bar">
+                                          <span
                                               style={{
                                                   width: `${result.percent}%`,
                                                   backgroundColor: color,
@@ -564,15 +635,18 @@ function ParticipantResults({ state }: { state: ParticipantState }) {
                       )
                     : (state.results as WordCloudResult[])
                           .slice(0, 15)
-                          .map((result) => (
+                          .map((result, index) => (
                               <div
                                   key={result.answer_text}
-                                  className="flex justify-between gap-3 text-sm"
+                                  className="flex items-center justify-between gap-3 rounded-2xl border-[3px] border-[var(--ink)] px-4 py-2 text-white"
+                                  style={{
+                                      backgroundColor: optionColor(index),
+                                  }}
                               >
-                                  <span className="min-w-0 font-medium break-words">
+                                  <span className="font-toy min-w-0 text-lg font-semibold break-words">
                                       {result.answer_text}
                                   </span>
-                                  <span className="shrink-0 text-neutral-500 tabular-nums">
+                                  <span className="font-toy flex size-8 shrink-0 items-center justify-center rounded-full bg-white font-semibold text-[var(--ink)] tabular-nums">
                                       {result.count}
                                   </span>
                               </div>
