@@ -10,8 +10,8 @@ set -euo pipefail
 SSH_HOST=${SSH_HOST:-"hostup"}
 APP_PATH=${APP_PATH:-"/home/nrnqv/apps/enkat"}           # rot för releases/current/shared
 WEB_ROOT=${WEB_ROOT:-"/home/nrnqv/public_html/enkat"}    # publik webbmapp
-KEEP_RELEASES=${KEEP_RELEASES:-20}
-KEEP_DB_BACKUPS=${KEEP_DB_BACKUPS:-20}
+KEEP_RELEASES=${KEEP_RELEASES:-5}
+KEEP_DB_BACKUPS=${KEEP_DB_BACKUPS:-10}
 
 # Flaggor
 NO_BUILD=${NO_BUILD:-0}      # 1 = skippa npm build lokalt
