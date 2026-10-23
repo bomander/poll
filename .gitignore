@@ -26,3 +26,8 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Skärmbilder och genererade bilder hör inte hemma i Git (se scripts/check-hygiene.sh).
+.playwright-mcp/
+output/playwright/
+generated_images/
