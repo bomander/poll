@@ -42,7 +42,7 @@ composer audit --no-dev --locked --no-interaction
 npm run format:check
 npm run lint
 npm run types
-npm audit
+npm audit --audit-level=high
 
 ########################################
 # 1) Bygg frontenden lokalt
