@@ -35,6 +35,15 @@
         @if (isset($page['props']['seo']))
             <meta name="description" content="{{ $page['props']['seo']['description'] }}" inertia="description">
             <link rel="canonical" href="{{ $page['props']['seo']['canonical'] }}" inertia="canonical">
+            <meta property="og:type" content="website">
+            <meta property="og:title" content="{{ $page['props']['seo']['title'] }}">
+            <meta property="og:description" content="{{ $page['props']['seo']['description'] }}">
+            <meta property="og:url" content="{{ $page['props']['seo']['canonical'] }}">
+            <meta property="og:image" content="https://boma.nu/og/services/enkat.jpg">
+            <meta property="og:image:width" content="1600">
+            <meta property="og:image:height" content="1000">
+            <meta property="og:image:alt" content="Stapeldiagram med svaren på en enkätfråga">
+            <meta name="twitter:card" content="summary_large_image">
         @endif
 
         <link rel="icon" href="{{ url('favicon.ico') }}" sizes="any">
