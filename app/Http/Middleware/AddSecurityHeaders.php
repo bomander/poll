@@ -26,20 +26,23 @@ class AddSecurityHeaders
 
         // Innehållspolicy: egna resurser plus uppräknade värdar. 'unsafe-inline' behövs för inline-skript och skript som Cloudflare lägger in.
         if (! $response->headers->has('Content-Security-Policy')) {
+            // auth.boma.nu levererar skriptet och ramen för inloggningsrutan.
+            $auth = rtrim((string) config('services.boma_identity.issuer'), '/') ?: 'https://auth.boma.nu';
+
             $response->headers->set('Content-Security-Policy', implode('; ', [
                 "default-src 'self'",
                 "base-uri 'self'",
                 "object-src 'none'",
                 "frame-ancestors 'self'",
                 "form-action 'self' https://auth.boma.nu",
-                "script-src 'self' 'unsafe-inline'",
+                "script-src 'self' 'unsafe-inline' {$auth}",
                 "style-src 'self' 'unsafe-inline'",
                 "font-src 'self' data:",
                 "img-src 'self' data: blob: https:",
                 "connect-src 'self'",
                 "media-src 'self' blob: https:",
                 "worker-src 'self' blob:",
-                "frame-src 'self'",
+                "frame-src 'self' {$auth}",
                 "manifest-src 'self'",
             ]));
         }

@@ -53,6 +53,11 @@
         @viteReactRefresh
         @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         @inertiaHead
+        {{-- Inloggningsrutan från auth.boma.nu: länkar märkta data-boma-login
+             öppnar auths formulär i en ruta på sidan. --}}
+        @if(config('services.boma_identity.enabled') && config('services.boma_identity.client_id'))
+        <script src="{{ rtrim((string) config('services.boma_identity.issuer'), '/') }}/konto.js?v=1" defer></script>
+        @endif
     </head>
     <body class="font-sans antialiased">
         @if (($page['component'] ?? '') === 'welcome' && isset($page['props']['seo']))
@@ -62,7 +67,7 @@
                     <p>{{ $page['props']['seo']['description'] }}</p>
                     <nav aria-label="Kom igång">
                         <a href="{{ route('public.join') }}">Delta i en enkät</a>
-                        <a href="{{ route('login') }}">Logga in</a>
+                        <a href="{{ route('login') }}" data-boma-login="{{ route('auth.boma') }}">Logga in</a>
                     </nav>
                 </main>
             </div>

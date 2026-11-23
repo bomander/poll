@@ -108,6 +108,7 @@ export default function Welcome() {
                         ) : (
                             <a
                                 href={`${basePath}/login`}
+                                data-boma-login={`${basePath}/auth/boma`}
                                 className="font-semibold underline underline-offset-4"
                             >
                                 {t('welcome.teacher_login')}
